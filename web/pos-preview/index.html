@@ -592,6 +592,22 @@
     display: flex; align-items: center; gap: 4px; animation: pulseBadge 3s infinite;
   }
 
+  /* Sub Tabs Pill Navigation */
+  .sub-tabs {
+    display: inline-flex; background: var(--bg); padding: 4px; border-radius: 10px;
+    border: 1px solid var(--line); gap: 4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .sub-tab {
+    background: transparent; border: none; padding: 6px 14px; border-radius: 7px;
+    font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer;
+    transition: all 0.18s ease; font-family: inherit;
+  }
+  .sub-tab:hover { color: var(--ink); }
+  .sub-tab.active {
+    background: var(--panel); color: var(--primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); font-weight: 700;
+  }
+
   /* Table Reservations View */
   .reservation-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;
@@ -623,6 +639,9 @@
     background: var(--line-soft); border-radius: 8px; padding: 8px 10px; font-size: 11.5px;
     color: var(--ink-soft); margin: 10px 0; border-left: 3px solid var(--accent);
   }
+  .stat-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: var(--ink-soft); letter-spacing: .04em; }
+  .stat-val { font-size: 24px; font-weight: 800; color: var(--ink); font-family: 'Fraunces', serif; margin: 4px 0 2px; }
+  .stat-sub { font-size: 11px; color: var(--ink-soft); }
 
   /* Digital Receipt Delivery (WhatsApp & SMS) */
   .digital-delivery-card {
@@ -973,42 +992,8 @@
 
     <!-- VIEW 6: TABLE RESERVATIONS & BOOKINGS -->
     <div class="view" id="view-reservations">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
-        <div>
-          <div style="font-size:18px;font-weight:800;color:var(--ink);">Table Reservations &amp; Guest Bookings</div>
-          <div style="font-size:12px;color:var(--ink-soft);">Manage dining bookings, hold tables, and seat arriving parties directly to active orders</div>
-        </div>
-        <button class="btn btn-primary" id="openNewReservationBtn" style="padding:10px 18px;font-size:13px;box-shadow:var(--shadow);">
-          📅 + Book New Table
-        </button>
-      </div>
-
-      <!-- Reservation Stats -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:18px;">
-        <div class="master-stat-card">
-          <div class="stat-label">Total Bookings Today</div>
-          <div class="stat-val" id="statResTotal">0</div>
-          <div class="stat-sub">Across all floors</div>
-        </div>
-        <div class="master-stat-card">
-          <div class="stat-label">Expected Dinner Guests</div>
-          <div class="stat-val" style="color:var(--primary);" id="statResPax">0</div>
-          <div class="stat-sub">Reserved covers</div>
-        </div>
-        <div class="master-stat-card">
-          <div class="stat-label">Confirmed &amp; Awaiting</div>
-          <div class="stat-val" style="color:#059669;" id="statResConfirmed">0</div>
-          <div class="stat-sub">Ready to seat</div>
-        </div>
-        <div class="master-stat-card">
-          <div class="stat-label">Seated at Tables</div>
-          <div class="stat-val" style="color:#d97706;" id="statResSeated">0</div>
-          <div class="stat-sub">Currently dining</div>
-        </div>
-      </div>
-
-      <!-- Filter Tabs & Search -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+      <!-- Top Action Bar: Filters, Search, and Book New Table -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
         <div class="sub-tabs" id="resFilterTabs">
           <button class="sub-tab active" data-resfilter="all">All Bookings</button>
           <button class="sub-tab" data-resfilter="confirmed">Confirmed</button>
@@ -1016,8 +1001,36 @@
           <button class="sub-tab" data-resfilter="waitlist">Waitlist</button>
           <button class="sub-tab" data-resfilter="cancelled">Cancelled</button>
         </div>
-        <div style="max-width:280px;width:100%;">
-          <input type="text" id="resSearchInput" class="menu-search-input" placeholder="Search by guest, phone, table..." style="padding:7px 12px;font-size:12px;width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);">
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="resSearchInput" class="menu-search-input" placeholder="🔍 Search guest, phone, table..." style="padding:8px 14px;font-size:12.5px;width:240px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);">
+          <button class="btn btn-primary" id="openNewReservationBtn" style="padding:8px 16px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow);">
+            <span>📅</span> + Book New Table
+          </button>
+        </div>
+      </div>
+
+      <!-- Reservation Stats -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:18px;">
+        <div class="master-stat-card">
+          <div class="m-lbl">Total Bookings Today</div>
+          <div class="m-val" id="statResTotal">0</div>
+          <div class="m-sub">Across all floors</div>
+        </div>
+        <div class="master-stat-card">
+          <div class="m-lbl">Expected Dinner Guests</div>
+          <div class="m-val" style="color:var(--primary);" id="statResPax">0</div>
+          <div class="m-sub">Reserved covers</div>
+        </div>
+        <div class="master-stat-card">
+          <div class="m-lbl">Confirmed &amp; Awaiting</div>
+          <div class="m-val" style="color:#059669;" id="statResConfirmed">0</div>
+          <div class="m-sub">Ready to seat</div>
+        </div>
+        <div class="master-stat-card">
+          <div class="m-lbl">Seated at Tables</div>
+          <div class="m-val" style="color:#d97706;" id="statResSeated">0</div>
+          <div class="m-sub">Currently dining</div>
         </div>
       </div>
 
@@ -1929,14 +1942,17 @@
       shiftBtn.style.display = "none";
     }
 
-    // Prefill Customer Details
-    const nameInp = document.getElementById("customerNameInput");
-    const phoneInp = document.getElementById("customerPhoneInput");
-    nameInp.value = currentOrderSession.customerName || "";
-    phoneInp.value = currentOrderSession.customerPhone || "";
-
-    nameInp.oninput = () => { currentOrderSession.customerName = nameInp.value.trim(); };
-    phoneInp.oninput = () => { currentOrderSession.customerPhone = phoneInp.value.trim(); };
+    // Prefill Customer Details (Input IDs orderCustName & orderCustPhone)
+    const nameInp = document.getElementById("orderCustName");
+    const phoneInp = document.getElementById("orderCustPhone");
+    if (nameInp) {
+      nameInp.value = currentOrderSession.customerName || "";
+      nameInp.oninput = () => { currentOrderSession.customerName = nameInp.value.trim(); };
+    }
+    if (phoneInp) {
+      phoneInp.value = currentOrderSession.customerPhone || "";
+      phoneInp.oninput = () => { currentOrderSession.customerPhone = phoneInp.value.trim(); };
+    }
 
     // Render Menu Category Tabs (Includes 'All Items' Tab)
     const catContainer = document.getElementById("posCategoryTabs");
