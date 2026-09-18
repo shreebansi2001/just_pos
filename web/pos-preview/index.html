@@ -833,11 +833,11 @@
 <div class="modal-backdrop" id="invoiceModal">
   <div class="modal">
     <div class="modal-head">
-      <h3>Tax Invoice &amp; Settlement</h3>
+      <h3 id="invoiceModalTitle">Tax Invoice &amp; Settlement</h3>
       <button class="modal-close" data-close-modal>✕</button>
     </div>
     <div class="modal-body" id="invoiceModalBody"></div>
-    <div class="modal-foot">
+    <div class="modal-foot" id="invoiceModalFoot">
       <button type="button" class="btn" data-close-modal style="flex:1;">Cancel</button>
       <button type="button" class="btn btn-primary" id="payInvoiceBtn" style="flex:1.4;background:#059669;border-color:#059669;">
         ✓ Collect Payment &amp; Free Table
@@ -1072,6 +1072,7 @@
       tableLabel: "GF-2",
       type: "dineIn",
       customerName: "Vikas Sharma",
+      customerPhone: "+91 98200 12345",
       subtotal: 780,
       cgst: 19.5,
       sgst: 19.5,
@@ -1095,7 +1096,7 @@
   let editingRecordId = null;
 
   // =========================================================================
-  // API CLIENT
+  // API CLIENT (REAL SPRING BOOT REST /v1/api/pos + RESILIENT OFFLINE FALLBACK)
   // =========================================================================
   const apiClient = {
     async checkBackend() {
@@ -1138,6 +1139,9 @@
     async deleteTable(id) {
       try { await fetch(`${API_BASE}/tables/${id}`, { method: "DELETE" }); } catch(e){}
     },
+    async updateTableStatus(tableId, status) {
+      try { await fetch(`${API_BASE}/tables/${tableId}/status?status=${encodeURIComponent(status)}`, { method: "PUT" }); } catch(e){}
+    },
     async saveTax(payload) {
       try { await fetch(`${API_BASE}/taxes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch(e){}
     },
@@ -1146,6 +1150,30 @@
     },
     async updateKotStatus(id, nextStatus) {
       try { await fetch(`${API_BASE}/kots/${id}/status`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: nextStatus }) }); } catch(e){}
+    },
+    async createOrder(payload) {
+      try {
+        const res = await fetch(`${API_BASE}/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        return await res.json();
+      } catch(e){ return null; }
+    },
+    async sendKot(orderId, items) {
+      try {
+        const res = await fetch(`${API_BASE}/orders/${orderId}/kot`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(items) });
+        return await res.json();
+      } catch(e){ return null; }
+    },
+    async moveTable(orderId, newTableId) {
+      try {
+        const res = await fetch(`${API_BASE}/orders/${orderId}/move`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newTableId }) });
+        return await res.json();
+      } catch(e){ return null; }
+    },
+    async payInvoice(invoiceId, paymentMode) {
+      try {
+        const res = await fetch(`${API_BASE}/invoices/${invoiceId}/pay`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paymentMode }) });
+        return await res.json();
+      } catch(e){ return null; }
     }
   };
 
@@ -1757,26 +1785,41 @@
   });
 
   function showInvoiceModal(inv) {
+    const isPaid = (inv.status === "paid");
+    const titleEl = document.getElementById("invoiceModalTitle");
+    if (titleEl) titleEl.textContent = isPaid ? "Tax Invoice Receipt" : "Tax Invoice & Settlement";
+
     const body = document.getElementById("invoiceModalBody");
+    const phoneDisplay = inv.customerPhone && inv.customerPhone !== "undefined" ? inv.customerPhone : "—";
+    const nameDisplay = inv.customerName && inv.customerName !== "undefined" ? inv.customerName : "Walk-in Guest";
+    const orderTypeDisplay = (inv.type || "dinein").toUpperCase();
+
     body.innerHTML = `
       <div class="receipt-slip">
         <h4>SAFFRON RESTAURANT &amp; CATERING</h4>
         <div style="text-align:center;font-size:11px;">GSTIN: 27AAAAA0000A1Z5 · TEL: +91 22 2845 0000</div>
+        ${isPaid ? `
+          <div style="text-align:center;margin:8px 0 4px 0;">
+            <span class="table-status status-available" style="font-size:11.5px;padding:3px 12px;font-weight:700;">
+              ✓ PAID IN FULL · Settled via ${inv.paymentMode || 'UPI'}
+            </span>
+          </div>
+        ` : ''}
         <div class="receipt-divider"></div>
         <div style="display:flex;justify-content:space-between;">
           <span><b>Invoice:</b> ${inv.id}</span>
-          <span><b>Table:</b> ${inv.tableLabel}</span>
+          <span><b>Table:</b> ${inv.tableLabel || 'Counter'}</span>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:2px;">
-          <span><b>Customer:</b> ${inv.customerName}</span>
-          <span><b>Phone:</b> ${inv.customerPhone}</span>
+          <span><b>Customer:</b> ${nameDisplay}</span>
+          <span><b>Phone:</b> ${phoneDisplay}</span>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:2px;">
           <span><b>Time:</b> ${inv.time}</span>
-          <span><b>Type:</b> ${inv.type.toUpperCase()}</span>
+          <span><b>Type:</b> ${orderTypeDisplay}</span>
         </div>
         <div class="receipt-divider"></div>
-        ${inv.items.map(i => `
+        ${(inv.items || []).map(i => `
           <div style="display:flex;justify-content:space-between;padding:2px 0;">
             <span>${i.qty} × ${i.name}</span>
             <span>${money(i.price * i.qty)}</span>
@@ -1793,59 +1836,93 @@
         </div>
       </div>
 
-      <div style="margin-top:14px;">
-        <label style="font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:6px;">Select Payment Method</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <label style="border:1.5px solid var(--primary);border-radius:8px;padding:8px;text-align:center;cursor:pointer;background:var(--primary-tint);font-weight:700;">
-            <input type="radio" name="payMode" value="UPI" checked style="display:none;">
-            📱 UPI / QR
-          </label>
-          <label style="border:1.5px solid var(--line);border-radius:8px;padding:8px;text-align:center;cursor:pointer;font-weight:700;">
-            <input type="radio" name="payMode" value="Cash" style="display:none;">
-            💵 Cash
-          </label>
-          <label style="border:1.5px solid var(--line);border-radius:8px;padding:8px;text-align:center;cursor:pointer;font-weight:700;">
-            <input type="radio" name="payMode" value="Card" style="display:none;">
-            💳 Card
-          </label>
+      ${!isPaid ? `
+        <div style="margin-top:14px;">
+          <label style="font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:6px;">Select Payment Method</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="payModeSelector">
+            <label style="border:1.5px solid var(--primary);border-radius:8px;padding:8px;text-align:center;cursor:pointer;background:var(--primary-tint);font-weight:700;">
+              <input type="radio" name="payMode" value="UPI" checked style="display:none;">
+              📱 UPI / QR
+            </label>
+            <label style="border:1.5px solid var(--line);border-radius:8px;padding:8px;text-align:center;cursor:pointer;font-weight:700;">
+              <input type="radio" name="payMode" value="Cash" style="display:none;">
+              💵 Cash
+            </label>
+            <label style="border:1.5px solid var(--line);border-radius:8px;padding:8px;text-align:center;cursor:pointer;font-weight:700;">
+              <input type="radio" name="payMode" value="Card" style="display:none;">
+              💳 Card
+            </label>
+          </div>
         </div>
-      </div>
+      ` : ''}
     `;
 
-    // Radio style toggle
-    body.querySelectorAll("label").forEach(lbl => {
-      lbl.addEventListener("click", () => {
-        body.querySelectorAll("label").forEach(l => {
-          l.style.borderColor = "var(--line)";
-          l.style.background = "var(--panel)";
+    const foot = document.getElementById("invoiceModalFoot");
+    if (isPaid) {
+      foot.innerHTML = `
+        <button type="button" class="btn" data-close-modal style="flex:1;">Close</button>
+        <button type="button" class="btn btn-primary" id="printReceiptBtn" style="flex:1.4;">
+          🖨️ Print Tax Invoice
+        </button>
+      `;
+      foot.querySelector("#printReceiptBtn").onclick = () => {
+        window.print();
+      };
+      foot.querySelector("[data-close-modal]").onclick = closeAllModals;
+    } else {
+      foot.innerHTML = `
+        <button type="button" class="btn" data-close-modal style="flex:1;">Cancel</button>
+        <button type="button" class="btn btn-primary" id="payInvoiceBtn" style="flex:1.4;background:#059669;border-color:#059669;">
+          ✓ Collect Payment &amp; Free Table
+        </button>
+      `;
+      foot.querySelector("[data-close-modal]").onclick = closeAllModals;
+
+      // Radio style toggle
+      const selector = document.getElementById("payModeSelector");
+      if (selector) {
+        selector.querySelectorAll("label").forEach(lbl => {
+          lbl.addEventListener("click", () => {
+            selector.querySelectorAll("label").forEach(l => {
+              l.style.borderColor = "var(--line)";
+              l.style.background = "var(--panel)";
+            });
+            lbl.style.borderColor = "var(--primary)";
+            lbl.style.background = "var(--primary-tint)";
+            lbl.querySelector("input").checked = true;
+          });
         });
-        lbl.style.borderColor = "var(--primary)";
-        lbl.style.background = "var(--primary-tint)";
-        lbl.querySelector("input").checked = true;
-      });
-    });
-
-    const payBtn = document.getElementById("payInvoiceBtn");
-    payBtn.onclick = () => {
-      const mode = body.querySelector("input[name='payMode']:checked")?.value || "UPI";
-      inv.status = "paid";
-      inv.paymentMode = mode;
-      invoices.unshift(inv);
-
-      // Free up table / remove session!
-      if (currentOrderSession.tableId) {
-        const tbl = tables.find(t => t.id === currentOrderSession.tableId);
-        if (tbl) tbl.status = "available";
-        delete tableOrders[currentOrderSession.tableId];
-      } else {
-        takeawayOrders = takeawayOrders.filter(t => t.orderId !== currentOrderSession.orderId);
       }
 
-      currentOrderSession = null;
-      closeAllModals();
-      showToast(`✓ Invoice ${inv.id} settled via ${mode}! Table freed.`);
-      showView("tables");
-    };
+      const payBtn = foot.querySelector("#payInvoiceBtn");
+      payBtn.onclick = () => {
+        const mode = body.querySelector("input[name='payMode']:checked")?.value || "UPI";
+        inv.status = "paid";
+        inv.paymentMode = mode;
+        apiClient.payInvoice(inv.id, mode);
+
+        if (!invoices.find(x => x.id === inv.id)) {
+          invoices.unshift(inv);
+        }
+
+        // Free up table / remove session!
+        if (currentOrderSession && currentOrderSession.tableId) {
+          const tbl = tables.find(t => t.id === currentOrderSession.tableId);
+          if (tbl) tbl.status = "available";
+          apiClient.updateTableStatus(currentOrderSession.tableId, "available");
+          delete tableOrders[currentOrderSession.tableId];
+        } else if (currentOrderSession) {
+          takeawayOrders = takeawayOrders.filter(t => t.orderId !== currentOrderSession.orderId);
+        }
+
+        currentOrderSession = null;
+        closeAllModals();
+        showToast(`✓ Invoice ${inv.id} settled via ${mode}! Table freed.`);
+        renderTables();
+        renderBilling();
+        showView("tables");
+      };
+    }
 
     openModal("invoiceModal");
   }
