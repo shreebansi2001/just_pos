@@ -48,4 +48,5 @@ bin/
 .idea/
 .vscode/
 *.swp
+web/bin/
 *.swo
