@@ -1,0 +1,163 @@
+[
+  {
+    "product": "itext-core",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "hcBtdn5OZuLMTPR/5oqra39tP7oA91KZXiGKWOn3EbKYfNPJ1JSoojOdlzu+o+jD7wIjwG5j6bzyGyCxwyCpDmygjpwtjx1vgV7KChHkf3A5tQKhOJVzwQ2zZBEaBtdVWdkBLFYZuvQHrnbCAKQI90PIEld2fmNMMhLDgx/1jbQxwLpcQrOYUC9zL2NvPoM89UBIHku3RwlEsOdUhPpH+wSb+oCnJ4qfL5IXeARy+/GByX2eqeEmlWyyx1dbl5ZBDfhOOqPs28no+bz2hLe/JxXriTAjW1r3FyaeG9UEiB7Ob0IvzfVgZaU409MN1d99p46Y4YJJQcfIY6+gWOIjqXwRaeJYxrIiRYWh6Xl2bfkrR+VIfcELDXCIVR+wPChiLISh5EinX2BSdwwtmSDva6wQ7VMkXByOVpO48yn8lrVoFw59gR29nAQN2JsyxHhgnQNC3RFzu6g5RqGRiI+eEVwktsmQRFMBBoR1tg3eje5ys7cew6C3jGPIDUtta1x/pUEHxGh8cKvsqCld1g6VSBVIUTk8fusOhpTR0v5ZdseLbo/D2NRD609Utw0OrUJ3uCEkkXkgzP96pCN2E3Z+LyNC2ZbQe87HEFtTffAgOEZYmYHyLo+2tQaGJya6ImBW0V93zI08CagBLb1ssmO6M5nbhQ5/3+axkLuE6WQWKmE="
+  },
+  {
+    "product": "pdfXfa",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "GvTID6iItVI0onTTmPjpkSWBy2QhoLF5TvGBs/z32hx1HUnTSODwEloPIPyThe13TbgBOqmbeCIgEya5pV1v9jdOdlbTD/Vt8WDnBkDT6O7+KCuBM/IOA6Du2QD38KkjGSHwaUiHDyo21Czcpgg2mjoNJVAVau5HloxJ+qKHjyOhMNIPY2KKU2Sl5ovMfdCOS63FgzBNNga7A/DEXXAP7wTzV80doY/A5PDchdmKd5twlFajwtSngjz7+pJjwQ2Zy9pbcCQBn+b717b/6jebWI+zSLUm5ZyH478hKXef/y0fTs6aXdKxo+n/T4ictpkHoUwxSlS2QsZWbqCbbf0k2geq9+O64p8+b1bd0N7TWtqLsILBT/hSHc2NQEOTpvyHHa3cithVSHdAxB/CrdbbZ+CUrc4OUsKp1StW4G5Ev+edNZ9KdlidPalXPSuCeNky+8HLAh8awdZSsDU0iRgviEqXhhujqsj/nPH62/Ic+PhxbfFlIrzdCG3b1LWfMJm1axmYew8+m77ifK8XG2O0uQRFRqua8kyXUTMaCfVaFSt4uUXPjA4+SVtfBSBGvOcU4pRgx3fy3exhRsVke7VUUFBxQYrA7LoCD2bU0WjWcPH1mzEpfeDLpctCUSNkZOoctKtPKMbmaDxpjDT5B5oIW5wkBCQ/H8R+pXJgrwb669c="
+  },
+  {
+    "product": "pdfSweep",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "APGm+qnd3Us5roPuhap3lSHuhQMbr0u0TSpNKuKmi10LPi7XX3VlWdY0XVv238dZDonSgK0sZI3xB6kSQGHqE66m66j6hAILBttKuTvlmB3bo006Wyl+Abe5nYH3ekz4JD4T2xsb6Twrg9Bzp40i9jcm3EtN5Vv33BrXfmFkg2sT4njK9QMndc2Ks9fBB3B0bIau1nBqMqrcF3JLZB/knYSbQNE/Qe8jCKmes9JRSwpbKihR79vD4lkfZIXmseS0Bg9s4f8H8JyGFQl1oOoZJi6+5kc9Sp6P5SwN4w4q65fAySvB7sjxxmqlkbfYFzmZggtZTwZ3yCEBl5VItFFGBaWNvJDjdvhKd/Rl21aWRBLIDsXVaNYbNLFwsQH9udzvD3d6NH363f10OxqSsZ6NMkINt7JNe2knPesifw7DUTyQ6MlH5M9sSu8jdCjeN+JRivKlpN3GMwvEzC0CTICiIK1Z4LW7wXSNeBcWvLQ0wIVHx0P7/ZrIl3HrnohJipdBj5ulwkgPUq8ZetYnBoBRVvclQMiUASkJaIZ3kKDj4RUC5HTYDVNnvBtMLdigwItyhHup53w+RN/B/hNQwUPrYy6fEPSTscfEGMDjCqmJFJ63y+PEbdwlsIWGfqqaACplqQEy6u56BjHznGHwSVgntaMVHbvyMZZQY6RcA4xDHC4="
+  },
+  {
+    "product": "pdfOcr-tesseract4",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "HchoYzy0o93CgXGs0s5CwVpS+8HOzyC08SEE0k417I7Us33nHyAS/euZyXHt5B3ylNzEW1pbFYvSzcOv/0GUE4w7YP7g2jkPizrrd9wX4xAL709eYGHDz8zEnDnSgYDJX+AmQTzOygujHMjshjFPERjeSW7rAuD9blv1Xb03zEbg5MZ/AjNUDz3oRm9eSDs8WIVht/Vo9O2h2YWAocpkazcnGxh4xHMDqwFde2pI8jm4GmYaN7+ghccVzZM7Yz+Gz9He0Ex7Dqg/RJreg7cZYHdLTqh4FwGckTC//v5N2kvCjZvQKz8VXZ9CDEOgFtgN5VknlOF3ijbfhC4Neh8gg6RJog2N5skuiQ8hSIRbZye0PAXKlMFmyghIFgIcHl2B1UMhev+YAD+VWsvpMNPJy3MNd7nwUNpRldTjThyeHVPpuYf5FBxuvUeBPMlSt/uz7MaOtcVT3PCwQTJWGLHBg6WapYs2iDHXfRxZekvUQ/caOLlLd3gb9hNX4zN5/3GlBj2v8DAO5Q9RtvkJpW/scpQ+9kxIuy/uRQlkTJsiX4UlcaCxBjfm6eGPOeSWfgJbauSaGg+RK31kGBiZDwCfiNBCToOSe42u6Ucf8LS7Q+v0jzLGmQkamYCqzKBegc4ARfr+4Gh3TJ745vpRhypiEM1ISVRypPmwXloxd9fAhkg="
+  },
+  {
+    "product": "pdfOptimizer",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "gBwpXaG4JzS1lDFhyMhd+6HTuifVePL6Tn3P7mdqI8demCwBK5yaKRmnpLoZ9KKJgFev+OMWJIdPGZsiDBEFNTM6goOhgA4Mhx1U+Sw1Db/DK6tQZYEE5YF0O05IXCO/zQ/ix4yjtr3x1CItx5lmPTVEfRIg6Ty/0iNeu4xrnzp5oc7Bm4mNBDxNPpSGDqSMP6g6rbp/AaF/utix5lKQYyZBQhpM3AaZPGh5BbxR1358KrWDA3lztQWu3M9a3vvdr15pwm7f5Ad4wlsNqV4gns6/4UjxtSUxeKFy3WEfMaiZmFm3A4GLDhp9pIHqXJ63ICUnC53nezCpVSsgQOXCQKLDC45CkuW9R6u1Zr6ibcrKqpB555L1/g64CEyvROUvryH22rTtyUAAbk9Pz4ZDezPn4lHK3vljpas1D3R9QVMrx1sQC+HRon72JldaVmpiHt6JFRsdei7vKj0mRUtDUDBPhfbaOQEUa6E4VqoPFqinW4GvDm7MZTR/OH9MCjsicX19gqCFuXpvK9OnOmtrwkFEvSMOIZ++C113PeG0nnyGEV5DytlbIjBVdzt8tkOTASvOf9nZUHViL+OQ0ZrU+ve3PURyF7wFa9M5Ti4rzShZ2vTP30XjDRAsQhtshXyfDW4/jm++30oyRXASrGZdAzRDK/Gks6FZ3c/p7b0KaEA="
+  },
+  {
+    "product": "pdfHtml",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "h/fNjUllQOizrTdNJr7YfbGPgeE5oh/DVyyH47S/Bw1v9KLmQmzwBc+8KH36uffpx3gcSSgsuMtT82UWNauCs6piY2S1jHDCdBYDt/qQ9exw+oR6R+HbaEbm6yGCabp+T9j5QPeuFrFs7ZBjXM7eVX2InX0XJIQdBjzuS5FKNKaaG4LEkyOyi7Nlyq+D//c2pczXFnVQSaECYkiLRdPJ2mv0KoSJ9I4XxVwVDacTjgSkWseCD+uKKVPBBqaSiQZ+nsC8IHvsOApM5AGouX472DV3xRin32j11P0xQej1tjJLbe1w1kOuxj7H8MzgmSWymJwg8HAmJjGwC7uct3GGJ0S6CUZDSbiTO4b/biOpgNX4Au87UgCDwImShRPp5oiXZgx5dzdHRWKf5Rz/LH1UqHa5wMDduXCmWTnvMYezYX9BHWyoDT5NjXc28ZEf3tpFQkdfe/lgJHS6MNdhLg2S8yWd1npicpMhKA6kr+vWVmB/xS+38zM4uvFLPwThZYcjBbOEFdPjuKIt/rykXEKRqv7nVxDWgAtI35OvQ60tZ3ESBbBnuhT0KabhAsQMBDwEQcrvTZlNnS5DjOevo7JEfI+cd2IsHRGi7IDo92Xz7MAZLNDW5KjfHHhTnNXBbt4qdUfzNZwJ9A91al0w1mBqMbFIaZ5Jx0kYf5IfCgyGmlc="
+  },
+  {
+    "product": "pdfCalligraph",
+    "licensee": {
+      "company": "Shree Infotech",
+      "name": "Maitri Vithalani",
+      "email": "shree.maitri2002@gmail.com"
+    },
+    "key": "e901385025662ebb3c4b0595fd775d87ccc69f769bf527c0dfa01287e88840e8",
+    "creationDate": "2026-08-31",
+    "expirationDate": "2026-10-01",
+    "onExpiration": "fail",
+    "platform": "any",
+    "licenseType": "trial",
+    "limits": {
+      "default": {
+        "limitType": "unlimited",
+        "sendEvents": false
+      }
+    },
+    "licenseVersion": "1.0.0",
+    "sendStatistics": "disabled",
+    "signature": "JZFkXgf4LALVBZaSY3R4782B5tsH1J9n9CYtEm8VbGiu+zKx5g0fOT+ikHoh42SCUTlwNrEF+/HDQRr1VCKIjpfMb8lBvg9QFzRe2gUooHypne4bTpkQiAemxMzLVr63c9ZJkZMvcrDRqPgpfQirKXPzZwRZrKWk8UATriqELQv6AKGNkCFh4z8GanNi3jQGn0vszIUXfBHFVVRLuKlgXuGpOtTZG7rWyH2ZzgnKMc8Oo0JqMJsS20ttyPo7Ye7SiTLYv5YJZENktl04rjfSclSVYZya2tCt/C9QEgNDqZn3vFPUYMzUryYtYXKnDBQRp4wr3Sqrg8M9LQyIELAcbZ4STxE8GAxN18nhleTfY84KuDNeg9hMBQhcq89rVE5xyNTy2xrjHSKtPoIvZ7MO/ryfIbbAyf0yb3jS1fC4OX4nZhI4gbV4gaFgNCOT0uCodq4UtqcBoy4Hp2kE9UeGwG8OQzZMdiKB/R3U80ww81FXlV1M8gRODjapq1Vk6sTSNK9Z/d+RkjMsdz2NXsSD4LehoXPVJkbVyjc8v38wfD2KooRyCq6RvoF8l4emvctxhz84G9XXUXlHcBHPUwJ47JYuLsR7jsZVQK+mwljCzHZe/Lrp1b/w5yE0hOEQjbh1xlrA7lHhPROD1D4FyWx4mbYpSRcRw9krXN/wCQ5R1G4="
+  }
+]

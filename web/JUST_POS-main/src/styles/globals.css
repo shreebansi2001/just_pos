@@ -1,0 +1,147 @@
+/* Tailwind core */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Demos */
+@import "demos/demo1";
+
+/* Shadcn UI */
+@import "shadcn.ui";
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+  @apply bg-white border-2 border-green-500;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #0fb709;
+}
+
+.ant-checkbox:hover .ant-checkbox-inner {
+  @apply border-green-500;
+}
+.ant-checkbox-label {
+  @apply text-[#4B4B4B];
+  font-weight: 400;
+  font-size: 18px;
+}
+
+.font-14 {
+  font-size: 14px !important;
+}
+
+.dnd-active .cursor-grab {
+  cursor: none;
+}
+
+.remove-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.remove-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@layer utilities {
+  .bg-user-access {
+    @apply bg-lightUserAccessBg dark:bg-darkUserAccessBg bg-no-repeat;
+    background-position: right center;
+    background-size: 60%;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.ant-select-dropdown
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: var(--tw-primary);
+}
+
+.ant-select-dropdown
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled)
+  .ant-select-item-option-state {
+  color: var(--tw-primary);
+}
+
+/* segmentedTabs */
+.segmentedTabs .ant-segmented {
+  width: 100%;
+}
+
+.segmentedTabs .ant-segmented-group {
+  gap: 6px;
+}
+
+.segmentedTabs
+  .ant-segmented-group
+  .ant-segmented-item
+  .ant-segmented-item-label {
+  min-height: unset;
+  line-height: unset;
+  padding: 10px 14px;
+}
+
+.segmentedTabs
+  .ant-segmented-group
+  .ant-segmented-item.ant-segmented-item-selected
+  .ant-segmented-item-label {
+  color: var(--tw-primary);
+}
+
+.segmentedTabs
+  .ant-segmented-group
+  .ant-segmented-item
+  .ant-segmented-item-label
+  > span
+  i {
+  font-size: 18px;
+}
+
+.segmentedTabs
+  .ant-segmented-group
+  .ant-segmented-item:hover:not(.ant-segmented-item-selected):not(
+    .ant-segmented-item-disabled
+  )::after {
+  background-color: #fff;
+}
+
+.ant-select-dropdown
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  color: #fff;
+}
+
+.ant-select-dropdown
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled)
+  .anticon.anticon-check
+  > svg
+  > path {
+  fill: #fff;
+}
+
+.input {
+  height: 2.5rem;
+}
+
+/* /segmentedTabs */

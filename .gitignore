@@ -30,6 +30,15 @@ venv/
 .venv/
 env/
 
+# Java / Maven Backend
+target/
+bin/
+*.class
+*.jar
+*.war
+.mvn/
+
+
 # Logs & Databases
 *.log
 *.sqlite

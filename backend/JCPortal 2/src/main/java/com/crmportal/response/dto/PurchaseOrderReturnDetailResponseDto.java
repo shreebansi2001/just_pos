@@ -1,0 +1,25 @@
+package com.crmportal.response.dto;
+
+import lombok.Data;
+
+@Data
+public class PurchaseOrderReturnDetailResponseDto {
+
+    private Long id;
+    private Long rawMaterialId;
+    private String rawMaterialName;
+    private Long rawMaterialCatId;
+    private String rawMaterialCatName;
+    private Long unitId;
+    private String unitName;
+    private String hsccode;
+    private float cgst;
+    private float sgst;
+    private float igst;
+    private double qty;
+    private float price;
+    private float othercharge;
+    private float total;
+	private double returnedQty;  
+    private double remainingQty;
+}
