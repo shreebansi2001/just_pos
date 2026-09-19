@@ -493,6 +493,128 @@
   }
 
   /* =========================================================================
+     ITEM CUSTOMIZATION & OPTION GROUPS (SINGLE / MULTIPLE SELECTION)
+     ========================================================================= */
+  .custom-option-group {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .cog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .cog-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cog-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  .cog-badge.single {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+  }
+  .cog-badge.multiple {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+  .cog-options-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .cog-choice-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .15s ease;
+    user-select: none;
+  }
+  .cog-choice-item:hover {
+    border-color: var(--primary-soft);
+    background: var(--line-soft);
+  }
+  .cog-choice-item.selected {
+    border-color: var(--primary);
+    background: var(--primary-tint);
+  }
+  .cog-choice-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .cog-choice-radio, .cog-choice-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--panel);
+    transition: all .15s;
+  }
+  .cog-choice-check {
+    border-radius: 5px;
+  }
+  .cog-choice-item.selected .cog-choice-radio {
+    border-color: var(--primary);
+    background: var(--primary);
+  }
+  .cog-choice-item.selected .cog-choice-radio::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .cog-choice-item.selected .cog-choice-check {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  .cog-choice-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .cog-builder-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  /* =========================================================================
      4. MASTERS — SOURCED FROM JUST_POS_MAIN
      ========================================================================= */
   .master-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
@@ -1289,6 +1411,34 @@
   </div>
 </div>
 
+<!-- Item Customization Modal (Single & Multiple Selection Options) -->
+<div class="modal-backdrop" id="itemCustomizationModal">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-head">
+      <div>
+        <h3 id="customDishTitle" style="display:flex;align-items:center;gap:8px;">
+          <span>Customize Dish</span>
+        </h3>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;" id="customDishSub">Select portion, toppings &amp; add-ons</div>
+      </div>
+      <button class="modal-close" data-close-modal>✕</button>
+    </div>
+    <div class="modal-body" id="customDishBody" style="max-height:65vh;overflow-y:auto;padding:16px;"></div>
+    <div class="modal-foot" style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-soft);letter-spacing:.04em;">Item Total</div>
+        <div style="font-size:20px;font-weight:800;color:var(--primary);font-family:'JetBrains Mono',monospace;" id="customDishTotal">₹0.00</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn" data-close-modal>Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmAddCustomItemBtn" style="padding:9px 18px;font-weight:700;">
+          ✓ Add to Order Slip
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Item Chef Instruction / Note Modal -->
 <div class="modal-backdrop" id="itemNoteModal">
   <div class="modal" style="max-width:440px;">
@@ -1434,7 +1584,15 @@
       m.style.display = "none";
     });
   }
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove("active");
+      el.style.display = "none";
+    }
+  }
   window.openModal = openModal;
+  window.closeModal = closeModal;
   window.closeAllModals = closeAllModals;
   document.querySelectorAll("[data-close-modal]").forEach(b => b.addEventListener("click", closeAllModals));
   document.querySelectorAll(".modal-backdrop").forEach(m => {
@@ -1460,18 +1618,147 @@
   ];
 
   let items = [
-    { id: 1, foodType: "veg", itemName: "Paneer Tikka", shortcode: "PT1", categoryId: 1, price: 240, itemDescription: "Smoky char-grilled cottage cheese", station: "Kitchen", status: "active" },
-    { id: 2, foodType: "veg", itemName: "Hara Bhara Kebab", shortcode: "HBK", categoryId: 1, price: 190, itemDescription: "Crispy spinach, peas and potato patties", station: "Kitchen", status: "active" },
-    { id: 3, foodType: "nonveg", itemName: "Chicken Seekh Kebab", shortcode: "CSK", categoryId: 1, price: 280, itemDescription: "Spiced skewered minced chicken", station: "Kitchen", status: "active" },
-    { id: 4, foodType: "veg", itemName: "Paneer Butter Masala", shortcode: "PBM", categoryId: 2, price: 280, itemDescription: "Rich tomato-butter gravy", station: "Kitchen", status: "active" },
-    { id: 5, foodType: "veg", itemName: "Dal Makhani", shortcode: "DMK", categoryId: 2, price: 220, itemDescription: "Slow-cooked black lentils with white butter", station: "Kitchen", status: "active" },
-    { id: 6, foodType: "nonveg", itemName: "Butter Chicken", shortcode: "BCK", categoryId: 2, price: 320, itemDescription: "Tender chicken in silky makhani gravy", station: "Kitchen", status: "active" },
-    { id: 7, foodType: "nonveg", itemName: "Hyderabadi Chicken Biryani", shortcode: "HCB", categoryId: 3, price: 290, itemDescription: "Layered dum basmati rice with spiced chicken", station: "Kitchen", status: "active" },
-    { id: 8, foodType: "veg", itemName: "Veg Dum Biryani", shortcode: "VDB", categoryId: 3, price: 230, itemDescription: "Saffron infused basmati with seasonal vegetables", station: "Kitchen", status: "active" },
-    { id: 9, foodType: "veg", itemName: "Butter Naan", shortcode: "BN", categoryId: 4, price: 55, itemDescription: "Tandoori refined flour flatbread with butter", station: "Kitchen", status: "active" },
-    { id: 10, foodType: "veg", itemName: "Garlic Naan", shortcode: "GN", categoryId: 4, price: 70, itemDescription: "Topped with roasted garlic and coriander", station: "Kitchen", status: "active" },
-    { id: 11, foodType: "veg", itemName: "Gulab Jamun", shortcode: "GJ", categoryId: 6, price: 90, itemDescription: "Warm reduced milk dumplings in rose syrup", station: "Kitchen", status: "active" },
-    { id: 12, foodType: "veg", itemName: "Virgin Mojito", shortcode: "VM", categoryId: 7, price: 130, itemDescription: "Fresh mint, lime wedges, sugar syrup, and soda", station: "Bar", status: "active" }
+    {
+      id: 1, foodType: "veg", itemName: "Paneer Tikka", shortcode: "PT1", categoryId: 1, price: 240,
+      itemDescription: "Smoky char-grilled cottage cheese", station: "Kitchen", status: "active",
+      optionGroups: [
+        {
+          id: "og_pt_portion",
+          name: "Portion Size",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Regular (6 Pcs)", price: 240, isDefault: true },
+            { name: "Large Platter (10 Pcs)", price: 380, isDefault: false }
+          ]
+        },
+        {
+          id: "og_pt_dips",
+          name: "Add-on Dips & Chutneys",
+          selectionType: "multiple",
+          required: false,
+          options: [
+            { name: "Extra Mint Chutney", price: 20, isDefault: false },
+            { name: "Garlic Mayo Dip", price: 30, isDefault: false },
+            { name: "Creamy Cheese Dip", price: 40, isDefault: false }
+          ]
+        }
+      ]
+    },
+    { id: 2, foodType: "veg", itemName: "Hara Bhara Kebab", shortcode: "HBK", categoryId: 1, price: 190, itemDescription: "Crispy spinach, peas and potato patties", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 3, foodType: "nonveg", itemName: "Chicken Seekh Kebab", shortcode: "CSK", categoryId: 1, price: 280, itemDescription: "Spiced skewered minced chicken", station: "Kitchen", status: "active", optionGroups: [] },
+    {
+      id: 4, foodType: "veg", itemName: "Paneer Butter Masala", shortcode: "PBM", categoryId: 2, price: 280,
+      itemDescription: "Rich tomato-butter gravy with tender cottage cheese", station: "Kitchen", status: "active",
+      optionGroups: [
+        {
+          id: "og_pbm_portion",
+          name: "Portion Size (Sabji)",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Half Portion", price: 160, isDefault: false },
+            { name: "Full Portion", price: 280, isDefault: true }
+          ]
+        },
+        {
+          id: "og_pbm_prep",
+          name: "Preparation Style",
+          selectionType: "single",
+          required: false,
+          options: [
+            { name: "Regular Gravy", price: 0, isDefault: true },
+            { name: "Jain Preparation (No Onion, No Garlic)", price: 0, isDefault: false },
+            { name: "Extra Spicy Kolhapuri", price: 0, isDefault: false }
+          ]
+        },
+        {
+          id: "og_pbm_addons",
+          name: "Add-on Garnishing",
+          selectionType: "multiple",
+          required: false,
+          options: [
+            { name: "Extra Butter Dollop", price: 25, isDefault: false },
+            { name: "Grated Amul Cheese", price: 35, isDefault: false },
+            { name: "Fried Cashew Nuts (Kaju)", price: 45, isDefault: false }
+          ]
+        }
+      ]
+    },
+    { id: 5, foodType: "veg", itemName: "Dal Makhani", shortcode: "DMK", categoryId: 2, price: 220, itemDescription: "Slow-cooked black lentils with white butter", station: "Kitchen", status: "active", optionGroups: [] },
+    {
+      id: 6, foodType: "nonveg", itemName: "Butter Chicken", shortcode: "BCK", categoryId: 2, price: 320,
+      itemDescription: "Tender chicken in silky makhani gravy", station: "Kitchen", status: "active",
+      optionGroups: [
+        {
+          id: "og_bck_portion",
+          name: "Portion Size",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Half Portion (2 Pcs)", price: 190, isDefault: false },
+            { name: "Full Portion (4 Pcs)", price: 320, isDefault: true }
+          ]
+        },
+        {
+          id: "og_bck_addons",
+          name: "Extra Add-ons",
+          selectionType: "multiple",
+          required: false,
+          options: [
+            { name: "Extra Boneless Chicken", price: 65, isDefault: false },
+            { name: "Extra Makhani Gravy Bowl", price: 50, isDefault: false }
+          ]
+        }
+      ]
+    },
+    { id: 7, foodType: "nonveg", itemName: "Hyderabadi Chicken Biryani", shortcode: "HCB", categoryId: 3, price: 290, itemDescription: "Layered dum basmati rice with spiced chicken", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 8, foodType: "veg", itemName: "Veg Dum Biryani", shortcode: "VDB", categoryId: 3, price: 230, itemDescription: "Saffron infused basmati with seasonal vegetables", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 9, foodType: "veg", itemName: "Butter Naan", shortcode: "BN", categoryId: 4, price: 55, itemDescription: "Tandoori refined flour flatbread with butter", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 10, foodType: "veg", itemName: "Garlic Naan", shortcode: "GN", categoryId: 4, price: 70, itemDescription: "Topped with roasted garlic and coriander", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 11, foodType: "veg", itemName: "Gulab Jamun", shortcode: "GJ", categoryId: 6, price: 90, itemDescription: "Warm reduced milk dumplings in rose syrup", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 12, foodType: "veg", itemName: "Virgin Mojito", shortcode: "VM", categoryId: 7, price: 130, itemDescription: "Fresh mint, lime wedges, sugar syrup, and soda", station: "Bar", status: "active", optionGroups: [] },
+    {
+      id: 13, foodType: "veg", itemName: "Farmhouse Gourmet Pizza", shortcode: "FHP", categoryId: 1, price: 340,
+      itemDescription: "Wood-fired crust with bell peppers, onions, corn and mozzarella", station: "Live Counter", status: "active",
+      optionGroups: [
+        {
+          id: "og_pizza_size",
+          name: "Pizza Size",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Regular 7-inch", price: 240, isDefault: false },
+            { name: "Medium 10-inch", price: 340, isDefault: true },
+            { name: "Large 12-inch", price: 460, isDefault: false }
+          ]
+        },
+        {
+          id: "og_pizza_crust",
+          name: "Crust Selection",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Classic Hand Tossed", price: 0, isDefault: true },
+            { name: "Cheese Burst Stuffed", price: 65, isDefault: false },
+            { name: "Thin Wheat Crust", price: 25, isDefault: false }
+          ]
+        },
+        {
+          id: "og_pizza_toppings",
+          name: "Choose Toppings (Multi-Select)",
+          selectionType: "multiple",
+          required: false,
+          options: [
+            { name: "Extra Mozzarella Cheese", price: 45, isDefault: false },
+            { name: "Black Olives & Jalapeños", price: 35, isDefault: false },
+            { name: "Golden Sweet Corn", price: 30, isDefault: false },
+            { name: "Grilled Paneer Cubes", price: 45, isDefault: false },
+            { name: "Fresh Button Mushrooms", price: 40, isDefault: false }
+          ]
+        }
+      ]
+    }
   ];
 
   let floors = [
@@ -1851,6 +2138,7 @@
     }
     updateGlobalStats();
   }
+  window.showView = showView;
 
   document.querySelectorAll(".nav-btn[data-view]").forEach(b => {
     b.addEventListener("click", () => showView(b.dataset.view));
@@ -2084,8 +2372,8 @@
             tableName: t.tableName,
             shortcode: t.shortcode,
             orderType: "dineIn",
-            customerName: tableRes ? tableRes.guestName : "",
-            customerPhone: tableRes ? tableRes.phone : "",
+            customerName: nextRes ? nextRes.guestName : "",
+            customerPhone: nextRes ? nextRes.phone : "",
             items: []
           };
           tableOrders[t.id] = currentOrderSession;
@@ -2486,6 +2774,10 @@
 
     menuGrid.innerHTML = filtered.map(it => {
       const catObj = categories.find(c => c.id === it.categoryId);
+      const hasOptions = it.optionGroups && it.optionGroups.length > 0;
+      const singleGroups = hasOptions ? it.optionGroups.filter(g => g.selectionType === 'single').length : 0;
+      const multiGroups = hasOptions ? it.optionGroups.filter(g => g.selectionType === 'multiple').length : 0;
+
       return `
         <div class="dish-card" data-dishid="${it.id}">
           <div>
@@ -2498,10 +2790,18 @@
             </div>
             <div class="dish-name">${it.itemName}</div>
             <div style="font-size:11px;color:var(--ink-soft);line-height:1.25;">${it.itemDescription || ''}</div>
+            ${hasOptions ? `
+              <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">
+                ${singleGroups > 0 ? `<span class="cog-badge single" style="font-size:9.5px;padding:1px 5px;">🔘 Portions/Size</span>` : ''}
+                ${multiGroups > 0 ? `<span class="cog-badge multiple" style="font-size:9.5px;padding:1px 5px;">☑️ Toppings/Add-ons</span>` : ''}
+              </div>
+            ` : ''}
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
             <div class="dish-price">${money(it.price)}</div>
-            <button class="btn btn-sm btn-primary" style="padding:4px 10px;">+ Add</button>
+            <button class="btn btn-sm btn-primary" style="padding:4px 10px;font-size:11px;font-weight:700;">
+              ${hasOptions ? '⚙️ Options' : '+ Add'}
+            </button>
           </div>
         </div>
       `;
@@ -2512,17 +2812,26 @@
         const dish = items.find(x => x.id === Number(c.dataset.dishid));
         if (!dish || !currentOrderSession) return;
 
-        // Check if item already exists in current order
-        const existingItem = currentOrderSession.items.find(x => x.id === dish.id);
+        // If dish has option groups, open interactive customization modal
+        if (dish.optionGroups && dish.optionGroups.length > 0) {
+          openDishCustomizationModal(dish);
+          return;
+        }
+
+        // Quick-add for standard items with no option groups
+        const existingItem = currentOrderSession.items.find(x => x.id === dish.id && !x.variantLabel && (!x.addons || x.addons.length === 0));
         if (existingItem) {
           existingItem.qty += 1;
         } else {
           currentOrderSession.items.push({
             id: dish.id,
+            uid: `ci_${dish.id}_${Date.now()}`,
             name: dish.itemName,
+            variantLabel: '',
+            addons: [],
             price: dish.price,
             qty: 1,
-            sentQty: 0, // 0 means not yet sent to kitchen!
+            sentQty: 0,
             kotId: null,
             status: "new",
             note: ""
@@ -2534,6 +2843,288 @@
   }
 
   document.getElementById("menuSearch").addEventListener("input", renderPosMenu);
+
+  // ---------------------------------------------------------------------------
+  // DISH CUSTOMIZATION MODAL (Single Selection e.g. Half/Full, Multiple e.g. Toppings)
+  // ---------------------------------------------------------------------------
+  let currentCustomDish = null;
+  let customSelections = {}; // { [groupId]: singleOptionName | [multiOptionNames...] }
+  let customItemQty = 1;
+
+  function openDishCustomizationModal(dish) {
+    currentCustomDish = dish;
+    customItemQty = 1;
+    customSelections = {};
+
+    // Initialize selection defaults
+    (dish.optionGroups || []).forEach(og => {
+      if (og.selectionType === 'single') {
+        const defOpt = og.options.find(o => o.isDefault) || og.options[0];
+        customSelections[og.id] = defOpt ? defOpt.name : null;
+      } else {
+        // multiple selection (checkboxes)
+        customSelections[og.id] = (og.options || []).filter(o => o.isDefault).map(o => o.name);
+      }
+    });
+
+    renderCustomizationModalContent();
+    openModal("itemCustomizationModal");
+  }
+
+  function calculateCustomItemUnitPrice() {
+    if (!currentCustomDish) return 0;
+    const dish = currentCustomDish;
+    let basePrice = dish.price;
+    let hasPortionGroup = false;
+    let addonsTotal = 0;
+
+    (dish.optionGroups || []).forEach(og => {
+      if (og.selectionType === 'single') {
+        const selectedName = customSelections[og.id];
+        const opt = og.options.find(o => o.name === selectedName);
+        if (opt) {
+          const isPortionOrSize = /portion|size|quantity|serve/i.test(og.name);
+          if (isPortionOrSize && opt.price > 0) {
+            basePrice = opt.price;
+            hasPortionGroup = true;
+          } else if (!hasPortionGroup && opt.price > 0 && og.options.some(o => o.price > 0 && o.price !== dish.price)) {
+            basePrice = opt.price;
+            hasPortionGroup = true;
+          } else if (opt.price > 0) {
+            addonsTotal += opt.price;
+          }
+        }
+      } else {
+        // Multiple selection add-ons
+        const selectedList = customSelections[og.id] || [];
+        selectedList.forEach(name => {
+          const opt = og.options.find(o => o.name === name);
+          if (opt && opt.price) {
+            addonsTotal += opt.price;
+          }
+        });
+      }
+    });
+
+    return basePrice + addonsTotal;
+  }
+
+  function renderCustomizationModalContent() {
+    if (!currentCustomDish) return;
+    const dish = currentCustomDish;
+    const catObj = categories.find(c => c.id === dish.categoryId);
+
+    document.getElementById("customDishTitle").innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${dish.foodType === 'nonveg' ? '<span class="nonveg-icon"><span></span></span>' : '<span class="veg-icon"><span></span></span>'}
+        <span>${dish.itemName}</span>
+        <span class="shortcode-badge">${dish.shortcode}</span>
+      </div>
+    `;
+
+    document.getElementById("customDishSub").innerHTML = `
+      ${catObj ? `<b>${catObj.categoryName}</b> · ` : ''}Base: ${money(dish.price)} · Choose options below
+    `;
+
+    const body = document.getElementById("customDishBody");
+    const groups = dish.optionGroups || [];
+
+    if (groups.length === 0) {
+      body.innerHTML = `<div style="text-align:center;padding:24px;color:var(--ink-soft);">No options configured for this item.</div>`;
+      updateCustomModalTotal();
+      return;
+    }
+
+    body.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        ${groups.map(og => {
+          const isSingle = og.selectionType === 'single';
+          const isPortionOrSize = isSingle && /portion|size|quantity|serve/i.test(og.name);
+
+          return `
+            <div class="custom-option-group">
+              <div class="cog-header">
+                <div>
+                  <div class="cog-title">${og.name}</div>
+                  <div class="cog-subtitle">
+                    ${isSingle 
+                      ? `Select one option (${og.required ? 'Required' : 'Optional'})` 
+                      : `Select any add-ons / toppings (Multiple choice)`}
+                  </div>
+                </div>
+                <span class="cog-badge ${isSingle ? 'single' : 'multiple'}">
+                  ${isSingle ? '🔘 Single Selection' : '☑️ Multiple Selection'}
+                </span>
+              </div>
+              <div class="cog-choices-grid">
+                ${og.options.map(opt => {
+                  const isChecked = isSingle
+                    ? customSelections[og.id] === opt.name
+                    : (customSelections[og.id] || []).includes(opt.name);
+
+                  const priceLabel = opt.price > 0 
+                    ? (isPortionOrSize ? money(opt.price) : `+${money(opt.price)}`)
+                    : (isSingle ? 'Free / Included' : 'Free');
+
+                  return `
+                    <label class="cog-choice-item ${isChecked ? 'selected' : ''}" 
+                           data-og-id="${og.id}" 
+                           data-opt-name="${encodeURIComponent(opt.name)}"
+                           data-type="${og.selectionType}">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="${isSingle ? 'radio' : 'checkbox'}" 
+                               name="og_input_${og.id}" 
+                               class="${isSingle ? 'cog-choice-radio' : 'cog-choice-check'}"
+                               ${isChecked ? 'checked' : ''}
+                               style="accent-color:var(--primary);cursor:pointer;">
+                        <span style="font-weight:600;font-size:12.5px;color:var(--ink);">${opt.name}</span>
+                      </div>
+                      <span class="cog-choice-price" style="font-size:12px;font-weight:700;color:${opt.price > 0 ? 'var(--primary)' : 'var(--ink-soft)'};">
+                        ${priceLabel}
+                      </span>
+                    </label>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          `;
+        }).join("")}
+
+        <!-- Quantity Stepper inside customization modal -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--surface-subtle);border-radius:10px;border:1px solid var(--line);">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--ink);">Quantity</div>
+            <div style="font-size:11px;color:var(--ink-soft);">How many portions to add?</div>
+          </div>
+          <div class="cart-item-qty" style="gap:10px;">
+            <button type="button" id="customQtyDec" style="width:32px;height:32px;font-size:16px;">−</button>
+            <span id="customQtyVal" style="font-weight:800;font-size:15px;min-width:24px;text-align:center;">${customItemQty}</span>
+            <button type="button" id="customQtyInc" style="width:32px;height:32px;font-size:16px;">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Bind choice clicks
+    body.querySelectorAll(".cog-choice-item").forEach(el => {
+      el.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() === "input") {
+          e.stopPropagation();
+        }
+        const ogId = el.dataset.ogId;
+        const optName = decodeURIComponent(el.dataset.optName);
+        const type = el.dataset.type;
+
+        if (type === 'single') {
+          customSelections[ogId] = optName;
+        } else {
+          let list = customSelections[ogId] || [];
+          if (list.includes(optName)) {
+            list = list.filter(x => x !== optName);
+          } else {
+            list.push(optName);
+          }
+          customSelections[ogId] = list;
+        }
+
+        renderCustomizationModalContent();
+      });
+    });
+
+    // Quantity stepper
+    document.getElementById("customQtyDec").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (customItemQty > 1) {
+        customItemQty--;
+        document.getElementById("customQtyVal").textContent = customItemQty;
+        updateCustomModalTotal();
+      }
+    });
+
+    document.getElementById("customQtyInc").addEventListener("click", (e) => {
+      e.stopPropagation();
+      customItemQty++;
+      document.getElementById("customQtyVal").textContent = customItemQty;
+      updateCustomModalTotal();
+    });
+
+    updateCustomModalTotal();
+  }
+
+  function updateCustomModalTotal() {
+    const unitPrice = calculateCustomItemUnitPrice();
+    const grandTotal = unitPrice * customItemQty;
+    document.getElementById("customDishTotal").textContent = `${money(grandTotal)}`;
+  }
+
+  // Confirm and Add Custom Item to Cart Slip
+  document.getElementById("confirmAddCustomItemBtn").addEventListener("click", () => {
+    if (!currentCustomDish || !currentOrderSession) return;
+    const dish = currentCustomDish;
+
+    // Validate required single groups
+    for (const og of (dish.optionGroups || [])) {
+      if (og.selectionType === 'single' && og.required) {
+        if (!customSelections[og.id]) {
+          showToast(`Please select an option for "${og.name}"`, "error");
+          return;
+        }
+      }
+    }
+
+    // Build variant label (single selection) & addons list (multiple selection)
+    const variantParts = [];
+    const addonsList = [];
+
+    (dish.optionGroups || []).forEach(og => {
+      if (og.selectionType === 'single') {
+        const val = customSelections[og.id];
+        if (val) {
+          variantParts.push(val);
+        }
+      } else {
+        const selectedNames = customSelections[og.id] || [];
+        selectedNames.forEach(n => {
+          const opt = og.options.find(o => o.name === n);
+          addonsList.push({ name: n, price: opt ? opt.price : 0 });
+        });
+      }
+    });
+
+    const variantLabel = variantParts.join(" • ");
+    const unitPrice = calculateCustomItemUnitPrice();
+
+    // Check if identical customized item already exists in unsent cart items
+    const addonsKey = addonsList.map(a => a.name).sort().join("|");
+    const existing = currentOrderSession.items.find(x => 
+      x.id === dish.id && 
+      (x.variantLabel || '') === variantLabel && 
+      ((x.addons || []).map(a => a.name).sort().join("|")) === addonsKey &&
+      x.sentQty === 0
+    );
+
+    if (existing) {
+      existing.qty += customItemQty;
+    } else {
+      currentOrderSession.items.push({
+        id: dish.id,
+        uid: `ci_${dish.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name: dish.itemName,
+        variantLabel: variantLabel,
+        addons: addonsList,
+        price: unitPrice,
+        qty: customItemQty,
+        sentQty: 0,
+        kotId: null,
+        status: "new",
+        note: ""
+      });
+    }
+
+    closeModal("itemCustomizationModal");
+    renderCart();
+    showToast(`✓ Added ${customItemQty} × ${dish.itemName}${variantLabel ? ' (' + variantLabel + ')' : ''} to order!`);
+  });
 
   // Render Cart Slip (Shows Previous KOT items + Newly added items)
   function renderCart() {
@@ -2556,10 +3147,22 @@
           <div class="cart-item-row ${isSent ? 'is-sent' : 'is-new'}">
             <div style="flex:1;min-width:0;padding-right:8px;">
               <div style="font-weight:700;font-size:12.5px;color:var(--ink);">${it.name}</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:1px;">
+              ${it.variantLabel ? `
+                <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+                  <span class="cog-badge single" style="font-size:10px;padding:1px 6px;font-weight:700;">
+                    🔘 ${it.variantLabel}
+                  </span>
+                </div>
+              ` : ''}
+              ${it.addons && it.addons.length > 0 ? `
+                <div style="font-size:10.5px;color:var(--ink-soft);margin-top:2px;line-height:1.3;">
+                  <b>Toppings:</b> ${it.addons.map(a => a.name + (a.price ? ` (+${money(a.price)})` : '')).join(', ')}
+                </div>
+              ` : ''}
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">
                 ${money(it.price)} × ${it.qty} = <b>${money(it.price * it.qty)}</b>
               </div>
-              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
                 <span class="cart-item-badge ${isSent ? 'badge-sent' : 'badge-new'}">
                   ${isSent ? `🍳 In Kitchen (${it.kotId || 'Sent'})` : `⏳ New Unsent Item`}
                 </span>
@@ -2801,13 +3404,21 @@
       station: "Kitchen",
       status: "pending",
       chefNote: currentOrderSession.customerName ? `Guest: ${currentOrderSession.customerName}` : null,
-      items: unsentItems.map(c => ({
-        id: `i_${Date.now()}_${c.id}`,
-        name: c.name,
-        qty: c.qty - (c.sentQty || 0),
-        note: c.note || "",
-        done: false
-      }))
+      items: unsentItems.map(c => {
+        let fullName = c.name;
+        if (c.variantLabel) fullName += ` [${c.variantLabel}]`;
+        if (c.addons && c.addons.length > 0) fullName += ` (+ ${c.addons.map(a => a.name).join(', ')})`;
+        return {
+          id: `i_${Date.now()}_${c.id}`,
+          name: fullName,
+          baseName: c.name,
+          variantLabel: c.variantLabel || '',
+          addons: c.addons || [],
+          qty: c.qty - (c.sentQty || 0),
+          note: c.note || "",
+          done: false
+        };
+      })
     };
 
     kots.unshift(newKot);
@@ -2902,9 +3513,13 @@
         </div>
         <div class="receipt-divider"></div>
         ${(inv.items || []).map(i => `
-          <div style="display:flex;justify-content:space-between;padding:2px 0;">
-            <span>${i.qty} × ${i.name}</span>
-            <span>${money(i.price * i.qty)}</span>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;align-items:flex-start;">
+            <div style="flex:1;padding-right:8px;">
+              <div><b>${i.qty}</b> × ${i.name}</div>
+              ${i.variantLabel ? `<div style="font-size:10px;color:var(--ink-soft);padding-left:14px;">🔘 ${i.variantLabel}</div>` : ''}
+              ${i.addons && i.addons.length ? `<div style="font-size:10px;color:var(--ink-soft);padding-left:14px;">+ ${i.addons.map(a => a.name + (a.price ? ` (₹${a.price})` : '')).join(', ')}</div>` : ''}
+            </div>
+            <span style="font-weight:700;">${money(i.price * i.qty)}</span>
           </div>
         `).join("")}
         <div class="receipt-divider"></div>
@@ -4045,9 +4660,20 @@ For any queries or updates, reply to this message.`;
             <tr>
               <td><span style="font-weight:700;color:var(--ink-soft);">${String(i + 1).padStart(2, '0')}</span></td>
               <td>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  ${it.foodType === 'nonveg' ? '<span class="nonveg-icon"><span></span></span>' : '<span class="veg-icon"><span></span></span>'}
-                  <b>${it.itemName}</b>
+                <div style="display:flex;align-items:flex-start;gap:8px;">
+                  <span style="margin-top:2px;">${it.foodType === 'nonveg' ? '<span class="nonveg-icon"><span></span></span>' : '<span class="veg-icon"><span></span></span>'}</span>
+                  <div>
+                    <b>${it.itemName}</b>
+                    ${it.optionGroups && it.optionGroups.length > 0 ? `
+                      <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;">
+                        ${it.optionGroups.map(og => `
+                          <span class="cog-badge ${og.selectionType}" style="font-size:9.5px;padding:1px 5px;">
+                            ${og.selectionType === 'single' ? '🔘' : '☑️'} ${og.name} (${og.options.length})
+                          </span>
+                        `).join("")}
+                      </div>
+                    ` : ''}
+                  </div>
                 </div>
               </td>
               <td><span class="shortcode-badge">${it.shortcode}</span></td>
@@ -4298,9 +4924,169 @@ For any queries or updates, reply to this message.`;
   document.getElementById("masterSearchInput").addEventListener("input", renderMasterTable);
   document.getElementById("masterStatusFilter").addEventListener("change", renderMasterTable);
 
-  document.getElementById("openAddMasterModalBtn").addEventListener("click", () => {
-    openMasterFormModal(activeMasterTab, null);
-  });
+  let activeEditingItemOptionGroups = [];
+
+  function renderMasterOptionGroups() {
+    const list = document.getElementById("masterOptionGroupsList");
+    if (!list) return;
+
+    if (!activeEditingItemOptionGroups || activeEditingItemOptionGroups.length === 0) {
+      list.innerHTML = `
+        <div style="text-align:center;padding:16px;font-size:11.5px;color:var(--ink-soft);border:1.5px dashed var(--line);border-radius:8px;">
+          No option groups attached. Click a quick preset above (e.g. <b>🍲 + Sabji Half/Full</b> or <b>🧀 + Multi Toppings</b>) to add options!
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = activeEditingItemOptionGroups.map((og, gIdx) => {
+      const isSingle = og.selectionType === "single";
+      return `
+        <div class="cog-builder-card" data-gidx="${gIdx}" style="border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--paper);margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
+              <span style="font-size:14px;">${isSingle ? '🔘' : '☑️'}</span>
+              <input type="text" class="og-name-input" data-gidx="${gIdx}" value="${og.name}" placeholder="Group Name (e.g. Portion Size, Toppings)" style="font-weight:700;font-size:12.5px;flex:1;">
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select class="og-type-select" data-gidx="${gIdx}" style="font-size:11.5px;padding:4px 8px;">
+                <option value="single" ${isSingle ? 'selected' : ''}>🔘 Single Selection (Radio)</option>
+                <option value="multiple" ${!isSingle ? 'selected' : ''}>☑️ Multiple Selection (Checkboxes)</option>
+              </select>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;cursor:pointer;">
+                <input type="checkbox" class="og-req-check" data-gidx="${gIdx}" ${og.required ? 'checked' : ''}>
+                Required
+              </label>
+              <button type="button" class="btn btn-sm btn-danger og-del-group-btn" data-gidx="${gIdx}" style="padding:2px 8px;font-size:11px;color:#dc2626;" title="Remove this entire group">
+                🗑 Delete
+              </button>
+            </div>
+          </div>
+
+          <!-- Options / Choices Table -->
+          <div style="background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:6px;">
+            <div style="display:grid;grid-template-columns:1fr 100px 70px 40px;gap:6px;padding:6px 10px;background:var(--surface-subtle);font-size:10px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;">
+              <span>Choice Name</span>
+              <span>Price (₹)</span>
+              <span style="text-align:center;">Default</span>
+              <span></span>
+            </div>
+            <div style="padding:6px 10px;display:flex;flex-direction:column;gap:6px;">
+              ${og.options.map((opt, oIdx) => `
+                <div style="display:grid;grid-template-columns:1fr 100px 70px 40px;gap:6px;align-items:center;">
+                  <input type="text" class="opt-name-input" data-gidx="${gIdx}" data-oidx="${oIdx}" value="${opt.name}" placeholder="e.g. Half Portion, Extra Cheese" style="font-size:12px;padding:4px 8px;">
+                  <input type="number" class="opt-price-input" data-gidx="${gIdx}" data-oidx="${oIdx}" value="${opt.price || 0}" min="0" step="1" style="font-size:12px;padding:4px 8px;font-family:'JetBrains Mono',monospace;">
+                  <div style="display:flex;justify-content:center;">
+                    <input type="${isSingle ? 'radio' : 'checkbox'}" name="opt_def_${gIdx}" class="opt-def-input" data-gidx="${gIdx}" data-oidx="${oIdx}" ${opt.isDefault ? 'checked' : ''} style="cursor:pointer;accent-color:var(--primary);">
+                  </div>
+                  <button type="button" class="btn btn-sm opt-del-row-btn" data-gidx="${gIdx}" data-oidx="${oIdx}" style="padding:2px 5px;font-size:11px;color:#dc2626;" title="Remove Choice">✕</button>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <div style="margin-top:6px;display:flex;justify-content:flex-end;">
+            <button type="button" class="btn btn-sm add-choice-row-btn" data-gidx="${gIdx}" style="font-size:11px;padding:3px 10px;">
+              + Add Choice
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Wire listeners
+    list.querySelectorAll(".og-name-input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const gIdx = Number(inp.dataset.gidx);
+        if (activeEditingItemOptionGroups[gIdx]) activeEditingItemOptionGroups[gIdx].name = inp.value;
+      });
+    });
+
+    list.querySelectorAll(".og-type-select").forEach(sel => {
+      sel.addEventListener("change", () => {
+        const gIdx = Number(sel.dataset.gidx);
+        if (activeEditingItemOptionGroups[gIdx]) {
+          activeEditingItemOptionGroups[gIdx].selectionType = sel.value;
+          renderMasterOptionGroups();
+        }
+      });
+    });
+
+    list.querySelectorAll(".og-req-check").forEach(chk => {
+      chk.addEventListener("change", () => {
+        const gIdx = Number(chk.dataset.gidx);
+        if (activeEditingItemOptionGroups[gIdx]) activeEditingItemOptionGroups[gIdx].required = chk.checked;
+      });
+    });
+
+    list.querySelectorAll(".og-del-group-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const gIdx = Number(btn.dataset.gidx);
+        activeEditingItemOptionGroups.splice(gIdx, 1);
+        renderMasterOptionGroups();
+      });
+    });
+
+    list.querySelectorAll(".opt-name-input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const gIdx = Number(inp.dataset.gidx);
+        const oIdx = Number(inp.dataset.oidx);
+        if (activeEditingItemOptionGroups[gIdx]?.options[oIdx]) {
+          activeEditingItemOptionGroups[gIdx].options[oIdx].name = inp.value;
+        }
+      });
+    });
+
+    list.querySelectorAll(".opt-price-input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const gIdx = Number(inp.dataset.gidx);
+        const oIdx = Number(inp.dataset.oidx);
+        if (activeEditingItemOptionGroups[gIdx]?.options[oIdx]) {
+          activeEditingItemOptionGroups[gIdx].options[oIdx].price = Number(inp.value) || 0;
+        }
+      });
+    });
+
+    list.querySelectorAll(".opt-def-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        const gIdx = Number(inp.dataset.gidx);
+        const oIdx = Number(inp.dataset.oidx);
+        const og = activeEditingItemOptionGroups[gIdx];
+        if (!og) return;
+        if (og.selectionType === "single") {
+          og.options.forEach((o, i) => { o.isDefault = (i === oIdx); });
+        } else {
+          og.options[oIdx].isDefault = inp.checked;
+        }
+        renderMasterOptionGroups();
+      });
+    });
+
+    list.querySelectorAll(".opt-del-row-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const gIdx = Number(btn.dataset.gidx);
+        const oIdx = Number(btn.dataset.oidx);
+        if (activeEditingItemOptionGroups[gIdx]) {
+          activeEditingItemOptionGroups[gIdx].options.splice(oIdx, 1);
+          renderMasterOptionGroups();
+        }
+      });
+    });
+
+    list.querySelectorAll(".add-choice-row-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const gIdx = Number(btn.dataset.gidx);
+        if (activeEditingItemOptionGroups[gIdx]) {
+          activeEditingItemOptionGroups[gIdx].options.push({
+            name: `Choice ${activeEditingItemOptionGroups[gIdx].options.length + 1}`,
+            price: 0,
+            isDefault: activeEditingItemOptionGroups[gIdx].options.length === 0
+          });
+          renderMasterOptionGroups();
+        }
+      });
+    });
+  }
 
   function openMasterFormModal(type, id) {
     editingRecordId = id;
@@ -4400,7 +5186,101 @@ For any queries or updates, reply to this message.`;
           <label>Item Description / Ingredients</label>
           <textarea id="m_itDesc" rows="2" placeholder="Brief note about this dish...">${rec.itemDescription || ''}</textarea>
         </div>
+
+        <!-- Customization & Selection Groups Builder -->
+        <div class="form-group" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <label style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;margin:0;">
+                <span>⚡ Customization &amp; Selection Groups</span>
+              </label>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">
+                Configure Single Selection (e.g., Half / Full portion for Sabji, Pizza Sizes) and Multiple Selection (e.g., Toppings, Add-ons)
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm" id="presetPortionBtn" style="font-size:11px;padding:3px 8px;">
+                🍲 + Sabji Half/Full
+              </button>
+              <button type="button" class="btn btn-sm" id="presetPizzaSizeBtn" style="font-size:11px;padding:3px 8px;">
+                🍕 + Pizza Sizes
+              </button>
+              <button type="button" class="btn btn-sm" id="presetToppingsBtn" style="font-size:11px;padding:3px 8px;">
+                🧀 + Multi Toppings
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" id="addOptionGroupBtn" style="font-size:11px;padding:3px 8px;">
+                + Add Group
+              </button>
+            </div>
+          </div>
+
+          <div id="masterOptionGroupsList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          </div>
+        </div>
       `;
+
+      activeEditingItemOptionGroups = rec.optionGroups ? JSON.parse(JSON.stringify(rec.optionGroups)) : [];
+      renderMasterOptionGroups();
+
+      document.getElementById("presetPortionBtn")?.addEventListener("click", () => {
+        const baseP = Number(document.getElementById("m_itPrice").value) || 200;
+        activeEditingItemOptionGroups.push({
+          id: `og_portion_${Date.now()}`,
+          name: "Portion Size (Sabji)",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Half Portion", price: Math.round(baseP * 0.6), isDefault: false },
+            { name: "Full Portion", price: baseP, isDefault: true }
+          ]
+        });
+        renderMasterOptionGroups();
+      });
+
+      document.getElementById("presetPizzaSizeBtn")?.addEventListener("click", () => {
+        activeEditingItemOptionGroups.push({
+          id: `og_pizza_${Date.now()}`,
+          name: "Pizza Size",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Regular 7-inch", price: 220, isDefault: false },
+            { name: "Medium 10-inch", price: 340, isDefault: true },
+            { name: "Large 12-inch", price: 460, isDefault: false }
+          ]
+        });
+        renderMasterOptionGroups();
+      });
+
+      document.getElementById("presetToppingsBtn")?.addEventListener("click", () => {
+        activeEditingItemOptionGroups.push({
+          id: `og_top_${Date.now()}`,
+          name: "Add-on Toppings",
+          selectionType: "multiple",
+          required: false,
+          options: [
+            { name: "Extra Cheese", price: 40, isDefault: false },
+            { name: "Black Olives", price: 30, isDefault: false },
+            { name: "Jalapeños", price: 30, isDefault: false },
+            { name: "Crispy Paneer Cubes", price: 45, isDefault: false }
+          ]
+        });
+        renderMasterOptionGroups();
+      });
+
+      document.getElementById("addOptionGroupBtn")?.addEventListener("click", () => {
+        activeEditingItemOptionGroups.push({
+          id: `og_cust_${Date.now()}`,
+          name: "New Option Group",
+          selectionType: "single",
+          required: true,
+          options: [
+            { name: "Option 1", price: 0, isDefault: true },
+            { name: "Option 2", price: 0, isDefault: false }
+          ]
+        });
+        renderMasterOptionGroups();
+      });
     } else if (type === "floors") {
       const rec = isEdit ? floors.find(f => f.id === id) : { floorName: "", sortOrder: floors.length + 1, status: "active" };
       formBody.innerHTML = `
@@ -4513,17 +5393,31 @@ For any queries or updates, reply to this message.`;
       const desc = document.getElementById("m_itDesc").value.trim();
       const status = document.getElementById("m_itStatus").value;
 
+      // Sanitize and save configured option groups
+      const cleanOptionGroups = (activeEditingItemOptionGroups || []).filter(og => og.name && og.name.trim() && og.options && og.options.length > 0).map(og => ({
+        id: og.id || `og_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name: og.name.trim(),
+        selectionType: og.selectionType || 'single',
+        required: Boolean(og.required),
+        options: og.options.filter(o => o.name && o.name.trim()).map(o => ({
+          name: o.name.trim(),
+          price: Number(o.price) || 0,
+          isDefault: Boolean(o.isDefault)
+        }))
+      }));
+
       if (isEdit) {
         const it = items.find(i => i.id === editingRecordId);
-        Object.assign(it, { foodType, itemName: name, shortcode: short, categoryId: catId, price, station, itemDescription: desc, status });
+        Object.assign(it, { foodType, itemName: name, shortcode: short, categoryId: catId, price, station, itemDescription: desc, status, optionGroups: cleanOptionGroups });
         apiClient.saveItem(it);
-        showToast(`Item '${name}' updated!`);
+        showToast(`Item '${name}' updated with ${cleanOptionGroups.length} option group(s)!`);
       } else {
-        const newItem = { id: Date.now(), foodType, itemName: name, shortcode: short, categoryId: catId, price, station, itemDescription: desc, status };
+        const newItem = { id: Date.now(), foodType, itemName: name, shortcode: short, categoryId: catId, price, station, itemDescription: desc, status, optionGroups: cleanOptionGroups };
         items.push(newItem);
         apiClient.saveItem(newItem);
-        showToast(`Item '${name}' added & saved to backend!`);
+        showToast(`Item '${name}' added with ${cleanOptionGroups.length} option group(s)!`);
       }
+      renderPosMenu();
     } else if (type === "floors") {
       const name = document.getElementById("m_flrName").value.trim();
       const sort = Number(document.getElementById("m_flrSort").value);
@@ -4609,6 +5503,26 @@ For any queries or updates, reply to this message.`;
           <div><b>Station:</b> ${rec.station}</div>
           <div><b>Description:</b> ${rec.itemDescription || '—'}</div>
           <div><b>Status:</b> <span class="table-status ${rec.status === 'active' ? 'status-available' : 'status-occupied'}">${rec.status.toUpperCase()}</span></div>
+          ${rec.optionGroups && rec.optionGroups.length > 0 ? `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
+              <b>Customization &amp; Selection Groups (${rec.optionGroups.length}):</b>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+                ${rec.optionGroups.map(og => `
+                  <div style="background:var(--surface-subtle);border-radius:6px;padding:8px 10px;border:1px solid var(--line);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <b>${og.name}</b>
+                      <span class="cog-badge ${og.selectionType}">
+                        ${og.selectionType === 'single' ? '🔘 Single' : '☑️ Multiple'} ${og.required ? '(Required)' : '(Optional)'}
+                      </span>
+                    </div>
+                    <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">
+                      ${og.options.map(o => `${o.name} (${money(o.price)})${o.isDefault ? ' [Default]' : ''}`).join(" · ")}
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
     } else if (type === "floors") {
