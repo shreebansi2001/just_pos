@@ -4924,7 +4924,32 @@ For any queries or updates, reply to this message.`;
   document.getElementById("masterSearchInput").addEventListener("input", renderMasterTable);
   document.getElementById("masterStatusFilter").addEventListener("change", renderMasterTable);
 
+  document.getElementById("openAddMasterModalBtn").addEventListener("click", () => {
+    openMasterFormModal(activeMasterTab, null);
+  });
+
   let activeEditingItemOptionGroups = [];
+
+  function scrollAndHighlightNewGroup(gIdx) {
+    setTimeout(() => {
+      const card = document.querySelector(`.cog-builder-card[data-gidx="${gIdx}"]`);
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const nameInput = card.querySelector(".og-name-input");
+        if (nameInput) {
+          nameInput.focus();
+          nameInput.select();
+        }
+        card.style.transition = "all 0.3s ease";
+        card.style.borderColor = "var(--primary)";
+        card.style.boxShadow = "0 0 0 3px rgba(13, 148, 136, 0.25)";
+        setTimeout(() => {
+          card.style.borderColor = "var(--line)";
+          card.style.boxShadow = "none";
+        }, 1800);
+      }
+    }, 60);
+  }
 
   function renderMasterOptionGroups() {
     const list = document.getElementById("masterOptionGroupsList");
@@ -5224,6 +5249,7 @@ For any queries or updates, reply to this message.`;
 
       document.getElementById("presetPortionBtn")?.addEventListener("click", () => {
         const baseP = Number(document.getElementById("m_itPrice").value) || 200;
+        const newIdx = activeEditingItemOptionGroups.length;
         activeEditingItemOptionGroups.push({
           id: `og_portion_${Date.now()}`,
           name: "Portion Size (Sabji)",
@@ -5235,9 +5261,12 @@ For any queries or updates, reply to this message.`;
           ]
         });
         renderMasterOptionGroups();
+        scrollAndHighlightNewGroup(newIdx);
+        showToast("🍲 Added Sabji Portion (Half/Full) group!");
       });
 
       document.getElementById("presetPizzaSizeBtn")?.addEventListener("click", () => {
+        const newIdx = activeEditingItemOptionGroups.length;
         activeEditingItemOptionGroups.push({
           id: `og_pizza_${Date.now()}`,
           name: "Pizza Size",
@@ -5250,25 +5279,31 @@ For any queries or updates, reply to this message.`;
           ]
         });
         renderMasterOptionGroups();
+        scrollAndHighlightNewGroup(newIdx);
+        showToast("🍕 Added Pizza Sizes group!");
       });
 
       document.getElementById("presetToppingsBtn")?.addEventListener("click", () => {
+        const newIdx = activeEditingItemOptionGroups.length;
         activeEditingItemOptionGroups.push({
           id: `og_top_${Date.now()}`,
           name: "Add-on Toppings",
           selectionType: "multiple",
           required: false,
           options: [
-            { name: "Extra Cheese", price: 40, isDefault: false },
+            { name: "Extra Mozzarella Cheese", price: 40, isDefault: false },
             { name: "Black Olives", price: 30, isDefault: false },
             { name: "Jalapeños", price: 30, isDefault: false },
             { name: "Crispy Paneer Cubes", price: 45, isDefault: false }
           ]
         });
         renderMasterOptionGroups();
+        scrollAndHighlightNewGroup(newIdx);
+        showToast("🧀 Added Multi Toppings group!");
       });
 
       document.getElementById("addOptionGroupBtn")?.addEventListener("click", () => {
+        const newIdx = activeEditingItemOptionGroups.length;
         activeEditingItemOptionGroups.push({
           id: `og_cust_${Date.now()}`,
           name: "New Option Group",
@@ -5280,6 +5315,8 @@ For any queries or updates, reply to this message.`;
           ]
         });
         renderMasterOptionGroups();
+        scrollAndHighlightNewGroup(newIdx);
+        showToast("➕ Added New Option Group! You can configure choices and prices below.");
       });
     } else if (type === "floors") {
       const rec = isEdit ? floors.find(f => f.id === id) : { floorName: "", sortOrder: floors.length + 1, status: "active" };
