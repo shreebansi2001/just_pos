@@ -1213,6 +1213,14 @@
           </div>
         </div>
 
+        <div id="resConflictBanner" style="display:none;margin-bottom:12px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;transition:all 0.2s ease;">
+          <div style="font-weight:700;display:flex;align-items:center;gap:6px;" id="resConflictTitle">
+            ⚠️ Table Conflict Detected
+          </div>
+          <div id="resConflictMsg" style="margin-top:4px;font-size:11.5px;color:#78350f;line-height:1.4;"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;" id="resConflictActions"></div>
+        </div>
+
         <div class="form-group" style="margin-bottom:0;">
           <label>Special Occasion / Guest Notes</label>
           <input type="text" id="resNotes" placeholder="e.g. Birthday anniversary, request quiet corner table...">
@@ -1858,12 +1866,25 @@
         `;
       }
 
-      const tableRes = reservations.find(r => r.tableId == t.id && r.status === "confirmed");
-      const resBadgeHtml = tableRes ? `
-        <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
-          📅 Res: ${tableRes.resTime} (${tableRes.guestName.split(' ')[0]})
-        </span>
-      ` : '';
+      const activeReservations = reservations.filter(r => r.tableId == t.id && (r.status === "confirmed" || r.status === "waitlist"));
+      const nextRes = activeReservations.find(r => r.status === "confirmed");
+      const waitlistCount = activeReservations.filter(r => r.status === "waitlist").length;
+
+      let resBadgeHtml = "";
+      if (nextRes) {
+        resBadgeHtml += `
+          <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
+            📅 Res: ${nextRes.resTime} (${nextRes.guestName.split(' ')[0]})
+          </span>
+        `;
+      }
+      if (waitlistCount > 0) {
+        resBadgeHtml += `
+          <span style="font-size:10px;font-weight:700;background:#fffbeb;color:#b45309;border:1px solid #fde68a;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
+            ⏳ ${waitlistCount} Waitlist
+          </span>
+        `;
+      }
 
       card.innerHTML = `
         <div>
@@ -3041,10 +3062,30 @@ ${itemsText}
         if (!r) return;
 
         // Find table
-        const tbl = tables.find(t => t.id == r.tableId);
+        let tbl = tables.find(t => t.id == r.tableId);
         if (!tbl) {
           showToast("Assigned table not found. Please re-assign table.", "error");
           return;
+        }
+
+        // Check if table is currently occupied (e.g. earlier dining party still seated / turnover delay)
+        if (tbl.status === "occupied") {
+          const freeAlt = tables.find(t => t.status === "free" && t.masterStatus === "active" && t.capacity >= r.pax) ||
+                          tables.find(t => t.status === "free" && t.masterStatus === "active");
+
+          const proceed = confirm(
+            `⚠️ Table ${tbl.shortcode} is currently OCCUPIED by an ongoing dining party!\n\n` +
+            (freeAlt ? `Would you like to seat ${r.guestName} at available Table ${freeAlt.shortcode} (${freeAlt.capacity} seats) instead?` : `Please wait for the current table bill to be settled or select another table.`)
+          );
+
+          if (proceed && freeAlt) {
+            tbl = freeAlt;
+            r.tableId = freeAlt.id;
+            r.tableLabel = freeAlt.shortcode;
+            showToast(`Reassigned ${r.guestName} to ${freeAlt.shortcode}`);
+          } else {
+            return;
+          }
         }
 
         r.status = "seated";
@@ -3126,21 +3167,112 @@ For any queries or updates, reply to this message.`;
 
   document.getElementById("resSearchInput")?.addEventListener("input", renderReservations);
 
+  // Helper: Parse HH:MM to minutes from midnight
+  function parseTimeToMinutes(tStr) {
+    if (!tStr) return 0;
+    const parts = tStr.split(":");
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  }
+
+  // Helper: Check if a table has an overlapping reservation on a date (90 min dining slot)
+  function getTableReservationConflict(tableId, resDate, resTime, excludeResId = null) {
+    if (!tableId || !resDate || !resTime) return null;
+    const targetMins = parseTimeToMinutes(resTime);
+
+    return reservations.find(r => {
+      if (r.id === excludeResId) return false;
+      if (r.status !== "confirmed" && r.status !== "seated") return false;
+      if (String(r.tableId) !== String(tableId)) return false;
+      if (r.resDate !== resDate) return false;
+
+      const rMins = parseTimeToMinutes(r.resTime);
+      return Math.abs(targetMins - rMins) < 90; // Overlapping 90-minute dining window
+    }) || null;
+  }
+
+  // Dynamic conflict checking & real-time modal advisory banner
+  function updateReservationModalConflicts() {
+    const date = document.getElementById("resDate")?.value;
+    const time = document.getElementById("resTime")?.value;
+    const pax = Number(document.getElementById("resPax")?.value) || 2;
+    const tableSelect = document.getElementById("resTableSelect");
+    const statusSelect = document.getElementById("resStatus");
+    const banner = document.getElementById("resConflictBanner");
+    const bannerTitle = document.getElementById("resConflictTitle");
+    const bannerMsg = document.getElementById("resConflictMsg");
+    const bannerActions = document.getElementById("resConflictActions");
+
+    if (!tableSelect || !date || !time) return;
+
+    const currentSelectedTableId = tableSelect.value;
+    const activeTables = tables.filter(t => t.masterStatus === "active");
+
+    // Rebuild options with live availability & conflict badges
+    tableSelect.innerHTML = activeTables.map(t => {
+      const flr = floors.find(f => f.id == t.floorId);
+      const conflict = getTableReservationConflict(t.id, date, time);
+      const isSelected = (String(t.id) === String(currentSelectedTableId)) ? "selected" : "";
+
+      if (conflict) {
+        return `<option value="${t.id}" ${isSelected} style="color:#b91c1c;font-weight:600;">⚠️ ${t.shortcode} (${t.capacity}p) · Booked ${conflict.resTime} (${conflict.guestName.split(' ')[0]})</option>`;
+      } else {
+        return `<option value="${t.id}" ${isSelected}>🟢 ${t.shortcode} — ${t.tableName} (${t.capacity} seats, ${flr ? flr.floorName : 'Floor'})</option>`;
+      }
+    }).join("");
+
+    const selectedTable = activeTables.find(t => String(t.id) === String(tableSelect.value));
+    const activeConflict = selectedTable ? getTableReservationConflict(selectedTable.id, date, time) : null;
+
+    if (activeConflict && statusSelect.value === "confirmed") {
+      banner.style.display = "block";
+      banner.style.background = "#fff1f2";
+      banner.style.borderColor = "#fecdd3";
+      banner.style.color = "#9f1239";
+      bannerTitle.innerHTML = `⚠️ Double-Booking Conflict: Table ${selectedTable.shortcode} Already Booked!`;
+      bannerMsg.innerHTML = `Table <b>${selectedTable.shortcode}</b> is already reserved by <b>${activeConflict.guestName}</b> at <b>${activeConflict.resTime}</b> (${activeConflict.pax} guests). Two separate parties cannot occupy the same table during the 90-minute dining slot.`;
+
+      // Find alternative available table matching capacity
+      const altTable = activeTables.find(t => {
+        return String(t.id) !== String(selectedTable.id) &&
+               t.capacity >= pax &&
+               !getTableReservationConflict(t.id, date, time);
+      }) || activeTables.find(t => String(t.id) !== String(selectedTable.id) && !getTableReservationConflict(t.id, date, time));
+
+      let actionsHtml = "";
+      if (altTable) {
+        actionsHtml += `<button type="button" class="btn btn-sm btn-primary" id="autoAssignTableBtn" style="padding:5px 12px;font-size:11.5px;background:var(--primary);">🔄 Auto-Assign ${altTable.shortcode} (${altTable.capacity} seats)</button>`;
+      }
+      actionsHtml += `<button type="button" class="btn btn-sm" id="switchToWaitlistBtn" style="padding:5px 12px;font-size:11.5px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;">📋 Move to Waitlist</button>`;
+
+      bannerActions.innerHTML = actionsHtml;
+
+      document.getElementById("autoAssignTableBtn")?.addEventListener("click", () => {
+        tableSelect.value = altTable.id;
+        updateReservationModalConflicts();
+        showToast(`✓ Auto-assigned available Table ${altTable.shortcode}!`);
+      });
+
+      document.getElementById("switchToWaitlistBtn")?.addEventListener("click", () => {
+        statusSelect.value = "waitlist";
+        updateReservationModalConflicts();
+        showToast(`✓ Booking moved to Waitlist status.`);
+      });
+
+    } else if (selectedTable && pax > selectedTable.capacity) {
+      banner.style.display = "block";
+      banner.style.background = "#fffbeb";
+      banner.style.borderColor = "#fde68a";
+      banner.style.color = "#92400e";
+      bannerTitle.innerHTML = `👥 Capacity Advisory`;
+      bannerMsg.innerHTML = `Party has <b>${pax} guests</b>, but Table <b>${selectedTable.shortcode}</b> is designed for <b>${selectedTable.capacity} seats</b>. Consider assigning a larger table or combining adjacent tables.`;
+      bannerActions.innerHTML = "";
+    } else {
+      banner.style.display = "none";
+    }
+  }
+
   // Open New Reservation Modal
   function openNewReservationModal(defaultTableId) {
-    const tableSelect = document.getElementById("resTableSelect");
-    const activeTables = tables.filter(t => t.masterStatus === "active");
-    
-    if (activeTables.length === 0) {
-      tableSelect.innerHTML = `<option value="">No Active Tables Available</option>`;
-    } else {
-      tableSelect.innerHTML = activeTables.map(t => {
-        const flr = floors.find(f => f.id == t.floorId);
-        const isSelected = (defaultTableId && t.id == defaultTableId) ? "selected" : "";
-        return `<option value="${t.id}" ${isSelected}>${t.shortcode} — ${t.tableName} (${t.capacity} seats, ${flr ? flr.floorName : 'Floor'})</option>`;
-      }).join("");
-    }
-
     const todayStr = new Date().toISOString().split("T")[0];
     const dateInput = document.getElementById("resDate");
     if (dateInput) dateInput.value = todayStr;
@@ -3163,11 +3295,34 @@ For any queries or updates, reply to this message.`;
     const statusSelect = document.getElementById("resStatus");
     if (statusSelect) statusSelect.value = "confirmed";
 
+    const tableSelect = document.getElementById("resTableSelect");
+    const activeTables = tables.filter(t => t.masterStatus === "active");
+
+    if (activeTables.length === 0) {
+      tableSelect.innerHTML = `<option value="">No Active Tables Available</option>`;
+    } else {
+      tableSelect.innerHTML = activeTables.map(t => {
+        const flr = floors.find(f => f.id == t.floorId);
+        const isSelected = (defaultTableId && t.id == defaultTableId) ? "selected" : "";
+        return `<option value="${t.id}" ${isSelected}>${t.shortcode} — ${t.tableName} (${t.capacity} seats, ${flr ? flr.floorName : 'Floor'})</option>`;
+      }).join("");
+    }
+
+    updateReservationModalConflicts();
     openModal("reservationModal");
   }
   window.openNewReservationModal = openNewReservationModal;
 
   document.getElementById("openNewReservationBtn")?.addEventListener("click", () => openNewReservationModal());
+
+  // Real-time conflict checking listeners
+  ["resDate", "resTime", "resPax", "resTableSelect", "resStatus"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", updateReservationModalConflicts);
+      el.addEventListener("input", updateReservationModalConflicts);
+    }
+  });
 
   // Save Reservation Form
   function saveReservationForm(e) {
@@ -3177,8 +3332,8 @@ For any queries or updates, reply to this message.`;
     const resDate = document.getElementById("resDate")?.value;
     const resTime = document.getElementById("resTime")?.value;
     const pax = Number(document.getElementById("resPax")?.value) || 2;
-    const tableId = document.getElementById("resTableSelect")?.value;
-    const status = document.getElementById("resStatus")?.value || "confirmed";
+    let tableId = document.getElementById("resTableSelect")?.value;
+    let status = document.getElementById("resStatus")?.value || "confirmed";
     const notes = (document.getElementById("resNotes")?.value || "").trim();
 
     if (!guestName || !phone || !resDate || !resTime) {
@@ -3186,7 +3341,36 @@ For any queries or updates, reply to this message.`;
       return;
     }
 
-    const assignedTable = tables.find(t => t.id == tableId);
+    let assignedTable = tables.find(t => t.id == tableId);
+
+    // Standard Conflict Resolution Check
+    if (status === "confirmed") {
+      const conflict = getTableReservationConflict(tableId, resDate, resTime);
+      if (conflict) {
+        // Find alternative table
+        const altTable = tables.find(t => {
+          return t.masterStatus === "active" &&
+                 String(t.id) !== String(tableId) &&
+                 t.capacity >= pax &&
+                 !getTableReservationConflict(t.id, resDate, resTime);
+        }) || tables.find(t => t.masterStatus === "active" && String(t.id) !== String(tableId) && !getTableReservationConflict(t.id, resDate, resTime));
+
+        const choice = confirm(
+          `⚠️ Table ${assignedTable ? assignedTable.shortcode : 'Selected'} is ALREADY RESERVED at ${conflict.resTime} by ${conflict.guestName}!\n\n` +
+          (altTable ? `Click OK to auto-assign Table ${altTable.shortcode} (${altTable.capacity} seats), or Cancel to place on Waitlist.` : `No other tables available at this slot. Click OK to place on Waitlist.`)
+        );
+
+        if (choice && altTable) {
+          tableId = altTable.id;
+          assignedTable = altTable;
+          showToast(`Switched booking to Table ${altTable.shortcode}`);
+        } else {
+          status = "waitlist";
+          showToast(`Saved as Waitlist due to table slot conflict.`);
+        }
+      }
+    }
+
     const assignedFloor = assignedTable ? floors.find(f => f.id == assignedTable.floorId) : null;
     const resCode = `RES-${Math.floor(100 + Math.random() * 900)}`;
 
@@ -3209,7 +3393,7 @@ For any queries or updates, reply to this message.`;
     apiClient.saveReservation(newRes);
 
     closeAllModals();
-    showToast(`✓ Table booking ${resCode} confirmed for ${guestName}!`);
+    showToast(`✓ Table booking ${resCode} (${status.toUpperCase()}) saved for ${guestName}!`);
     renderReservations();
     renderTables();
     updateGlobalStats();
