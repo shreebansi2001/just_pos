@@ -50,3 +50,4 @@ bin/
 *.swp
 web/bin/
 *.swo
+scratch/

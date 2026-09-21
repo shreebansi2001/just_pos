@@ -128,9 +128,14 @@ export function MastersView({
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {items.map((i) => {
-                const priceTxt = i.variants
+                let priceTxt = i.variants
                   ? i.variants.map((v) => `${v[0]} ${formatMoney(v[1])}`).join(' / ')
                   : formatMoney(i.price);
+                if (i.pricingType === 'kg') {
+                  priceTxt = `${formatMoney(i.pricePerKg || i.price)} / KG (By Weight)`;
+                } else if (i.pricingType === 'both') {
+                  priceTxt = `${formatMoney(i.price)} / Pl · ${formatMoney(i.pricePerKg)} / KG (Dual)`;
+                }
 
                 return (
                   <tr key={i.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40">
@@ -291,15 +296,70 @@ export function MastersView({
 
         {/* Taxes Table (Tax Master) */}
         {activeTab === 'taxes' && (
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 uppercase tracking-wider text-gray-400">
-                <th className="py-3 px-4">Tax Name</th>
-                <th className="py-3 px-4">Percentage</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
+          <div className="space-y-4">
+            {/* Global Tax & Invoice Billing Rules Card */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/60 space-y-3">
+              <div className="flex justify-between items-center flex-wrap gap-2">
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                    🏛️ Global Tax &amp; Invoice Billing Rules
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Configure default GST rates, invoice inclusion rules, and cashier overrides for all POS terminals.
+                  </p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                  Live Master Active
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <span className="font-bold text-gray-700 dark:text-gray-200 block mb-1">Default POS GST Slab</span>
+                  <span className="text-gray-500 block text-[11px] mb-2">Applied to fresh orders</span>
+                  <select className="w-full px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 font-semibold">
+                    <option value="5">5% GST (2.5% CGST + 2.5% SGST)</option>
+                    <option value="12">12% GST (6.0% CGST + 6.0% SGST)</option>
+                    <option value="18">18% GST (9.0% CGST + 9.0% SGST)</option>
+                    <option value="0">0% (Tax Exempt Default)</option>
+                  </select>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <span className="font-bold text-gray-700 dark:text-gray-200 block mb-1">Service Charge Levy</span>
+                  <span className="text-gray-500 block text-[11px] mb-2">Optional banquet/dine-in charge</span>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="rc_scEnable" className="rounded text-[#017A9C]" />
+                    <label htmlFor="rc_scEnable" className="font-semibold text-gray-700 dark:text-gray-300 text-[11px]">Enable 5% Charge</label>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <span className="font-bold text-gray-700 dark:text-gray-200 block mb-1">POS Cashier Permissions</span>
+                  <span className="text-gray-500 block text-[11px] mb-2">Invoice breakdown &amp; overrides</span>
+                  <div className="space-y-1 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-1.5">
+                      <input type="checkbox" defaultChecked className="rounded text-[#017A9C]" />
+                      <span>Print CGST/SGST on Bills</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <input type="checkbox" defaultChecked className="rounded text-[#017A9C]" />
+                      <span>Allow 1-Click Tax Exemption</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 uppercase tracking-wider text-gray-400">
+                  <th className="py-3 px-4">Tax Name</th>
+                  <th className="py-3 px-4">Percentage</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {taxes.map((tx) => (
                 <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40">
@@ -338,6 +398,7 @@ export function MastersView({
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

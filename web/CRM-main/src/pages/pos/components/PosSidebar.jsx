@@ -1,9 +1,10 @@
 import React from 'react';
-import { LayoutGrid, ShoppingBag, Clock, Receipt, CalendarDays, Settings2, Moon, Sun } from 'lucide-react';
+import { LayoutGrid, ShoppingBag, ClipboardList, Clock, Receipt, CalendarDays, Settings2, Moon, Sun } from 'lucide-react';
 
 export function PosSidebar({ activeView, onViewChange, kotBadgeCount, resBadgeCount, isDark, onToggleTheme }) {
   const navItems = [
     { id: 'tables', label: 'Tables', icon: LayoutGrid },
+    { id: 'orders', label: 'Orders', icon: ClipboardList },
     { id: 'pos', label: 'New Order', icon: ShoppingBag },
     { id: 'kot', label: 'KOT', icon: Clock, badge: kotBadgeCount },
     { id: 'billing', label: 'Billing', icon: Receipt },

@@ -7,6 +7,7 @@ import { KotKanbanView } from './components/KotKanbanView';
 import { BillingView } from './components/BillingView';
 import { ReservationsView } from './components/ReservationsView';
 import { MastersView } from './components/MastersView';
+import { OrdersView } from './components/OrdersView';
 
 import { VariantModal } from './modals/VariantModal';
 import { PickerModal } from './modals/PickerModal';
@@ -28,6 +29,7 @@ export function PosApp() {
   const [taxes, setTaxes] = useState(initialPosSeed.taxes || []);
 
   const [orders, setOrders] = useState({});
+  const [cancelledOrders, setCancelledOrders] = useState([]);
   const [kots, setKots] = useState({});
   const [invoices, setInvoices] = useState({});
   const [reservations, setReservations] = useState({});
@@ -56,7 +58,7 @@ export function PosApp() {
   const [resFilterStatus, setResFilterStatus] = useState('all');
 
   // Sequence counters for demo
-  const [seq, setSeq] = useState({ order: 10, kot: 10, inv: 10, res: 10 });
+  const [seq, setSeq] = useState({ order: 10, kot: 10, inv: 68, res: 10 });
 
   // Initialize Theme and seed demo live state
   useEffect(() => {
@@ -128,24 +130,27 @@ export function PosApp() {
     });
 
     const initInvoices = {
-      INV001: {
-        id: 'INV001',
-        orderId: 'ORD-prev',
-        type: 'dine-in',
-        tableLabel: 'PH-1',
-        customerName: 'Ritika Shah',
-        customerPhone: '98200 12345',
-        sub: 740,
+      'KTA-KG/00068/26-27': {
+        id: 'KTA-KG/00068/26-27',
+        orderId: 'ORD-0068',
+        type: 'takeaway',
+        tableLabel: 'Catering',
+        customerName: 'Vijay Khorjuvekar',
+        customerPhone: '8830768469',
+        sub: 7300,
+        taxableAmount: 6952.36,
         disc: 0,
-        cgst: 18.5,
-        sgst: 18.5,
-        total: 777,
+        cgst: 173.82,
+        sgst: 173.82,
+        total: 7300,
         status: 'paid',
-        paymentMode: 'UPI',
+        paymentMode: 'Cash',
         createdAt: Date.now() - 45 * 60000,
         items: [
-          { name: 'Chicken Seekh Kebab', qty: 2, price: 260 },
-          { name: 'Veg Dum Biryani', qty: 1, price: 220 },
+          { name: 'KG-Vegetable Biriyani', qty: 2.50, unitMode: 'kg', weightKg: 2.50, price: 1100, pricePerKg: 1100 },
+          { name: 'KG-Veg Kolhapuri', qty: 2.00, unitMode: 'kg', weightKg: 2.00, price: 900, pricePerKg: 900 },
+          { name: 'Kg-Steamed Basmati Rice', qty: 2.50, unitMode: 'kg', weightKg: 2.50, price: 900, pricePerKg: 900 },
+          { name: 'Transport Services', qty: 1.00, unitMode: 'portion', price: 500 },
         ],
       },
     };
@@ -217,6 +222,7 @@ export function PosApp() {
   // View Titles
   const viewMeta = {
     tables: { title: 'Tables & Floor', subtitle: 'Live floor plan — tap a table to start or resume order' },
+    orders: { title: 'All Orders Desk', subtitle: 'Manage, edit, cancel, pay, and track all live, pending, and past dining orders' },
     pos: { title: 'Order Desk', subtitle: 'Build the order, add items, and fire to the kitchen' },
     kot: { title: 'Kitchen Display (KOT)', subtitle: 'Live 4-column kanban grouped by station & elapsed time' },
     billing: { title: 'Billing & Register', subtitle: 'Generated invoices, printable receipts, and payment settlements' },
@@ -307,6 +313,32 @@ export function PosApp() {
 
     if (pendingLines.length === 0) return;
 
+    // Check if an active KOT already exists for this order
+    const existingActiveKotId = (ord.kotIds || []).find(id => kots[id] && kots[id].status !== 'served' && kots[id].status !== 'cancelled');
+    if (existingActiveKotId && kots[existingActiveKotId]) {
+      const activeKot = { ...kots[existingActiveKotId] };
+      activeKot.round = (activeKot.round || 1) + 1;
+      const newItems = pendingLines.map(([, line]) => ({
+        name: line.name,
+        qty: line.qty - (line.sentQty || 0),
+        round: activeKot.round,
+        note: line.note || ord.instructions || ""
+      }));
+      activeKot.items = [...activeKot.items, ...newItems];
+      if (ord.instructions) {
+        activeKot.chefNote = activeKot.chefNote ? `${activeKot.chefNote} • [R${activeKot.round}]: ${ord.instructions}` : ord.instructions;
+      }
+      if (activeKot.status === 'ready') activeKot.status = 'preparing';
+
+      pendingLines.forEach(([k]) => {
+        ord.items[k].sentQty = ord.items[k].qty;
+      });
+
+      setKots({ ...kots, [existingActiveKotId]: activeKot });
+      setOrders({ ...orders, [currentOrderId]: ord });
+      return;
+    }
+
     const nextKotNum = seq.kot + 1;
     setSeq({ ...seq, kot: nextKotNum });
     const kotId = `KOT${String(nextKotNum).padStart(3, '0')}`;
@@ -320,10 +352,14 @@ export function PosApp() {
       tableLabel,
       type: ord.type,
       status: 'new',
+      round: 1,
+      chefNote: ord.instructions || null,
       createdAt: Date.now(),
       items: pendingLines.map(([, line]) => ({
         name: line.name,
         qty: line.qty - (line.sentQty || 0),
+        round: 1,
+        note: line.note || ""
       })),
     };
 
@@ -348,39 +384,58 @@ export function PosApp() {
 
     let sub = 0;
     Object.values(ord.items || {}).forEach((i) => (sub += i.price * i.qty));
-    let disc = ord.discountVal > 0 ? (ord.discountType === 'pct' ? sub * (ord.discountVal / 100) : Math.min(ord.discountVal, sub)) : 0;
-    const taxable = Math.max(sub - disc, 0);
-    const cgst = taxable * 0.025;
-    const sgst = taxable * 0.025;
-    const total = taxable + cgst + sgst;
+    const total = sub;
+    const taxableAmount = Math.round((total / 1.05) * 100) / 100;
+    const cgst = Math.round((taxableAmount * 0.025) * 100) / 100;
+    const sgst = Math.round((taxableAmount * 0.025) * 100) / 100;
 
     if (!inv) {
-      const nextInvNum = seq.inv + 1;
+      const hasKg = Object.values(ord.items || {}).some(i => i.unitMode === 'kg');
+      const nextInvNum = (seq.inv || 68) + 1;
       setSeq({ ...seq, inv: nextInvNum });
-      const invId = `INV${String(nextInvNum).padStart(3, '0')}`;
+      const prefix = hasKg ? 'KTA-KG' : 'KTA';
+      const invId = `${prefix}/${String(nextInvNum).padStart(5, '0')}/26-27`;
 
       inv = {
         id: invId,
         orderId: ord.id,
         type: ord.type,
         tableLabel,
-        customerName: ord.customerName,
-        customerPhone: ord.customerPhone,
-        items: Object.values(ord.items || {}).map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+        customerName: ord.customerName || 'Vijay Khorjuvekar',
+        customerPhone: ord.customerPhone || '8830768469',
+        items: Object.values(ord.items || {}).map((i) => ({ 
+          name: i.name, 
+          qty: i.qty, 
+          price: i.price, 
+          unitMode: i.unitMode, 
+          weightKg: i.weightKg, 
+          pricePerKg: i.pricePerKg,
+          addons: i.addons 
+        })),
         sub,
+        taxableAmount,
         disc,
         cgst,
         sgst,
         total,
         status: 'unpaid',
-        paymentMode: null,
+        paymentMode: 'Cash',
         createdAt: Date.now(),
       };
     } else {
       inv = {
         ...inv,
-        items: Object.values(ord.items || {}).map((i) => ({ name: i.name, qty: i.qty, price: i.price })),
+        items: Object.values(ord.items || {}).map((i) => ({ 
+          name: i.name, 
+          qty: i.qty, 
+          price: i.price, 
+          unitMode: i.unitMode, 
+          weightKg: i.weightKg, 
+          pricePerKg: i.pricePerKg,
+          addons: i.addons 
+        })),
         sub,
+        taxableAmount,
         disc,
         cgst,
         sgst,
@@ -451,21 +506,46 @@ export function PosApp() {
     );
   };
 
-  const handleCancelOrder = (orderId) => {
+  const handleCancelOrder = (orderId, reason) => {
     const o = orders[orderId];
     if (!o) return;
-    if (confirm(`Cancel ${o.id}? Any unserved tickets will be cleared.`)) {
-      if (o.tableId) {
-        setTables(tables.map((t) => (t.id === o.tableId ? { ...t, status: 'available', orderId: null } : t)));
-      }
-      const updated = { ...orders };
-      delete updated[orderId];
-      setOrders(updated);
-      if (currentOrderId === orderId) {
-        setCurrentOrderId(null);
-        setActiveView('tables');
-      }
+    const userReason = reason || prompt(`Cancel ${o.id}? Please enter reason:`, 'Customer cancelled / Voided');
+    if (userReason === null) return;
+    if (o.tableId) {
+      setTables(tables.map((t) => (t.id === o.tableId ? { ...t, status: 'available', orderId: null, isPending: false } : t)));
     }
+    const cancelledRecord = {
+      ...o,
+      status: 'cancelled',
+      cancelReason: userReason || 'Cancelled by operator',
+      cancelledAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setCancelledOrders((prev) => [cancelledRecord, ...prev]);
+
+    const updated = { ...orders };
+    delete updated[orderId];
+    setOrders(updated);
+    if (currentOrderId === orderId) {
+      setCurrentOrderId(null);
+      setActiveView('orders');
+    }
+  };
+
+  const handleSavePending = (orderId) => {
+    const targetId = orderId || currentOrderId;
+    const o = orders[targetId];
+    if (!o) return;
+    setOrders({
+      ...orders,
+      [targetId]: { ...o, status: 'pending' },
+    });
+    if (o.tableId) {
+      setTables(
+        tables.map((t) => (t.id === o.tableId ? { ...t, isPending: true } : t))
+      );
+    }
+    alert(`Order ${o.id} marked as Pending / On Hold.`);
+    setActiveView('orders');
   };
 
   const handleMoveKotStatus = (kotId, targetStatus) => {
@@ -676,6 +756,34 @@ export function PosApp() {
             />
           )}
 
+          {activeView === 'orders' && (
+            <OrdersView
+              orders={orders}
+              tables={tables}
+              floors={floors}
+              invoices={invoices}
+              cancelledOrders={cancelledOrders}
+              onEditOrder={(orderId) => {
+                setCurrentOrderId(orderId);
+                setActiveView('pos');
+              }}
+              onPayOrder={(orderId) => {
+                const o = orders[orderId];
+                if (o) {
+                  setCurrentOrderId(orderId);
+                  handleGenerateInvoice();
+                }
+              }}
+              onCancelOrder={(orderId) => handleCancelOrder(orderId)}
+              onPrintOrder={() => {
+                window.print();
+              }}
+              onCreateNewOrder={() => {
+                handleStartOrder('dine-in');
+              }}
+            />
+          )}
+
           {activeView === 'pos' && (
             <OrderDeskView
               order={currentOrderId ? orders[currentOrderId] : null}
@@ -691,6 +799,7 @@ export function PosApp() {
                 setVariantModalOpen(true);
               }}
               onSendKot={handleSendKot}
+              onSavePending={() => handleSavePending(currentOrderId)}
               onGenerateInvoice={handleGenerateInvoice}
               onClearUnsent={() => {
                 if (currentOrderId && orders[currentOrderId]) {
@@ -710,6 +819,19 @@ export function PosApp() {
                   setOrders({
                     ...orders,
                     [currentOrderId]: { ...orders[currentOrderId], discountType: type, discountVal: val },
+                  });
+                }
+              }}
+              onUpdateTax={(taxEnabled, taxRate, serviceChargeEnabled) => {
+                if (currentOrderId && orders[currentOrderId]) {
+                  setOrders({
+                    ...orders,
+                    [currentOrderId]: {
+                      ...orders[currentOrderId],
+                      taxEnabled,
+                      taxRate,
+                      serviceChargeEnabled,
+                    },
                   });
                 }
               }}

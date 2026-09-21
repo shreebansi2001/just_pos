@@ -47,6 +47,10 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
     e.preventDefault();
     let finalPayload = { ...formData };
     if (masterType === 'items') {
+      finalPayload.pricingType = formData.pricingType || 'portion';
+      if (formData.pricePerKg) {
+        finalPayload.pricePerKg = parseFloat(formData.pricePerKg) || 0;
+      }
       if (hasVariants) {
         const validVars = variants
           .filter((v) => v[0] && v[1] !== '')
@@ -56,7 +60,7 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
           return;
         }
         finalPayload.variants = validVars;
-        delete finalPayload.price;
+        if (formData.pricingType !== 'both') delete finalPayload.price;
       } else {
         finalPayload.price = parseFloat(finalPayload.price) || 0;
         delete finalPayload.variants;
@@ -215,6 +219,41 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
                   placeholder="e.g. Smoky, char-grilled cottage cheese"
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:border-[#017A9C]"
                 />
+              </div>
+
+              {/* Selling Basis / Pricing Type */}
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">
+                    ⚖️ Selling Basis / Pricing Unit *
+                  </label>
+                  <span className="text-[10.5px] text-gray-400">Plate, KG, or Dual</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">Pricing Mode</label>
+                    <select
+                      value={formData.pricingType || 'portion'}
+                      onChange={(e) => setFormData({ ...formData, pricingType: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs focus:outline-none focus:border-[#017A9C]"
+                    >
+                      <option value="portion">🍽️ Portion / Plate Only</option>
+                      <option value="kg">⚖️ Weight Based (Per KG)</option>
+                      <option value="both">🔄 Dual Mode (Plate &amp; KG)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">Rate / KG (₹)</label>
+                    <input
+                      type="number"
+                      value={formData.pricePerKg ?? ''}
+                      onChange={(e) => setFormData({ ...formData, pricePerKg: e.target.value })}
+                      placeholder="e.g. 750"
+                      disabled={formData.pricingType === 'portion'}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs focus:outline-none focus:border-[#017A9C] disabled:opacity-40"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2 border-t border-gray-100 dark:border-gray-800">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ArrowLeft, Trash2, Send, Receipt, Sparkles } from 'lucide-react';
+import { Search, ArrowLeft, Trash2, Send, Receipt, Sparkles, Clock, XCircle } from 'lucide-react';
 
 export function OrderDeskView({
   order,
@@ -12,9 +12,11 @@ export function OrderDeskView({
   onChangeItemQty,
   onOpenVariantModal,
   onSendKot,
+  onSavePending,
   onGenerateInvoice,
   onClearUnsent,
   onUpdateDiscount,
+  onUpdateTax,
   onUpdateCustomer
 }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,16 +58,20 @@ export function OrderDeskView({
   let discountAmount = 0;
   if (order.discountVal > 0) {
     if (order.discountType === 'pct') {
-      discountAmount = subtotal * (order.discountVal / 100);
+      discountAmount = Math.round(subtotal * (order.discountVal / 100) * 100) / 100;
     } else {
       discountAmount = Math.min(order.discountVal, subtotal);
     }
   }
 
   const taxable = Math.max(subtotal - discountAmount, 0);
-  const cgst = taxable * 0.025;
-  const sgst = taxable * 0.025;
-  const grandTotal = taxable + cgst + sgst;
+  const taxEnabled = order.taxEnabled !== false;
+  const taxRate = order.taxRate !== undefined ? Number(order.taxRate) : 5;
+  const halfTaxRate = taxRate / 2;
+  const cgst = (taxEnabled && taxRate > 0) ? Math.round(taxable * (halfTaxRate / 100) * 100) / 100 : 0;
+  const sgst = (taxEnabled && taxRate > 0) ? Math.round(taxable * (halfTaxRate / 100) * 100) / 100 : 0;
+  const serviceCharge = order.serviceChargeEnabled ? Math.round(taxable * 0.05 * 100) / 100 : 0;
+  const grandTotal = taxable + cgst + sgst + serviceCharge;
 
   const hasPendingKot = cartLines.some(([, line]) => (line.qty || 0) > (line.sentQty || 0));
   const hasItems = cartLines.length > 0;
@@ -203,15 +209,25 @@ export function OrderDeskView({
 
                   <div className="mt-3 pt-2 flex items-center justify-between">
                     <span className="text-sm font-extrabold text-gray-900 dark:text-white">
-                      {item.variants ? `from ${formatMoney(item.variants[0][1])}` : formatMoney(item.price)}
+                      {item.pricingType === 'kg'
+                        ? `${formatMoney(item.pricePerKg || item.price)} / Kg`
+                        : item.pricingType === 'both'
+                        ? `${formatMoney(item.price)} / Pl · ${formatMoney(item.pricePerKg)} / Kg`
+                        : item.variants
+                        ? `from ${formatMoney(item.variants[0][1])}`
+                        : formatMoney(item.price)}
                     </span>
 
-                    {item.variants ? (
+                    {item.variants || item.pricingType === 'kg' || item.pricingType === 'both' || item.pricePerKg ? (
                       <button
                         onClick={() => onOpenVariantModal(item)}
-                        className="px-3 py-1 rounded-lg bg-[#017A9C]/10 text-[#017A9C] hover:bg-[#017A9C] hover:text-white text-xs font-bold transition-colors"
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                          item.pricingType === 'kg'
+                            ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white'
+                            : 'bg-[#017A9C]/10 text-[#017A9C] hover:bg-[#017A9C] hover:text-white'
+                        }`}
                       >
-                        Select Size
+                        {item.pricingType === 'kg' ? '⚖️ Weight' : item.pricingType === 'both' ? '⚙️ Plate / KG' : 'Select Size'}
                       </button>
                     ) : qty > 0 ? (
                       <div className="flex items-center gap-2 bg-[#017A9C] text-white rounded-lg px-2 py-0.5">
@@ -317,34 +333,167 @@ export function OrderDeskView({
               <span className="font-semibold text-gray-900 dark:text-white">{formatMoney(subtotal)}</span>
             </div>
 
-            {/* Discount Row */}
-            <div className="flex items-center gap-2 py-1">
-              <select
-                value={order.discountType || 'pct'}
-                onChange={(e) => onUpdateDiscount(e.target.value, order.discountVal)}
-                className="px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs focus:outline-none"
-              >
-                <option value="pct">Discount %</option>
-                <option value="flat">Discount ₹</option>
-              </select>
-              <input
-                type="number"
-                min="0"
-                value={order.discountVal || 0}
-                onChange={(e) => onUpdateDiscount(order.discountType, parseFloat(e.target.value) || 0)}
-                className="w-16 px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs focus:outline-none"
-              />
-              <span className="ml-auto text-emerald-600 font-semibold">−{formatMoney(discountAmount)}</span>
+            {/* Discount Section */}
+            <div className="p-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-100 dark:border-gray-700/60 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-gray-700 dark:text-gray-200 flex items-center gap-1 text-[11px]">
+                  🏷️ Discount
+                </span>
+                {discountAmount > 0 && (
+                  <span className="text-emerald-600 font-bold text-[11px]">−{formatMoney(discountAmount)}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <select
+                  value={order.discountType || 'pct'}
+                  onChange={(e) => onUpdateDiscount(e.target.value, order.discountVal || 0)}
+                  className="px-1.5 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[11px] font-semibold focus:outline-none"
+                >
+                  <option value="pct">% Off</option>
+                  <option value="flat">₹ Flat</option>
+                </select>
+                <input
+                  type="number"
+                  min="0"
+                  value={order.discountVal || 0}
+                  onChange={(e) => onUpdateDiscount(order.discountType || 'pct', parseFloat(e.target.value) || 0)}
+                  className="w-14 px-1.5 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[11px] font-semibold text-right focus:outline-none"
+                />
+                <div className="flex gap-1">
+                  {[5, 10, 15].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => onUpdateDiscount('pct', p)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-all ${
+                        order.discountType === 'pct' && order.discountVal === p
+                          ? 'bg-[#017A9C] text-white border-[#017A9C]'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-[#017A9C]'
+                      }`}
+                    >
+                      {p}%
+                    </button>
+                  ))}
+                  {[50, 100].map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => onUpdateDiscount('flat', f)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-all ${
+                        order.discountType === 'flat' && order.discountVal === f
+                          ? 'bg-[#017A9C] text-white border-[#017A9C]'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-[#017A9C]'
+                      }`}
+                    >
+                      ₹{f}
+                    </button>
+                  ))}
+                </div>
+                {order.discountVal > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateDiscount('pct', 0)}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100"
+                    title="Remove Discount"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-between">
-              <span>CGST (2.5%)</span>
-              <span>{formatMoney(cgst)}</span>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-gray-500 text-[11px]">
+                <span>Taxable Amount</span>
+                <span>{formatMoney(taxable)}</span>
+              </div>
+            )}
+
+            {/* Tax Section (Add / Remove Tax & Charges) */}
+            <div className="p-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-100 dark:border-gray-700/60 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="font-bold text-gray-700 dark:text-gray-200 flex items-center gap-1.5 cursor-pointer text-[11px]">
+                  <input
+                    type="checkbox"
+                    checked={order.taxEnabled !== false}
+                    onChange={(e) => onUpdateTax && onUpdateTax(e.target.checked, order.taxRate ?? 5, !!order.serviceChargeEnabled)}
+                    className="rounded text-[#017A9C] focus:ring-0 cursor-pointer"
+                  />
+                  <span>Apply Taxes</span>
+                </label>
+                <div className="flex items-center gap-1">
+                  <select
+                    value={order.taxRate ?? 5}
+                    onChange={(e) => onUpdateTax && onUpdateTax(true, parseFloat(e.target.value) || 0, !!order.serviceChargeEnabled)}
+                    className="px-1 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[10px] font-semibold"
+                  >
+                    <option value="5">5% GST</option>
+                    <option value="12">12% GST</option>
+                    <option value="18">18% GST</option>
+                    <option value="0">0% Exempt</option>
+                  </select>
+                  {order.taxEnabled !== false && (order.taxRate ?? 5) > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateTax && onUpdateTax(false, order.taxRate ?? 5, !!order.serviceChargeEnabled)}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100"
+                      title="Remove Tax"
+                    >
+                      ✕ Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateTax && onUpdateTax(true, 5, !!order.serviceChargeEnabled)}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100"
+                      title="Add Tax"
+                    >
+                      + Add Tax
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Service Charge (5%) */}
+              <div className="flex items-center justify-between pt-1 border-t border-dashed border-gray-200 dark:border-gray-700 text-[10.5px]">
+                <label className="text-gray-500 dark:text-gray-400 flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!order.serviceChargeEnabled}
+                    onChange={(e) => onUpdateTax && onUpdateTax(order.taxEnabled !== false, order.taxRate ?? 5, e.target.checked)}
+                    className="rounded text-[#017A9C] focus:ring-0 cursor-pointer"
+                  />
+                  <span>Service Charge (5%)</span>
+                </label>
+                <span>{formatMoney(serviceCharge)}</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span>SGST (2.5%)</span>
-              <span>{formatMoney(sgst)}</span>
-            </div>
+
+            {order.taxEnabled !== false && (order.taxRate ?? 5) > 0 ? (
+              <>
+                <div className="flex justify-between">
+                  <span>CGST ({((order.taxRate ?? 5) / 2).toFixed(1)}%)</span>
+                  <span>{formatMoney(cgst)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SGST ({((order.taxRate ?? 5) / 2).toFixed(1)}%)</span>
+                  <span>{formatMoney(sgst)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-red-600 italic">
+                <span>Taxes (Removed / Exempt)</span>
+                <span>₹0.00</span>
+              </div>
+            )}
+
+            {order.serviceChargeEnabled && (
+              <div className="flex justify-between text-gray-600 dark:text-gray-300">
+                <span>Service Charge (5%)</span>
+                <span>{formatMoney(serviceCharge)}</span>
+              </div>
+            )}
+
             <div className="flex justify-between text-sm font-extrabold text-gray-900 dark:text-white pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
               <span>Total Payable</span>
               <span className="text-[#017A9C]">{formatMoney(grandTotal)}</span>
@@ -353,26 +502,42 @@ export function OrderDeskView({
 
           {/* Action Triggers */}
           <div className="p-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-            <button
-              onClick={onSendKot}
-              disabled={!hasPendingKot}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#017A9C] hover:bg-[#016582] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Send to kitchen (KOT)
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onSavePending}
+                className="flex-1 py-2.5 px-3 rounded-xl border border-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:border-amber-600 text-amber-800 dark:text-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                title="Save order in Pending status without sending to kitchen"
+              >
+                <Clock className="w-3.5 h-3.5" /> Save as Pending
+              </button>
+              <button
+                onClick={onSendKot}
+                disabled={!hasPendingKot}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-[#017A9C] hover:bg-[#016582] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Send to KOT
+              </button>
+            </div>
 
             <div className="flex gap-2">
               <button
-                onClick={onClearUnsent}
-                className="flex-1 py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100"
+                onClick={onCancelOrderClick}
+                className="py-2 px-3 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:border-red-800 text-xs font-bold text-red-700 dark:text-red-300 flex items-center justify-center gap-1"
+                title="Cancel this order"
               >
-                Clear Unsent
+                <XCircle className="w-3.5 h-3.5" /> Cancel
+              </button>
+              <button
+                onClick={onClearUnsent}
+                className="py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100"
+              >
+                Clear
               </button>
               <button
                 onClick={onGenerateInvoice}
                 disabled={!canInvoice}
-                className="flex-1 py-2 px-3 rounded-lg bg-[#017A9C] hover:bg-[#016582] text-white text-xs font-bold shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 <Receipt className="w-3.5 h-3.5" /> Generate Invoice
               </button>
