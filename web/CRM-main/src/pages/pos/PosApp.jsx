@@ -27,6 +27,33 @@ export function PosApp() {
   const [floors, setFloors] = useState(initialPosSeed.floors);
   const [tables, setTables] = useState(initialPosSeed.tables);
   const [taxes, setTaxes] = useState(initialPosSeed.taxes || []);
+  const [roles, setRoles] = useState(initialPosSeed.roles || []);
+  const [staffUsers, setStaffUsers] = useState(initialPosSeed.staffUsers || []);
+  const [currentUserId, setCurrentUserId] = useState(initialPosSeed.staffUsers?.[0]?.id || 'USR01');
+
+  const currentUser = staffUsers.find((u) => u.id === currentUserId) || staffUsers[0];
+  const currentRole = roles.find((r) => r.id === currentUser?.roleId) || roles[0];
+  const userPermissions = currentRole?.permissions || [];
+
+  const handleSwitchUser = (newUserId) => {
+    setCurrentUserId(newUserId);
+    const targetUser = staffUsers.find((u) => u.id === newUserId);
+    const targetRole = roles.find((r) => r.id === targetUser?.roleId);
+    if (targetRole) {
+      const perms = targetRole.permissions || [];
+      const permKey = activeView === 'pos' ? 'view_pos' : `view_${activeView}`;
+      if (!perms.includes(permKey)) {
+        if (targetRole.roleCode === 'KITCHEN' && perms.includes('view_kot')) {
+          setActiveView('kot');
+        } else {
+          const firstAllowed = ['tables', 'orders', 'pos', 'kot', 'billing', 'reservations', 'masters'].find(
+            (v) => perms.includes(v === 'pos' ? 'view_pos' : `view_${v}`)
+          );
+          if (firstAllowed) setActiveView(firstAllowed);
+        }
+      }
+    }
+  };
 
   const [orders, setOrders] = useState({});
   const [cancelledOrders, setCancelledOrders] = useState([]);
@@ -685,6 +712,18 @@ export function PosApp() {
       } else {
         setTaxes([...taxes, { ...data, id: `TAX${Date.now()}` }]);
       }
+    } else if (type === 'roles') {
+      if (data.id) {
+        setRoles(roles.map((r) => (r.id === data.id ? { ...r, ...data } : r)));
+      } else {
+        setRoles([...roles, { ...data, id: `ROL${Date.now()}` }]);
+      }
+    } else if (type === 'users') {
+      if (data.id) {
+        setStaffUsers(staffUsers.map((u) => (u.id === data.id ? { ...u, ...data } : u)));
+      } else {
+        setStaffUsers([...staffUsers, { ...data, id: `USR${Date.now()}` }]);
+      }
     }
   };
 
@@ -694,6 +733,8 @@ export function PosApp() {
     if (type === 'floors') setFloors(floors.map((f) => (f.id === id ? { ...f, active: !f.active } : f)));
     if (type === 'tables') setTables(tables.map((t) => (t.id === id ? { ...t, active: !t.active } : t)));
     if (type === 'taxes') setTaxes(taxes.map((tx) => (tx.id === id ? { ...tx, active: !tx.active } : tx)));
+    if (type === 'roles') setRoles(roles.map((r) => (r.id === id ? { ...r, active: !r.active } : r)));
+    if (type === 'users') setStaffUsers(staffUsers.map((u) => (u.id === id ? { ...u, active: !u.active } : u)));
   };
 
   const handleDeleteMaster = (type, id) => {
@@ -703,6 +744,8 @@ export function PosApp() {
       if (type === 'floors') setFloors(floors.filter((f) => f.id !== id));
       if (type === 'tables') setTables(tables.filter((t) => t.id !== id));
       if (type === 'taxes') setTaxes(taxes.filter((tx) => tx.id !== id));
+      if (type === 'roles') setRoles(roles.filter((r) => r.id !== id));
+      if (type === 'users') setStaffUsers(staffUsers.filter((u) => u.id !== id));
     }
   };
 
@@ -716,6 +759,7 @@ export function PosApp() {
         resBadgeCount={upcomingResTodayCount}
         isDark={isDark}
         onToggleTheme={toggleTheme}
+        userPermissions={userPermissions}
       />
 
       {/* Main Content Area */}
@@ -723,6 +767,11 @@ export function PosApp() {
         <PosTopbar
           title={viewMeta[activeView]?.title}
           subtitle={viewMeta[activeView]?.subtitle}
+          currentUser={currentUser}
+          currentRole={currentRole}
+          staffUsers={staffUsers}
+          roles={roles}
+          onSwitchUser={handleSwitchUser}
           stats={{
             freeTables: freeTablesCount,
             inUseTables: inUseTablesCount,
@@ -898,6 +947,10 @@ export function PosApp() {
               floors={floors}
               tables={tables}
               taxes={taxes}
+              roles={roles}
+              staffUsers={staffUsers}
+              currentUserId={currentUserId}
+              onSwitchUser={handleSwitchUser}
               onOpenAddModal={(type) => {
                 setActiveMasterType(type);
                 setEditingMasterItem(null);
@@ -954,6 +1007,7 @@ export function PosApp() {
         categories={categories}
         floors={floors}
         tables={tables}
+        roles={roles}
         onSave={handleSaveMaster}
       />
 

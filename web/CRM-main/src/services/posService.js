@@ -68,7 +68,126 @@ export const initialPosSeed = {
     { id: 'TAX03', taxName: 'IGST', percentage: 5.0, active: true },
     { id: 'TAX04', taxName: 'Service Tax', percentage: 5.0, active: false },
   ],
+  roles: [
+    {
+      id: 'ROL01',
+      roleName: 'Admin / Owner',
+      roleCode: 'ADMIN',
+      description: 'Full system access to all POS modules, financial reports, and masters configuration.',
+      permissions: [
+        'view_tables', 'view_orders', 'view_pos', 'view_kot', 'view_reservations', 'view_billing', 'view_masters',
+        'can_apply_discount', 'can_exempt_tax', 'can_cancel_order', 'can_modify_masters'
+      ],
+      active: true,
+      isSystem: true
+    },
+    {
+      id: 'ROL02',
+      roleName: 'Kitchen Manager / Chef',
+      roleCode: 'KITCHEN',
+      description: 'Kitchen display screen only (KOT Kanban). Restricted from viewing sales, billing, tables, and masters.',
+      permissions: ['view_kot'],
+      active: true,
+      isSystem: true
+    },
+    {
+      id: 'ROL03',
+      roleName: 'Cashier / Billing Staff',
+      roleCode: 'CASHIER',
+      description: 'Billing settlements, POS order taking, invoices, and table views. No access to masters or admin settings.',
+      permissions: ['view_tables', 'view_orders', 'view_pos', 'view_billing', 'can_apply_discount', 'can_exempt_tax'],
+      active: true,
+      isSystem: true
+    },
+    {
+      id: 'ROL04',
+      roleName: 'Waiter / Captain',
+      roleCode: 'CAPTAIN',
+      description: 'Table floor layout, order entry, and punching KOTs. Cannot settle bills or change master data.',
+      permissions: ['view_tables', 'view_orders', 'view_pos'],
+      active: true,
+      isSystem: true
+    },
+    {
+      id: 'ROL05',
+      roleName: 'Store Manager',
+      roleCode: 'MANAGER',
+      description: 'Operations oversight: tables, orders, KOTs, billing, reservations, and inventory masters.',
+      permissions: [
+        'view_tables', 'view_orders', 'view_pos', 'view_kot', 'view_reservations', 'view_billing', 'view_masters',
+        'can_apply_discount', 'can_exempt_tax', 'can_cancel_order'
+      ],
+      active: true,
+      isSystem: true
+    }
+  ],
+  staffUsers: [
+    {
+      id: 'USR01',
+      name: 'Saffron Admin',
+      userCode: 'JC-ADM-01',
+      email: 'admin@justcatering.in',
+      phone: '+91 98765 43210',
+      roleId: 'ROL01',
+      pin: '9999',
+      active: true
+    },
+    {
+      id: 'USR02',
+      name: 'Ramesh Sharma (Head Chef)',
+      userCode: 'JC-KTC-01',
+      email: 'chef.ramesh@justcatering.in',
+      phone: '+91 98765 11111',
+      roleId: 'ROL02',
+      pin: '1234',
+      active: true
+    },
+    {
+      id: 'USR03',
+      name: 'Pooja Patel (Cashier)',
+      userCode: 'JC-POS-01',
+      email: 'cashier@justcatering.in',
+      phone: '+91 98765 22222',
+      roleId: 'ROL03',
+      pin: '0000',
+      active: true
+    },
+    {
+      id: 'USR04',
+      name: 'Vikram Singh (Captain)',
+      userCode: 'JC-SRV-01',
+      email: 'captain@justcatering.in',
+      phone: '+91 98765 33333',
+      roleId: 'ROL04',
+      pin: '5555',
+      active: true
+    },
+    {
+      id: 'USR05',
+      name: 'Sunil Verma (Store Mgr)',
+      userCode: 'JC-MGR-01',
+      email: 'manager@justcatering.in',
+      phone: '+91 98765 44444',
+      roleId: 'ROL05',
+      pin: '8888',
+      active: true
+    }
+  ]
 };
+
+export const ALL_POS_PERMISSIONS = [
+  { id: 'view_tables', label: 'Tables Floor View', category: 'Navigation / Screen Rights', desc: 'View table map, occupancy, and seated guests' },
+  { id: 'view_orders', label: 'All Orders List', category: 'Navigation / Screen Rights', desc: 'View active, completed, and takeaway orders list' },
+  { id: 'view_pos', label: 'New Order / POS Desk', category: 'Navigation / Screen Rights', desc: 'Punch new orders, customize dishes, send KOT' },
+  { id: 'view_kot', label: 'KOT Live Kitchen Board', category: 'Navigation / Screen Rights', desc: 'View kitchen tickets, mark items cooking/ready' },
+  { id: 'view_reservations', label: 'Table Reservations', category: 'Navigation / Screen Rights', desc: 'Book, hold, and manage upcoming dining reservations' },
+  { id: 'view_billing', label: 'Billing & Settlements', category: 'Navigation / Screen Rights', desc: 'Settle orders, collect payment, generate tax invoices' },
+  { id: 'view_masters', label: 'System Masters', category: 'Navigation / Screen Rights', desc: 'Manage Categories, Items, Floors, Tables, Taxes, Roles & Staff' },
+  { id: 'can_apply_discount', label: 'Apply Cart Discounts', category: 'Operational Rights', desc: 'Permit cashier/waiter to give % or ₹ discounts' },
+  { id: 'can_exempt_tax', label: 'Tax Exemption', category: 'Operational Rights', desc: 'Permit 1-click tax exemption for duty-free/special orders' },
+  { id: 'can_cancel_order', label: 'Cancel / Void Order', category: 'Operational Rights', desc: 'Permit voiding active orders or deleting billed items' },
+  { id: 'can_modify_masters', label: 'Modify Master Rules', category: 'Operational Rights', desc: 'Add/edit items, tax slabs, roles, and staff records' }
+];
 
 export const posApi = {
   getStats: () => GET('/pos/stats').catch(() => null),

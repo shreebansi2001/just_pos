@@ -1010,11 +1010,73 @@
     background: #fee2e2 !important; color: #b91c1c !important;
   }
   .operator-chip {
-    cursor: pointer; transition: all .15s;
+    cursor: pointer; transition: all .15s; position: relative; user-select: none;
   }
   .operator-chip:hover {
-    border-color: var(--primary);
+    border-color: var(--primary); box-shadow: var(--shadow-sm);
   }
+  .op-role-pill {
+    background: var(--primary); color: #fff; padding: 2px 7px; border-radius: 10px;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .op-role-pill.kitchen { background: #d97706; }
+  .op-role-pill.cashier { background: #0284c7; }
+  .op-role-pill.waiter { background: #059669; }
+  .op-role-pill.manager { background: #7c3aed; }
+  .op-role-pill.admin { background: #017A9C; }
+
+  /* Operator Switcher Dropdown */
+  .operator-dropdown-menu {
+    position: absolute; top: calc(100% + 8px); right: 0; width: 290px;
+    background: var(--panel); border: 1.5px solid var(--line); border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18); z-index: 1000; overflow: hidden;
+    animation: fadeInSlide .15s ease-out;
+  }
+  .operator-dropdown-header {
+    padding: 10px 14px; background: var(--surface-subtle); border-bottom: 1px solid var(--line);
+    font-size: 11px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .operator-dropdown-list {
+    max-height: 280px; overflow-y: auto; padding: 6px 0;
+  }
+  .operator-user-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 14px; cursor: pointer; transition: all .12s; border-left: 3px solid transparent;
+  }
+  .operator-user-item:hover {
+    background: var(--primary-tint); border-left-color: var(--primary);
+  }
+  .operator-user-item.active {
+    background: var(--primary-tint); border-left-color: var(--primary); font-weight: 700;
+  }
+  .operator-user-info { display: flex; flex-direction: column; gap: 1px; }
+  .operator-user-name { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+  .operator-user-meta { font-size: 10.5px; color: var(--ink-soft); }
+
+  /* Permission Matrix styling in modal */
+  .perm-group-box {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; margin-bottom: 12px;
+  }
+  .perm-group-title {
+    font-size: 11.5px; font-weight: 800; color: var(--ink); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .perm-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;
+  }
+  .perm-item-label {
+    display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line-soft); cursor: pointer; transition: all .12s;
+  }
+  .perm-item-label:hover { border-color: var(--primary); background: var(--surface-subtle); }
+  .perm-item-label input[type="checkbox"] {
+    margin-top: 2px; accent-color: var(--primary); cursor: pointer;
+  }
+  .perm-item-text { display: flex; flex-direction: column; }
+  .perm-item-name { font-size: 11.5px; font-weight: 700; color: var(--ink); }
+  .perm-item-desc { font-size: 10px; color: var(--ink-soft); }
 
   /* Order Slip Chef Notes & Instructions */
   .cart-item-note-row {
@@ -1535,14 +1597,20 @@
 
         <!-- Quick Profile / Role Selector Pills -->
         <div class="login-role-pills">
-          <button type="button" class="role-pill-btn active" data-login-role="cashier">
+          <button type="button" class="role-pill-btn active" data-login-role="admin">
+            <span>👑</span> Admin
+          </button>
+          <button type="button" class="role-pill-btn" data-login-role="kitchen">
+            <span>👨‍🍳</span> Kitchen Chef
+          </button>
+          <button type="button" class="role-pill-btn" data-login-role="cashier">
             <span>👤</span> Cashier
           </button>
           <button type="button" class="role-pill-btn" data-login-role="manager">
             <span>👔</span> Manager
           </button>
           <button type="button" class="role-pill-btn" data-login-role="waiter">
-            <span>🧑‍🍳</span> Waiter / Captain
+            <span>🧑‍💼</span> Captain
           </button>
         </div>
 
@@ -1655,9 +1723,21 @@
         <div class="stat-chip"><b id="statTablesFree">0</b> tables free</div>
         <div class="stat-chip"><b id="statActiveKots">0</b> active KOTs</div>
         <div class="stat-chip primary"><b id="statTodaySales">₹0.00</b> sales today</div>
-        <div class="stat-chip operator-chip" id="topbarOperatorChip" title="Active POS Operator">
-          <span>👤</span> <b id="topbarOperatorName">Cashier</b>
-          <span style="color:var(--danger);font-size:11px;font-weight:700;margin-left:4px;cursor:pointer;" id="topbarLogoutBtn">Logout</span>
+        <div style="position:relative;">
+          <div class="stat-chip operator-chip" id="topbarOperatorChip" title="Click to switch operator or role">
+            <span>👤</span> <b id="topbarOperatorName">Admin</b>
+            <span id="topbarRoleBadge" class="op-role-pill admin">ADMIN</span>
+            <span style="font-size:10px;opacity:0.7;">▼</span>
+            <span style="color:var(--danger);font-size:11px;font-weight:700;margin-left:6px;cursor:pointer;" id="topbarLogoutBtn" title="Lock POS">Logout</span>
+          </div>
+          <!-- Dropdown menu for instant operator/role switching -->
+          <div id="operatorDropdownMenu" class="operator-dropdown-menu" style="display:none;">
+            <div class="operator-dropdown-header">
+              <span>Switch Operator / Role</span>
+              <span id="closeOperatorDropdownBtn" style="cursor:pointer;font-size:13px;padding:0 4px;">✕</span>
+            </div>
+            <div id="operatorDropdownList" class="operator-dropdown-list"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1982,6 +2062,8 @@
         <button class="cat-tab" data-master="floors">Floor Master</button>
         <button class="cat-tab" data-master="tables">Table Master</button>
         <button class="cat-tab" data-master="taxes">Tax Master</button>
+        <button class="cat-tab" data-master="roles">Roles &amp; Rights</button>
+        <button class="cat-tab" data-master="users">Staff Master</button>
       </div>
 
       <div class="master-stats-grid" id="masterStatsContainer"></div>
@@ -2673,6 +2755,173 @@
   };
 
   // =========================================================================
+  // DYNAMIC ROLES, PERMISSIONS & STAFF USERS
+  // =========================================================================
+  const ALL_PERMISSIONS = [
+    { id: "view_tables", label: "Tables Floor View", category: "Navigation / Screen Rights", desc: "View table map, occupancy, and seated guests" },
+    { id: "view_orders", label: "All Orders List", category: "Navigation / Screen Rights", desc: "View active, completed, and takeaway orders list" },
+    { id: "view_pos", label: "New Order / POS Desk", category: "Navigation / Screen Rights", desc: "Punch new orders, customize dishes, send KOT" },
+    { id: "view_kot", label: "KOT Live Kitchen Board", category: "Navigation / Screen Rights", desc: "View kitchen tickets, mark items cooking/ready" },
+    { id: "view_reservations", label: "Table Reservations", category: "Navigation / Screen Rights", desc: "Book, hold, and manage upcoming dining reservations" },
+    { id: "view_billing", label: "Billing & Settlements", category: "Navigation / Screen Rights", desc: "Settle orders, collect payment, generate tax invoices" },
+    { id: "view_masters", label: "System Masters", category: "Navigation / Screen Rights", desc: "Manage Categories, Items, Floors, Tables, Taxes, Roles & Staff" },
+    
+    { id: "can_apply_discount", label: "Apply Cart Discounts", category: "Operational Rights", desc: "Permit cashier/waiter to give % or ₹ discounts" },
+    { id: "can_exempt_tax", label: "Tax Exemption", category: "Operational Rights", desc: "Permit 1-click tax exemption for duty-free/special orders" },
+    { id: "can_cancel_order", label: "Cancel / Void Order", category: "Operational Rights", desc: "Permit voiding active orders or deleting billed items" },
+    { id: "can_modify_masters", label: "Modify Master Rules", category: "Operational Rights", desc: "Add/edit items, tax slabs, roles, and staff records" }
+  ];
+
+  let roles = [
+    {
+      id: 1,
+      roleName: "Admin / Owner",
+      roleCode: "ADMIN",
+      description: "Full system access to all POS modules, financial reports, and masters configuration.",
+      permissions: [
+        "view_tables", "view_orders", "view_pos", "view_kot", "view_reservations", "view_billing", "view_masters",
+        "can_apply_discount", "can_exempt_tax", "can_cancel_order", "can_modify_masters"
+      ],
+      status: "active",
+      isSystem: true
+    },
+    {
+      id: 2,
+      roleName: "Kitchen Manager / Chef",
+      roleCode: "KITCHEN",
+      description: "Kitchen display screen only (KOT Kanban). Restricted from viewing sales, billing, tables, and masters.",
+      permissions: [
+        "view_kot"
+      ],
+      status: "active",
+      isSystem: true
+    },
+    {
+      id: 3,
+      roleName: "Cashier / Billing Staff",
+      roleCode: "CASHIER",
+      description: "Billing settlements, POS order taking, invoices, and table views. No access to masters or admin settings.",
+      permissions: [
+        "view_tables", "view_orders", "view_pos", "view_billing",
+        "can_apply_discount", "can_exempt_tax"
+      ],
+      status: "active",
+      isSystem: true
+    },
+    {
+      id: 4,
+      roleName: "Waiter / Captain",
+      roleCode: "CAPTAIN",
+      description: "Table floor layout, order entry, and punching KOTs. Cannot settle bills or change master data.",
+      permissions: [
+        "view_tables", "view_orders", "view_pos"
+      ],
+      status: "active",
+      isSystem: true
+    },
+    {
+      id: 5,
+      roleName: "Store Manager",
+      roleCode: "MANAGER",
+      description: "Operations oversight: tables, orders, KOTs, billing, reservations, and inventory masters.",
+      permissions: [
+        "view_tables", "view_orders", "view_pos", "view_kot", "view_reservations", "view_billing", "view_masters",
+        "can_apply_discount", "can_exempt_tax", "can_cancel_order"
+      ],
+      status: "active",
+      isSystem: true
+    }
+  ];
+
+  let staffUsers = [
+    {
+      id: 1,
+      name: "Saffron Admin",
+      userCode: "JC-ADM-01",
+      email: "admin@justcatering.in",
+      phone: "+91 98765 43210",
+      roleId: 1,
+      pin: "9999",
+      status: "active"
+    },
+    {
+      id: 2,
+      name: "Ramesh Sharma (Head Chef)",
+      userCode: "JC-KTC-01",
+      email: "chef.ramesh@justcatering.in",
+      phone: "+91 98765 11111",
+      roleId: 2,
+      pin: "1234",
+      status: "active"
+    },
+    {
+      id: 3,
+      name: "Pooja Patel (Cashier)",
+      userCode: "JC-POS-01",
+      email: "cashier@justcatering.in",
+      phone: "+91 98765 22222",
+      roleId: 3,
+      pin: "0000",
+      status: "active"
+    },
+    {
+      id: 4,
+      name: "Vikram Singh (Captain)",
+      userCode: "JC-SRV-01",
+      email: "captain@justcatering.in",
+      phone: "+91 98765 33333",
+      roleId: 4,
+      pin: "5555",
+      status: "active"
+    },
+    {
+      id: 5,
+      name: "Sunil Verma (Store Mgr)",
+      userCode: "JC-MGR-01",
+      email: "manager@justcatering.in",
+      phone: "+91 98765 44444",
+      roleId: 5,
+      pin: "8888",
+      status: "active"
+    }
+  ];
+
+  let currentUserId = 1; // Default to Admin
+
+  function getCurrentUser() {
+    return staffUsers.find(u => u.id === currentUserId) || staffUsers[0];
+  }
+
+  function getCurrentRole() {
+    const user = getCurrentUser();
+    return roles.find(r => r.id === user.roleId) || roles[0];
+  }
+
+  function hasPermission(permId) {
+    const role = getCurrentRole();
+    if (!role || !role.permissions) return false;
+    return role.permissions.includes(permId);
+  }
+
+  function getAllowedViews() {
+    const role = getCurrentRole();
+    if (!role || !role.permissions) return ['tables'];
+    const views = [];
+    if (role.permissions.includes('view_tables')) views.push('tables');
+    if (role.permissions.includes('view_orders')) views.push('orders');
+    if (role.permissions.includes('view_pos')) views.push('pos');
+    if (role.permissions.includes('view_kot')) views.push('kot');
+    if (role.permissions.includes('view_reservations')) views.push('reservations');
+    if (role.permissions.includes('view_billing')) views.push('billing');
+    if (role.permissions.includes('view_masters')) views.push('masters');
+    return views;
+  }
+  window.getCurrentUser = getCurrentUser;
+  window.getCurrentRole = getCurrentRole;
+  window.hasPermission = hasPermission;
+  window.getAllowedViews = getAllowedViews;
+
+  // =========================================================================
   // PERSISTENT TABLE ORDERS & SESSIONS
   // =========================================================================
   let tableOrders = {
@@ -3066,9 +3315,20 @@
   };
 
   // =========================================================================
-  // VIEW NAVIGATION & ROUTING
+  // VIEW NAVIGATION & ROUTING (WITH ROLE-BASED ACCESS GUARDS)
   // =========================================================================
   function showView(viewId) {
+    // Dynamic Role-based Access Guard
+    const permKey = viewId === "pos" ? "view_pos" : `view_${viewId}`;
+    if (!hasPermission(permKey)) {
+      const allowed = getAllowedViews();
+      if (allowed.length > 0 && !allowed.includes(viewId)) {
+        showToast(`⚠️ Access Restricted: '${getCurrentRole().roleName}' cannot access ${viewId.toUpperCase()}`);
+        showView(allowed[0]);
+        return;
+      }
+    }
+
     activeView = viewId;
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     document.querySelectorAll(".nav-btn[data-view]").forEach(b => b.classList.remove("active"));
@@ -3108,13 +3368,95 @@
       renderBilling();
     } else if (viewId === "masters") {
       document.getElementById("pageTitle").textContent = "Unified Masters";
-      document.getElementById("pageSub").textContent = "Live categories, items, floors, tables & taxes from JUST_POS_MAIN";
+      document.getElementById("pageSub").textContent = "Live categories, items, floors, tables, taxes, roles & staff members";
       renderMasters();
     }
     updateGlobalStats();
     refreshLucideIcons();
   }
   window.showView = showView;
+
+  // Enforce Navigation Access and Operator Topbar
+  function enforceRoleAccess() {
+    const user = getCurrentUser();
+    const role = getCurrentRole();
+
+    // 1. Update Topbar Operator display
+    const opNameEl = document.getElementById("topbarOperatorName");
+    if (opNameEl) opNameEl.textContent = user.name.split(" ")[0];
+
+    const opBadge = document.getElementById("topbarRoleBadge");
+    if (opBadge) {
+      opBadge.textContent = role.roleCode || role.roleName.toUpperCase();
+      opBadge.className = `op-role-pill ${role.roleCode.toLowerCase()}`;
+    }
+
+    // 2. Dynamically show/hide sidebar buttons according to permissions
+    document.querySelectorAll(".nav-btn[data-view]").forEach(btn => {
+      const view = btn.dataset.view;
+      const perm = view === "pos" ? "view_pos" : `view_${view}`;
+      if (hasPermission(perm)) {
+        btn.style.display = "flex";
+      } else {
+        btn.style.display = "none";
+      }
+    });
+
+    // 3. Check active view - if unauthorized, redirect immediately
+    const allowed = getAllowedViews();
+    if (allowed.length > 0 && !allowed.includes(activeView)) {
+      const targetView = (role.roleCode === "KITCHEN" && allowed.includes("kot")) ? "kot" : allowed[0];
+      showView(targetView);
+    }
+
+    // 4. Cart Discount & Tax Permissions
+    const discRow = document.getElementById("discountDeductionRow");
+    if (discRow && !hasPermission("can_apply_discount")) {
+      discRow.style.opacity = "0.4";
+      discRow.title = "Discount permission disabled for this role";
+    }
+
+    renderOperatorDropdown();
+  }
+  window.enforceRoleAccess = enforceRoleAccess;
+
+  function renderOperatorDropdown() {
+    const list = document.getElementById("operatorDropdownList");
+    if (!list) return;
+
+    list.innerHTML = staffUsers.map(u => {
+      const r = roles.find(ro => ro.id === u.roleId) || { roleName: "Unknown", roleCode: "USER" };
+      const isCurrent = u.id === currentUserId;
+      return `
+        <div class="operator-user-item ${isCurrent ? 'active' : ''}" data-uid="${u.id}">
+          <div class="operator-user-info">
+            <span class="operator-user-name">${u.name}</span>
+            <span class="operator-user-meta">${u.userCode} · <b>${r.roleName}</b></span>
+          </div>
+          <span class="op-role-pill ${r.roleCode.toLowerCase()}" style="font-size:9.5px;">${r.roleCode}</span>
+        </div>
+      `;
+    }).join("");
+
+    list.querySelectorAll(".operator-user-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const uid = Number(item.dataset.uid);
+        switchOperator(uid);
+        const menu = document.getElementById("operatorDropdownMenu");
+        if (menu) menu.style.display = "none";
+      });
+    });
+  }
+
+  function switchOperator(userId) {
+    const user = staffUsers.find(u => u.id === userId);
+    if (!user) return;
+    currentUserId = userId;
+    enforceRoleAccess();
+    const role = getCurrentRole();
+    showToast(`✓ Switched operator to: ${user.name} (${role.roleName})`);
+  }
+  window.switchOperator = switchOperator;
 
   document.querySelectorAll(".nav-btn[data-view]").forEach(b => {
     b.addEventListener("click", () => showView(b.dataset.view));
@@ -3166,7 +3508,15 @@
       document.querySelectorAll("[data-login-role]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       const role = btn.dataset.loginRole;
-      if (role === "cashier") {
+      if (role === "admin") {
+        document.getElementById("loginUserCode").value = "JC-ADM-01";
+        document.getElementById("loginUsername").value = "admin@justcatering.in";
+        document.getElementById("loginPassword").value = "admin9999";
+      } else if (role === "kitchen") {
+        document.getElementById("loginUserCode").value = "JC-KTC-01";
+        document.getElementById("loginUsername").value = "chef.ramesh@justcatering.in";
+        document.getElementById("loginPassword").value = "chef123";
+      } else if (role === "cashier") {
         document.getElementById("loginUserCode").value = "JC-POS-01";
         document.getElementById("loginUsername").value = "cashier@justcatering.in";
         document.getElementById("loginPassword").value = "password123";
@@ -3182,6 +3532,25 @@
       setPasswordObscurity(true);
     });
   });
+
+  // Topbar Operator Dropdown Wiring
+  const opChip = document.getElementById("topbarOperatorChip");
+  const opMenu = document.getElementById("operatorDropdownMenu");
+  if (opChip && opMenu) {
+    opChip.addEventListener("click", (e) => {
+      if (e.target && e.target.id === "topbarLogoutBtn") return;
+      opMenu.style.display = opMenu.style.display === "none" ? "block" : "none";
+    });
+    document.getElementById("closeOperatorDropdownBtn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      opMenu.style.display = "none";
+    });
+    document.addEventListener("click", (e) => {
+      if (!opChip.contains(e.target) && !opMenu.contains(e.target)) {
+        opMenu.style.display = "none";
+      }
+    });
+  }
 
   // Logout Handlers
   function handleLogout() {
@@ -3213,10 +3582,16 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         `;
       }
-      const userVal = document.getElementById("loginUsername").value.split("@")[0] || "Cashier";
-      const opNameEl = document.getElementById("topbarOperatorName");
-      if (opNameEl) opNameEl.textContent = userVal.charAt(0).toUpperCase() + userVal.slice(1);
-      showToast("✓ Terminal unlocked! Operator authenticated to Saffron POS.");
+      const codeVal = document.getElementById("loginUserCode").value.trim().toUpperCase();
+      const emailVal = document.getElementById("loginUsername").value.trim().toLowerCase();
+      const matched = staffUsers.find(u => u.userCode.toUpperCase() === codeVal || u.email.toLowerCase() === emailVal);
+      if (matched) {
+        currentUserId = matched.id;
+      }
+      enforceRoleAccess();
+      const curUser = getCurrentUser();
+      const curRole = getCurrentRole();
+      showToast(`✓ Terminal unlocked! Authenticated as ${curUser.name} (${curRole.roleName})`);
       if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
       apiClient.checkBackend();
     }, 450);
@@ -6813,7 +7188,9 @@ For any queries or updates, reply to this message.`;
     items: { title: "Item Master", addBtnLabel: "+ Add Item", searchPlaceholder: "Search dishes (Paneer, Biryani...)" },
     floors: { title: "Floor Master", addBtnLabel: "+ Add Floor", searchPlaceholder: "Search floors..." },
     tables: { title: "Table Master", addBtnLabel: "+ Add Table", searchPlaceholder: "Search tables..." },
-    taxes: { title: "Tax Master", addBtnLabel: "+ Add Tax", searchPlaceholder: "Search tax types..." }
+    taxes: { title: "Tax Master", addBtnLabel: "+ Add Tax", searchPlaceholder: "Search tax types..." },
+    roles: { title: "Roles & Rights Master", addBtnLabel: "+ Add Role", searchPlaceholder: "Search roles (Admin, Kitchen, Cashier...)" },
+    users: { title: "Staff / User Master", addBtnLabel: "+ Add Staff Member", searchPlaceholder: "Search staff members..." }
   };
 
   document.querySelectorAll("#masterNavTabs .cat-tab").forEach(tab => {
@@ -6975,6 +7352,24 @@ For any queries or updates, reply to this message.`;
         { label: "Active Taxes", val: active, sub: "Applied on bills" },
         { label: "Recently Updated", val: "Today", sub: "GST compliance" },
         { label: "Combined GST", val: "5.0%", sub: "CGST 2.5% + SGST 2.5%" }
+      ];
+    } else if (activeMasterTab === "roles") {
+      const total = roles.length;
+      const active = roles.filter(r => r.status === "active").length;
+      stats = [
+        { label: "Defined Roles", val: total, sub: "System & Custom" },
+        { label: "Active Roles", val: active, sub: "Assignable to Staff" },
+        { label: "Total Rights", val: ALL_PERMISSIONS.length, sub: "Screen & Action Perms" },
+        { label: "Kitchen Isolation", val: "Active", sub: "KOT Kanban Only" }
+      ];
+    } else if (activeMasterTab === "users") {
+      const total = staffUsers.length;
+      const active = staffUsers.filter(u => u.status === "active").length;
+      stats = [
+        { label: "Staff Members", val: total, sub: "Registered Staff" },
+        { label: "Active Team", val: active, sub: "Authorized for POS" },
+        { label: "Roles Mapped", val: `${new Set(staffUsers.map(u => u.roleId)).size}`, sub: "Active assignments" },
+        { label: "Current Operator", val: getCurrentUser().name.split(" ")[0], sub: getCurrentRole().roleName }
       ];
     }
 
@@ -7290,6 +7685,156 @@ For any queries or updates, reply to this message.`;
       `;
     }
 
+    // 6. ROLES & RIGHTS MASTER
+    else if (activeMasterTab === "roles") {
+      const filtered = roles.filter(r => {
+        const matchQ = r.roleName.toLowerCase().includes(query) || r.roleCode.toLowerCase().includes(query) || (r.description && r.description.toLowerCase().includes(query));
+        const matchS = statusFilter ? r.status === statusFilter : true;
+        return matchQ && matchS;
+      });
+
+      tableEl.innerHTML = `
+        <thead>
+          <tr>
+            <th style="width:70px;">SR. NO.</th>
+            <th style="width:220px;">ROLE &amp; SYSTEM CODE</th>
+            <th>DESCRIPTION &amp; ACCESS PROFILE</th>
+            <th style="width:260px;">PERMISSIONS SUMMARY</th>
+            <th style="width:130px;">STATUS</th>
+            <th style="text-align:right;width:120px;">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-soft);">No roles found.</td></tr>` : ''}
+          ${filtered.map((r, i) => {
+            const isKitchen = r.roleCode === "KITCHEN";
+            const isAdmin = r.roleCode === "ADMIN";
+            const permCount = (r.permissions || []).length;
+            const badgeClass = r.roleCode.toLowerCase();
+            return `
+              <tr>
+                <td><span style="font-weight:700;color:var(--ink-soft);">${String(i + 1).padStart(2, '0')}</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <b style="color:var(--ink);">${r.roleName}</b>
+                    <span class="op-role-pill ${badgeClass}" style="font-size:9.5px;">${r.roleCode}</span>
+                  </div>
+                </td>
+                <td>
+                  <div style="font-size:12px;color:var(--ink-soft);line-height:1.4;">
+                    ${r.description || 'Custom role configured by administrator.'}
+                  </div>
+                </td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                    ${isKitchen ? `
+                      <span class="var-badge" style="background:#fef3c7;color:#92400e;font-weight:800;">🍳 KOT Live View Only</span>
+                    ` : isAdmin ? `
+                      <span class="var-badge" style="background:#e0f2fe;color:#0369a1;font-weight:800;">👑 Full Unrestricted Access</span>
+                    ` : `
+                      <span class="var-badge" style="background:var(--surface-subtle);color:var(--ink);font-weight:700;">${permCount} Rights Active</span>
+                      ${r.permissions.includes('view_billing') ? '<span style="font-size:9.5px;padding:2px 5px;background:#f0fdf4;color:#166534;border-radius:4px;font-weight:700;">Billing</span>' : ''}
+                      ${r.permissions.includes('can_apply_discount') ? '<span style="font-size:9.5px;padding:2px 5px;background:#fefce8;color:#854d0e;border-radius:4px;font-weight:700;">Discount</span>' : ''}
+                    `}
+                  </div>
+                </td>
+                <td>
+                  <label class="switch-row" data-action="toggle-status" data-type="roles" data-id="${r.id}">
+                    <span class="switch">
+                      <input type="checkbox" ${r.status === 'active' ? 'checked' : ''} ${r.isSystem ? 'disabled title="System role cannot be deactivated"' : ''}>
+                      <span class="slider"></span>
+                    </span>
+                    <span class="switch-label ${r.status === 'active' ? 'active' : 'inactive'}">
+                      ${r.status === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </label>
+                </td>
+                <td style="text-align:right;">
+                  <div class="action-btn-group" style="justify-content:flex-end;">
+                    <button class="action-icon-btn edit" data-action="edit" data-type="roles" data-id="${r.id}" title="Edit Role &amp; Permissions">✏️</button>
+                    ${!r.isSystem ? `<button class="action-icon-btn delete" data-action="delete" data-type="roles" data-id="${r.id}" title="Delete Role">🗑️</button>` : `<span style="font-size:11px;color:var(--ink-soft);padding:0 4px;" title="System Default Role">🔒</span>`}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      `;
+    }
+
+    // 7. STAFF USERS MASTER
+    else if (activeMasterTab === "users") {
+      const filtered = staffUsers.filter(u => {
+        const matchQ = u.name.toLowerCase().includes(query) || u.userCode.toLowerCase().includes(query) || (u.email && u.email.toLowerCase().includes(query));
+        const matchS = statusFilter ? u.status === statusFilter : true;
+        return matchQ && matchS;
+      });
+
+      tableEl.innerHTML = `
+        <thead>
+          <tr>
+            <th style="width:70px;">SR. NO.</th>
+            <th>STAFF MEMBER NAME</th>
+            <th style="width:140px;">USER CODE</th>
+            <th>ASSIGNED ROLE</th>
+            <th>CONTACT (EMAIL / PHONE)</th>
+            <th style="width:90px;">PIN</th>
+            <th style="width:120px;">STATUS</th>
+            <th style="text-align:right;width:160px;">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.length === 0 ? `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--ink-soft);">No staff members found.</td></tr>` : ''}
+          ${filtered.map((u, i) => {
+            const role = roles.find(r => r.id === u.roleId) || { roleName: "Unassigned", roleCode: "NONE" };
+            const isCurrent = u.id === currentUserId;
+            return `
+              <tr style="${isCurrent ? 'background:var(--primary-tint);' : ''}">
+                <td><span style="font-weight:700;color:var(--ink-soft);">${String(i + 1).padStart(2, '0')}</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <b style="color:var(--ink);">${u.name}</b>
+                    ${isCurrent ? `<span style="font-size:9.5px;font-weight:800;background:var(--primary);color:#fff;padding:1px 6px;border-radius:6px;">CURRENT</span>` : ''}
+                  </div>
+                </td>
+                <td><code style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--primary);">${u.userCode}</code></td>
+                <td>
+                  <span class="op-role-pill ${role.roleCode.toLowerCase()}" style="font-size:10px;">${role.roleName}</span>
+                </td>
+                <td>
+                  <div style="font-size:11.5px;color:var(--ink-soft);">
+                    <div>✉️ ${u.email}</div>
+                    <div>📞 ${u.phone}</div>
+                  </div>
+                </td>
+                <td><code style="font-family:'JetBrains Mono',monospace;font-weight:700;">••••</code></td>
+                <td>
+                  <label class="switch-row" data-action="toggle-status" data-type="users" data-id="${u.id}">
+                    <span class="switch">
+                      <input type="checkbox" ${u.status === 'active' ? 'checked' : ''}>
+                      <span class="slider"></span>
+                    </span>
+                    <span class="switch-label ${u.status === 'active' ? 'active' : 'inactive'}">
+                      ${u.status === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </label>
+                </td>
+                <td style="text-align:right;">
+                  <div class="action-btn-group" style="justify-content:flex-end;">
+                    <button class="btn btn-sm ${isCurrent ? 'btn-primary' : ''}" data-action="switch-user" data-id="${u.id}" style="font-size:10.5px;padding:3px 8px;" title="Switch POS Operator to this User">
+                      ${isCurrent ? 'Active' : 'Switch 👤'}
+                    </button>
+                    <button class="action-icon-btn edit" data-action="edit" data-type="users" data-id="${u.id}" title="Edit Staff Member">✏️</button>
+                    ${staffUsers.length > 1 ? `<button class="action-icon-btn delete" data-action="delete" data-type="users" data-id="${u.id}" title="Delete Staff Member">🗑️</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      `;
+    }
+
     wireMasterTableInteractions();
   }
 
@@ -7319,11 +7864,28 @@ For any queries or updates, reply to this message.`;
         } else if (type === "taxes") {
           const rec = taxes.find(t => t.id === id);
           if (rec) { rec.status = nextStatus; apiClient.saveTax(rec); }
+        } else if (type === "roles") {
+          const rec = roles.find(r => r.id === id);
+          if (rec && !rec.isSystem) rec.status = nextStatus;
+          enforceRoleAccess();
+        } else if (type === "users") {
+          const rec = staffUsers.find(u => u.id === id);
+          if (rec) rec.status = nextStatus;
+          enforceRoleAccess();
         }
 
-        showToast(`Status updated to ${nextStatus.toUpperCase()} (API Synced)`);
+        showToast(`Status updated to ${nextStatus.toUpperCase()}`);
         renderMasters();
         renderTables();
+      });
+    });
+
+    tableEl.querySelectorAll("[data-action='switch-user']").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        switchOperator(id);
+        renderMasterTable();
+        renderMasterStats();
       });
     });
 
@@ -7346,6 +7908,20 @@ For any queries or updates, reply to this message.`;
           else if (type === "floors") { floors = floors.filter(f => f.id !== id); apiClient.deleteFloor(id); }
           else if (type === "tables") { tables = tables.filter(t => t.id !== id); apiClient.deleteTable(id); }
           else if (type === "taxes") { taxes = taxes.filter(t => t.id !== id); apiClient.deleteTax(id); }
+          else if (type === "roles") {
+            const role = roles.find(r => r.id === id);
+            if (role && role.isSystem) {
+              alert("System built-in roles cannot be deleted.");
+              return;
+            }
+            roles = roles.filter(r => r.id !== id);
+            showToast("Role removed!");
+            enforceRoleAccess();
+          } else if (type === "users") {
+            staffUsers = staffUsers.filter(u => u.id !== id);
+            showToast("Staff user removed!");
+            enforceRoleAccess();
+          }
 
           showToast("Record deleted from database!");
           renderMasters();
@@ -7888,6 +8464,181 @@ For any queries or updates, reply to this message.`;
           </div>
         </div>
       `;
+    } else if (type === "roles") {
+      const rec = isEdit ? roles.find(r => r.id === id) : {
+        roleName: "",
+        roleCode: "",
+        description: "",
+        permissions: ["view_kot"],
+        status: "active",
+        isSystem: false
+      };
+
+      const screenPerms = ALL_PERMISSIONS.filter(p => p.category.includes("Navigation"));
+      const opPerms = ALL_PERMISSIONS.filter(p => p.category.includes("Operational"));
+
+      formBody.innerHTML = `
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label>Role Name *</label>
+            <input type="text" id="m_roleName" value="${rec.roleName}" required placeholder="e.g. Kitchen Expediter, Bar Captain">
+          </div>
+          <div class="form-group">
+            <label>Role Code *</label>
+            <input type="text" id="m_roleCode" value="${rec.roleCode}" required placeholder="e.g. KITCHEN, EXPED" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Role Description &amp; Staff Scope</label>
+          <input type="text" id="m_roleDesc" value="${rec.description || ''}" placeholder="e.g. Dedicated kitchen display screen, cannot view sales or billing...">
+        </div>
+
+        <!-- Quick Presets -->
+        <div style="margin-bottom:14px;background:var(--surface-subtle);border:1px solid var(--line);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;">⚡ Quick Permission Presets:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" id="presetKitchenOnly" style="font-size:11px;background:#fef3c7;color:#92400e;border-color:#fde68a;">
+              🍳 Kitchen Only (KOT Kanban Only)
+            </button>
+            <button type="button" class="btn btn-sm" id="presetCashier" style="font-size:11px;background:#e0f2fe;color:#0369a1;border-color:#bae6fd;">
+              💵 Cashier (POS &amp; Billing)
+            </button>
+            <button type="button" class="btn btn-sm" id="presetWaiter" style="font-size:11px;background:#f0fdf4;color:#166534;border-color:#bbf7d0;">
+              🧑‍🍳 Captain (Orders &amp; Tables)
+            </button>
+            <button type="button" class="btn btn-sm" id="presetFullAdmin" style="font-size:11px;background:#fae8ff;color:#86198f;border-color:#f5d0fe;">
+              👑 Full Admin (All Rights)
+            </button>
+          </div>
+        </div>
+
+        <!-- Screen / Navigation Rights Matrix -->
+        <div class="perm-group-box">
+          <div class="perm-group-title">
+            <span>📺</span> Screen &amp; Navigation Rights (Modules Visible)
+          </div>
+          <div class="perm-grid">
+            ${screenPerms.map(p => `
+              <label class="perm-item-label">
+                <input type="checkbox" name="role_perm" value="${p.id}" ${rec.permissions.includes(p.id) ? 'checked' : ''}>
+                <div class="perm-item-text">
+                  <span class="perm-item-name">${p.label}</span>
+                  <span class="perm-item-desc">${p.desc}</span>
+                </div>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
+        <!-- Operational Rights Matrix -->
+        <div class="perm-group-box">
+          <div class="perm-group-title">
+            <span>⚙️</span> Operational &amp; Financial Actions
+          </div>
+          <div class="perm-grid">
+            ${opPerms.map(p => `
+              <label class="perm-item-label">
+                <input type="checkbox" name="role_perm" value="${p.id}" ${rec.permissions.includes(p.id) ? 'checked' : ''}>
+                <div class="perm-item-text">
+                  <span class="perm-item-name">${p.label}</span>
+                  <span class="perm-item-desc">${p.desc}</span>
+                </div>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select id="m_roleStatus">
+            <option value="active" ${rec.status === 'active' ? 'selected' : ''}>Active</option>
+            <option value="inactive" ${rec.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+          </select>
+        </div>
+      `;
+
+      const checkPerms = (allowedList) => {
+        formBody.querySelectorAll("input[name='role_perm']").forEach(cb => {
+          cb.checked = allowedList.includes(cb.value);
+        });
+      };
+
+      document.getElementById("presetKitchenOnly")?.addEventListener("click", () => {
+        checkPerms(["view_kot"]);
+        showToast("✓ Preset applied: Kitchen Only (KOT view only)");
+      });
+      document.getElementById("presetCashier")?.addEventListener("click", () => {
+        checkPerms(["view_tables", "view_orders", "view_pos", "view_billing", "can_apply_discount", "can_exempt_tax"]);
+        showToast("✓ Preset applied: Cashier & Billing Staff");
+      });
+      document.getElementById("presetWaiter")?.addEventListener("click", () => {
+        checkPerms(["view_tables", "view_orders", "view_pos"]);
+        showToast("✓ Preset applied: Captain / Waiter");
+      });
+      document.getElementById("presetFullAdmin")?.addEventListener("click", () => {
+        checkPerms(ALL_PERMISSIONS.map(p => p.id));
+        showToast("✓ Preset applied: Full Admin (All Permissions)");
+      });
+    } else if (type === "users") {
+      const rec = isEdit ? staffUsers.find(u => u.id === id) : {
+        name: "",
+        userCode: `JC-STF-0${staffUsers.length + 1}`,
+        email: "",
+        phone: "",
+        roleId: roles[0]?.id || 1,
+        pin: "1234",
+        status: "active"
+      };
+
+      formBody.innerHTML = `
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label>Staff Full Name *</label>
+            <input type="text" id="m_userName" value="${rec.name}" required placeholder="e.g. Suresh Chef, Priya Sharma">
+          </div>
+          <div class="form-group">
+            <label>Employee / Station Code *</label>
+            <input type="text" id="m_userCode" value="${rec.userCode}" required placeholder="e.g. JC-KTC-02" style="font-family:'JetBrains Mono',monospace;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Assigned Role (Permissions Profile) *</label>
+          <select id="m_userRoleId" required style="font-weight:700;font-size:12.5px;">
+            ${roles.filter(r => r.status === 'active').map(r => `
+              <option value="${r.id}" ${rec.roleId === r.id ? 'selected' : ''}>
+                ${r.roleName} (${r.roleCode}) — ${r.permissions.length} rights
+              </option>
+            `).join("")}
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="m_userEmail" value="${rec.email || ''}" placeholder="staff@justcatering.in">
+          </div>
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="tel" id="m_userPhone" value="${rec.phone || ''}" placeholder="+91 98765 00000">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Login PIN / Password *</label>
+            <input type="text" id="m_userPin" value="${rec.pin || '1234'}" required placeholder="e.g. 1234" style="font-family:'JetBrains Mono',monospace;">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="m_userStatus">
+              <option value="active" ${rec.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="inactive" ${rec.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+            </select>
+          </div>
+        </div>
+      `;
     }
 
     openModal("masterFormModal");
@@ -8030,6 +8781,78 @@ For any queries or updates, reply to this message.`;
         apiClient.saveTax(newTax);
         showToast(`Tax '${name}' (${pct}%) saved to backend!`);
       }
+    } else if (type === "roles") {
+      const name = document.getElementById("m_roleName").value.trim();
+      const code = document.getElementById("m_roleCode").value.trim().toUpperCase();
+      const desc = document.getElementById("m_roleDesc").value.trim();
+      const status = document.getElementById("m_roleStatus").value;
+      const selectedPerms = Array.from(document.querySelectorAll("input[name='role_perm']:checked")).map(cb => cb.value);
+
+      if (selectedPerms.length === 0) {
+        alert("Please select at least one permission for this role.");
+        return;
+      }
+
+      if (isEdit) {
+        const item = roles.find(r => r.id === editingRecordId);
+        if (item) {
+          item.roleName = name;
+          item.roleCode = code;
+          item.description = desc;
+          item.permissions = selectedPerms;
+          item.status = status;
+        }
+        showToast(`Role '${name}' (${code}) updated with ${selectedPerms.length} permissions!`);
+      } else {
+        const newRole = {
+          id: Date.now(),
+          roleName: name,
+          roleCode: code,
+          description: desc,
+          permissions: selectedPerms,
+          status,
+          isSystem: false
+        };
+        roles.push(newRole);
+        showToast(`Role '${name}' (${code}) created successfully!`);
+      }
+      enforceRoleAccess();
+    } else if (type === "users") {
+      const name = document.getElementById("m_userName").value.trim();
+      const code = document.getElementById("m_userCode").value.trim().toUpperCase();
+      const roleId = Number(document.getElementById("m_userRoleId").value);
+      const email = document.getElementById("m_userEmail").value.trim();
+      const phone = document.getElementById("m_userPhone").value.trim();
+      const pin = document.getElementById("m_userPin").value.trim();
+      const status = document.getElementById("m_userStatus").value;
+
+      if (isEdit) {
+        const item = staffUsers.find(u => u.id === editingRecordId);
+        if (item) {
+          item.name = name;
+          item.userCode = code;
+          item.roleId = roleId;
+          item.email = email;
+          item.phone = phone;
+          item.pin = pin;
+          item.status = status;
+        }
+        showToast(`Staff member '${name}' updated!`);
+      } else {
+        const newUser = {
+          id: Date.now(),
+          name,
+          userCode: code,
+          roleId,
+          email: email || `${code.toLowerCase()}@justcatering.in`,
+          phone: phone || "+91 98000 00000",
+          pin: pin || "1234",
+          status
+        };
+        staffUsers.push(newUser);
+        showToast(`Staff member '${name}' registered with role '${roles.find(r => r.id === roleId)?.roleName || ''}'!`);
+      }
+      enforceRoleAccess();
     }
 
     closeAllModals();
@@ -8119,11 +8942,45 @@ For any queries or updates, reply to this message.`;
           <div><b>Status:</b> <span class="table-status ${rec.status === 'active' ? 'status-available' : 'status-occupied'}">${rec.status.toUpperCase()}</span></div>
         </div>
       `;
+    } else if (type === "roles") {
+      const rec = roles.find(r => r.id === id);
+      body.innerHTML = `
+        <div style="font-size:14px;line-height:1.7;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <b>Role Name:</b> ${rec.roleName}
+            <span class="op-role-pill ${rec.roleCode.toLowerCase()}">${rec.roleCode}</span>
+          </div>
+          <div><b>Description:</b> ${rec.description || '—'}</div>
+          <div><b>System Built-in:</b> ${rec.isSystem ? 'Yes (Protected)' : 'No (Custom)'}</div>
+          <div style="margin-top:8px;"><b>Permissions Assigned (${rec.permissions.length}):</b></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+            ${rec.permissions.map(p => {
+              const info = ALL_PERMISSIONS.find(ap => ap.id === p);
+              return `<span class="var-badge" style="background:var(--surface-subtle);color:var(--ink);">${info ? info.label : p}</span>`;
+            }).join("")}
+          </div>
+          <div style="margin-top:8px;"><b>Status:</b> <span class="table-status ${rec.status === 'active' ? 'status-available' : 'status-occupied'}">${rec.status.toUpperCase()}</span></div>
+        </div>
+      `;
+    } else if (type === "users") {
+      const rec = staffUsers.find(u => u.id === id);
+      const role = roles.find(r => r.id === rec.roleId) || { roleName: "Unassigned", roleCode: "NONE" };
+      body.innerHTML = `
+        <div style="font-size:14px;line-height:1.7;">
+          <div><b>Staff Name:</b> ${rec.name}</div>
+          <div><b>User Code:</b> <code>${rec.userCode}</code></div>
+          <div><b>Assigned Role:</b> <span class="op-role-pill ${role.roleCode.toLowerCase()}">${role.roleName}</span></div>
+          <div><b>Email:</b> ${rec.email || '—'}</div>
+          <div><b>Phone:</b> ${rec.phone || '—'}</div>
+          <div><b>Status:</b> <span class="table-status ${rec.status === 'active' ? 'status-available' : 'status-occupied'}">${rec.status.toUpperCase()}</span></div>
+        </div>
+      `;
     }
     openModal("masterViewModal");
   }
 
   // Initial Load
+  enforceRoleAccess();
   showView("tables");
   apiClient.checkBackend();
 })();

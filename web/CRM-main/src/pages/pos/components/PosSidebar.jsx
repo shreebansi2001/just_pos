@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutGrid, ShoppingBag, ClipboardList, Clock, Receipt, CalendarDays, Settings2, Moon, Sun } from 'lucide-react';
 
-export function PosSidebar({ activeView, onViewChange, kotBadgeCount, resBadgeCount, isDark, onToggleTheme }) {
+export function PosSidebar({ activeView, onViewChange, kotBadgeCount, resBadgeCount, isDark, onToggleTheme, userPermissions }) {
   const navItems = [
     { id: 'tables', label: 'Tables', icon: LayoutGrid },
     { id: 'orders', label: 'Orders', icon: ClipboardList },
@@ -12,6 +12,13 @@ export function PosSidebar({ activeView, onViewChange, kotBadgeCount, resBadgeCo
     { id: 'masters', label: 'Masters', icon: Settings2 },
   ];
 
+  const visibleNavItems = userPermissions && userPermissions.length > 0
+    ? navItems.filter((item) => {
+        const permKey = item.id === 'pos' ? 'view_pos' : `view_${item.id}`;
+        return userPermissions.includes(permKey);
+      })
+    : navItems;
+
   return (
     <aside className="w-[74px] bg-white dark:bg-[#121820] border-r border-gray-200 dark:border-gray-800 flex flex-col items-center py-4 flex-shrink-0 sticky top-0 h-screen overflow-y-auto z-20">
       {/* Brand Icon */}
@@ -21,7 +28,7 @@ export function PosSidebar({ activeView, onViewChange, kotBadgeCount, resBadgeCo
 
       {/* Navigation Buttons */}
       <div className="flex flex-col gap-1 w-full px-2.5">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
           return (

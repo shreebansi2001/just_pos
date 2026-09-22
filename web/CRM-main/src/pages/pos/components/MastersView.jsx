@@ -7,6 +7,10 @@ export function MastersView({
   floors,
   tables,
   taxes = [],
+  roles = [],
+  staffUsers = [],
+  currentUserId,
+  onSwitchUser,
   onOpenAddModal,
   onOpenEditModal,
   onToggleActive,
@@ -20,6 +24,8 @@ export function MastersView({
     { id: 'floors', label: 'Floors', hint: 'Dining sections — grouped tabs on the Tables screen.' },
     { id: 'tables', label: 'Tables', hint: 'Physical dining tables, each mapped to a floor.' },
     { id: 'taxes', label: 'Tax Master', hint: 'Tax Master: CGST, SGST, IGST percentages applied to order totals.' },
+    { id: 'roles', label: 'Roles & Rights', hint: 'Personalize roles and assign granular screen & action rights for staff.' },
+    { id: 'users', label: 'Staff Master', hint: 'Register staff members and assign their dynamic roles & PINs.' },
   ];
 
   const formatMoney = (n) => '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
@@ -398,6 +404,173 @@ export function MastersView({
               ))}
             </tbody>
           </table>
+          </div>
+        )}
+
+        {/* Roles & Rights Table */}
+        {activeTab === 'roles' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 uppercase tracking-wider text-gray-400">
+                  <th className="py-3 px-4">Role &amp; Code</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-4">Permissions Active</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {roles.map((r) => {
+                  const isKitchen = r.roleCode === 'KITCHEN';
+                  const isAdmin = r.roleCode === 'ADMIN';
+                  return (
+                    <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900 dark:text-white">{r.roleName}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#017A9C]/10 text-[#017A9C]">
+                            {r.roleCode}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-gray-500 max-w-xs">{r.description || '—'}</td>
+                      <td className="py-3 px-4">
+                        {isKitchen ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                            🍳 KOT Live Only (Restricted)
+                          </span>
+                        ) : isAdmin ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400">
+                            👑 Full System Access
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            {(r.permissions || []).length} Rights Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${r.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                          {r.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right space-x-1">
+                        <button
+                          onClick={() => onOpenEditModal('roles', r)}
+                          className="px-2.5 py-1 rounded border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100"
+                        >
+                          Edit
+                        </button>
+                        {!r.isSystem && (
+                          <>
+                            <button
+                              onClick={() => onToggleActive('roles', r.id)}
+                              className="px-2.5 py-1 rounded border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100"
+                            >
+                              {r.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => onDeleteMaster('roles', r.id)}
+                              className="px-2.5 py-1 rounded text-[11px] font-bold text-red-600 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Staff Master Table */}
+        {activeTab === 'users' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 uppercase tracking-wider text-gray-400">
+                  <th className="py-3 px-4">Staff Member</th>
+                  <th className="py-3 px-4">Employee Code</th>
+                  <th className="py-3 px-4">Assigned Role</th>
+                  <th className="py-3 px-4">Contact</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {staffUsers.map((u) => {
+                  const role = roles.find((r) => r.id === u.roleId) || { roleName: 'Unassigned', roleCode: 'USER' };
+                  const isCurrent = u.id === currentUserId;
+                  return (
+                    <tr key={u.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/40 ${isCurrent ? 'bg-[#017A9C]/5' : ''}`}>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900 dark:text-white">{u.name}</span>
+                          {isCurrent && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#017A9C] text-white">
+                              CURRENT
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-mono font-semibold text-gray-600 dark:text-gray-300">{u.userCode}</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#017A9C]/10 text-[#017A9C]">
+                          {role.roleName}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-500">
+                        <div>{u.email}</div>
+                        <div className="text-[10px] text-gray-400">{u.phone}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${u.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                          {u.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right space-x-1">
+                        {onSwitchUser && (
+                          <button
+                            onClick={() => onSwitchUser(u.id)}
+                            className={`px-2.5 py-1 rounded text-[11px] font-bold ${
+                              isCurrent
+                                ? 'bg-[#017A9C] text-white'
+                                : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100'
+                            }`}
+                          >
+                            {isCurrent ? 'Active' : 'Switch 👤'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onOpenEditModal('users', u)}
+                          className="px-2.5 py-1 rounded border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onToggleActive('users', u.id)}
+                          className="px-2.5 py-1 rounded border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100"
+                        >
+                          {u.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        {staffUsers.length > 1 && (
+                          <button
+                            onClick={() => onDeleteMaster('users', u.id)}
+                            className="px-2.5 py-1 rounded text-[11px] font-bold text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
