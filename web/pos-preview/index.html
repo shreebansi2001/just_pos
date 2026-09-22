@@ -4112,7 +4112,13 @@
     showItemAddons: false,
     
     // Billing & Tax Summary
+    taxRegime: "cgst_sgst", // "cgst_sgst" (Intra-state CGST+SGST), "igst" (Inter-state IGST), "composition_none" (Bill of Supply), "single_gst" (Consolidated)
+    documentTitle: "TAX INVOICE", // "TAX INVOICE", "BILL OF SUPPLY", "RETAIL INVOICE", "CASH MEMO", "ESTIMATE / BILL"
     showTaxBreakdown: true, // true: CGST & SGST separate rows, false: Consolidated GST
+    showCgst: true, // Shows/hides CGST row
+    showSgst: true, // Shows/hides SGST row
+    showIgst: false, // Shows/hides IGST row
+    hideTaxIfZero: true, // Auto-suppresses tax rows if bill tax is 0 or exempt
     showTaxableBase: true,
     showTotalQuantity: true,
     showRoundOff: false,
@@ -4134,6 +4140,14 @@
       if (saved) {
         const parsed = JSON.parse(saved);
         const merged = Object.assign({}, DEFAULT_INVOICE_CONFIG, parsed);
+        // Normalize dynamic tax properties if missing in existing localStorage
+        if (merged.showCgst === undefined) merged.showCgst = true;
+        if (merged.showSgst === undefined) merged.showSgst = true;
+        if (merged.showIgst === undefined) merged.showIgst = false;
+        if (merged.hideTaxIfZero === undefined) merged.hideTaxIfZero = true;
+        if (!merged.taxRegime) merged.taxRegime = "cgst_sgst";
+        if (!merged.documentTitle) merged.documentTitle = "TAX INVOICE";
+
         // If placeholder screenshot name or missing layoutStyle or legacy thankYouMessage, clean and normalize
         if (merged.thankYouMessage?.includes("SCREENSHOT")) {
           merged.thankYouMessage = "";
@@ -4151,6 +4165,8 @@
           merged.showPaymentMode = true;
           merged.showTotalQuantity = true;
           merged.showTaxBreakdown = true;
+          merged.showCgst = true;
+          merged.showSgst = true;
           merged.showTaxableBase = true;
           merged.showAmountInWords = true;
         }
@@ -5655,6 +5671,30 @@
             previewEl.innerHTML = generateDocumentSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, activeInvoiceDocType, invoiceMasterConfig);
           }
         }, 300);
+      }
+      if (urlParams.get("tax_regime")) {
+        const regime = urlParams.get("tax_regime");
+        setTimeout(() => {
+          invoiceMasterConfig.taxRegime = regime;
+          if (regime === "composition_none") {
+            invoiceMasterConfig.documentTitle = "BILL OF SUPPLY";
+            invoiceMasterConfig.showCgst = false;
+            invoiceMasterConfig.showSgst = false;
+            invoiceMasterConfig.showIgst = false;
+          } else if (regime === "igst") {
+            invoiceMasterConfig.showCgst = false;
+            invoiceMasterConfig.showSgst = false;
+            invoiceMasterConfig.showIgst = true;
+          }
+          const sel = document.getElementById("cfg_taxRegime");
+          if (sel) sel.value = regime;
+          recalcSampleInvoiceTotals();
+          localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+          const previewEl = document.getElementById("liveInvoiceBuilderPreview");
+          if (previewEl) {
+            previewEl.innerHTML = generateDocumentSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, activeInvoiceDocType, invoiceMasterConfig);
+          }
+        }, 320);
       }
       if (urlParams.get("disable_toggles")) {
         const toDisable = urlParams.get("disable_toggles").split(",");
@@ -10070,6 +10110,42 @@ For any queries or updates, reply to this message.`;
     amountInWords: "INR Seven Thousand Three Hundred Only"
   };
 
+  // Helper to dynamically recalculate SAMPLE_INVOICE_PREVIEW_DATA based on active tax regime & items
+  function recalcSampleInvoiceTotals() {
+    const inv = SAMPLE_INVOICE_PREVIEW_DATA;
+    const items = inv.items || [];
+    const subtotal = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 1)), 0);
+    const totalQty = items.reduce((sum, it) => sum + (it.unitMode === 'kg' ? (Number(it.weightKg || 1) * Number(it.qty || 1)) : Number(it.qty || 1)), 0);
+    inv.subtotal = Number(subtotal.toFixed(2));
+    inv.totalQty = Number(totalQty).toFixed(2);
+    
+    const regime = invoiceMasterConfig.taxRegime || "cgst_sgst";
+    if (regime === "composition_none") {
+      inv.taxableAmount = inv.subtotal;
+      inv.cgst = 0;
+      inv.sgst = 0;
+      inv.igst = 0;
+      inv.totalGst = 0;
+      inv.total = inv.subtotal;
+    } else {
+      const taxable = inv.subtotal * 100 / 105;
+      const totalGst = inv.subtotal - taxable;
+      inv.taxableAmount = Number(taxable.toFixed(2));
+      inv.totalGst = Number(totalGst.toFixed(2));
+      if (regime === "igst") {
+        inv.igst = Number(totalGst.toFixed(2));
+        inv.cgst = 0;
+        inv.sgst = 0;
+      } else {
+        inv.cgst = Number((totalGst / 2).toFixed(2));
+        inv.sgst = Number((totalGst / 2).toFixed(2));
+        inv.igst = 0;
+      }
+      inv.total = inv.subtotal;
+    }
+    inv.amountInWords = numberToWordsINR(inv.total);
+  }
+
   // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe
   function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm"), customWidthMm = null, margins = null) {
     let iframe = document.getElementById("posThermalPrintIframe");
@@ -10479,10 +10555,19 @@ For any queries or updates, reply to this message.`;
     if (cfg.layoutStyle === "classic_boxed" || cfg.restaurantName?.includes("Amoncar") || compConf?.prefix?.includes("KTA")) {
       const invTotalNum = Number(inv.total || 0);
       const invSubtotalNum = Number(inv.subtotal || inv.total || 0);
-      const invTaxableNum = Number(inv.taxableAmount || (invTotalNum * 100 / 105));
-      const invCgstNum = Number(inv.cgst !== undefined ? inv.cgst : (invTotalNum - invTaxableNum) / 2);
-      const invSgstNum = Number(inv.sgst !== undefined ? inv.sgst : (invTotalNum - invTaxableNum) / 2);
+      
+      const effectiveRegime = inv.taxRegime || cfg.taxRegime || (inv.isInterstate ? 'igst' : 'cgst_sgst');
+      const isCompositionOrNone = (effectiveRegime === 'composition_none' || effectiveRegime === 'none' || inv.isComposition);
+      const isIgstOnly = (effectiveRegime === 'igst' || inv.isInterstate || (inv.igst && inv.igst > 0));
+      
+      const invTaxableNum = isCompositionOrNone ? invSubtotalNum : Number(inv.taxableAmount || (invTotalNum * 100 / 105));
+      const totalTaxAmt = isCompositionOrNone ? 0 : Number(inv.totalGst !== undefined ? inv.totalGst : (invTotalNum - invTaxableNum));
+      
+      const invCgstNum = Number(inv.cgst !== undefined ? inv.cgst : (totalTaxAmt / 2));
+      const invSgstNum = Number(inv.sgst !== undefined ? inv.sgst : (totalTaxAmt / 2));
+      const invIgstNum = Number(inv.igst !== undefined ? inv.igst : totalTaxAmt);
 
+      const docHeaderTitle = cfg.documentTitle || (isCompositionOrNone ? 'BILL OF SUPPLY' : (inv.docTitle || 'TAX INVOICE'));
       const formatInr = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       const hasMeta = cfg.showInvoiceSeries || cfg.showCustomerDetails || cfg.showPaymentMode || (cfg.showTokenNumber && inv.tokenNo) || (cfg.showTableAndFloor && (inv.tableLabel || inv.floorLabel)) || (cfg.showServerName && inv.serverName);
@@ -10517,7 +10602,7 @@ For any queries or updates, reply to this message.`;
               ${(cfg.pan || compConf.pan) ? `PAN : ${cfg.pan || compConf.pan}` : ''}
             </div>
             <div style="font-size:${is58 ? '13px' : '16px'}; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; margin-top:4px;">
-              TAX INVOICE
+              ${docHeaderTitle}
             </div>
           </div>
 
@@ -10651,28 +10736,41 @@ For any queries or updates, reply to this message.`;
                   </tr>
                 ` : ''}
 
-                ${cfg.showTaxableBase ? `
+                ${(cfg.showTaxableBase && !isCompositionOrNone) ? `
                   <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
                     <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">Taxable Amount</td>
                     <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invTaxableNum)}</td>
                   </tr>
                 ` : ''}
 
-                ${cfg.showTaxBreakdown ? `
-                  <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
-                    <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">CGST</td>
-                    <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invCgstNum)}</td>
-                  </tr>
-                  <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
-                    <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">SGST/UTGST</td>
-                    <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invSgstNum)}</td>
-                  </tr>
-                ` : `
-                  <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
-                    <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">Total Tax (GST)</td>
-                    <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invCgstNum + invSgstNum)}</td>
-                  </tr>
-                `}
+                ${(!isCompositionOrNone && (!cfg.hideTaxIfZero || totalTaxAmt > 0)) ? `
+                  ${isIgstOnly ? `
+                    ${cfg.showIgst !== false ? `
+                      <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                        <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">IGST</td>
+                        <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invIgstNum)}</td>
+                      </tr>
+                    ` : ''}
+                  ` : (effectiveRegime === 'single_gst' || !cfg.showTaxBreakdown) ? `
+                    <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                      <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">Total Tax (GST)</td>
+                      <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(totalTaxAmt)}</td>
+                    </tr>
+                  ` : `
+                    ${(cfg.showCgst !== false && (!cfg.hideTaxIfZero || invCgstNum > 0)) ? `
+                      <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                        <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">CGST</td>
+                        <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invCgstNum)}</td>
+                      </tr>
+                    ` : ''}
+                    ${(cfg.showSgst !== false && (!cfg.hideTaxIfZero || invSgstNum > 0)) ? `
+                      <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                        <td colspan="${totalCols - 1}" style="padding:2px 5px; text-align:left;">SGST/UTGST</td>
+                        <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invSgstNum)}</td>
+                      </tr>
+                    ` : ''}
+                  `}
+                ` : ''}
 
                 ${cfg.showRoundOff ? `
                   <tr style="font-size:${is58 ? '9.5px' : '11px'}; color:#64748b;">
@@ -10751,7 +10849,7 @@ For any queries or updates, reply to this message.`;
             </div>
           ` : ''}
           <div style="display:inline-block; margin-top:5px; padding:2px 10px; background:#0f172a; color:#fff; font-size:${is58 ? '8.5px' : '10.5px'}; font-weight:800; letter-spacing:0.08em; border-radius:3px; text-transform:uppercase;">
-            TAX INVOICE
+            ${docHeaderTitle}
           </div>
         </div>
 
@@ -10873,27 +10971,40 @@ For any queries or updates, reply to this message.`;
                 <td style="padding:1.5px 0; text-align:right; font-family:monospace; font-weight:800;">-₹${Number(inv.discountAmount).toFixed(2)}</td>
               </tr>
             ` : ''}
-            ${cfg.showTaxableBase ? `
+            ${(cfg.showTaxableBase && !isCompositionOrNone) ? `
               <tr>
                 <td style="padding:1.5px 0; color:#475569; font-weight:600;">Taxable Amount:</td>
-                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.taxableAmount).toFixed(2)}</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.taxableAmount || invTaxableNum).toFixed(2)}</td>
               </tr>
             ` : ''}
-            ${cfg.showTaxBreakdown ? `
-              <tr>
-                <td style="padding:1.5px 0; color:#475569; font-weight:600;">CGST:</td>
-                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.cgst).toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="padding:1.5px 0; color:#475569; font-weight:600;">SGST / UTGST:</td>
-                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.sgst).toFixed(2)}</td>
-              </tr>
-            ` : `
-              <tr>
-                <td style="padding:1.5px 0; color:#475569; font-weight:600;">Total Tax (GST):</td>
-                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number((inv.cgst || 0) + (inv.sgst || 0)).toFixed(2)}</td>
-              </tr>
-            `}
+            ${(!isCompositionOrNone && (!cfg.hideTaxIfZero || totalTaxAmt > 0)) ? `
+              ${isIgstOnly ? `
+                ${cfg.showIgst !== false ? `
+                  <tr>
+                    <td style="padding:1.5px 0; color:#475569; font-weight:600;">IGST:</td>
+                    <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(invIgstNum).toFixed(2)}</td>
+                  </tr>
+                ` : ''}
+              ` : (effectiveRegime === 'single_gst' || !cfg.showTaxBreakdown) ? `
+                <tr>
+                  <td style="padding:1.5px 0; color:#475569; font-weight:600;">Total Tax (GST):</td>
+                  <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(totalTaxAmt).toFixed(2)}</td>
+                </tr>
+              ` : `
+                ${(cfg.showCgst !== false && (!cfg.hideTaxIfZero || invCgstNum > 0)) ? `
+                  <tr>
+                    <td style="padding:1.5px 0; color:#475569; font-weight:600;">CGST:</td>
+                    <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(invCgstNum).toFixed(2)}</td>
+                  </tr>
+                ` : ''}
+                ${(cfg.showSgst !== false && (!cfg.hideTaxIfZero || invSgstNum > 0)) ? `
+                  <tr>
+                    <td style="padding:1.5px 0; color:#475569; font-weight:600;">SGST / UTGST:</td>
+                    <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(invSgstNum).toFixed(2)}</td>
+                  </tr>
+                ` : ''}
+              `}
+            ` : ''}
             ${inv.serviceCharge > 0 ? `
               <tr>
                 <td style="padding:1.5px 0; color:#475569; font-weight:600;">Service Charge (${inv.serviceChargeRate || 5}%):</td>
@@ -11579,21 +11690,78 @@ For any queries or updates, reply to this message.`;
             <div class="invoice-control-header">
               <span>💰 5. Tax Breakdown &amp; Math Layout</span>
             </div>
+
+            <!-- Dynamic Regime & Legal Title Controls -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:11px; font-weight:700; color:var(--ink); margin-bottom:4px; display:block;">
+                  Tax Regime / GST Status
+                </label>
+                <select id="cfg_taxRegime" style="width:100%; font-size:12px; font-weight:600; padding:6px 8px; border-radius:6px; border:1px solid var(--line); background:#fff;">
+                  <option value="cgst_sgst" ${cfg.taxRegime === 'cgst_sgst' ? 'selected' : ''}>🏢 Regular Intra-State (CGST + SGST)</option>
+                  <option value="igst" ${cfg.taxRegime === 'igst' ? 'selected' : ''}>🚚 Inter-State Supply (IGST Only · No SGST)</option>
+                  <option value="composition_none" ${cfg.taxRegime === 'composition_none' ? 'selected' : ''}>📜 Composition Scheme / Non-GST (Bill of Supply)</option>
+                  <option value="single_gst" ${cfg.taxRegime === 'single_gst' ? 'selected' : ''}>🧾 Consolidated GST (Single Combined Line)</option>
+                </select>
+                <div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">Controls how taxes are separated on printed receipts</div>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:11px; font-weight:700; color:var(--ink); margin-bottom:4px; display:block;">
+                  Document Title on Slip
+                </label>
+                <select id="cfg_documentTitle" style="width:100%; font-size:12px; font-weight:600; padding:6px 8px; border-radius:6px; border:1px solid var(--line); background:#fff;">
+                  <option value="TAX INVOICE" ${(cfg.documentTitle === 'TAX INVOICE' || !cfg.documentTitle) ? 'selected' : ''}>TAX INVOICE (Standard GST)</option>
+                  <option value="BILL OF SUPPLY" ${cfg.documentTitle === 'BILL OF SUPPLY' ? 'selected' : ''}>BILL OF SUPPLY (Composition / Exempt)</option>
+                  <option value="RETAIL INVOICE" ${cfg.documentTitle === 'RETAIL INVOICE' ? 'selected' : ''}>RETAIL INVOICE (Retail Store)</option>
+                  <option value="CASH MEMO" ${cfg.documentTitle === 'CASH MEMO' ? 'selected' : ''}>CASH MEMO (Direct Cash)</option>
+                  <option value="ESTIMATE / BILL" ${cfg.documentTitle === 'ESTIMATE / BILL' ? 'selected' : ''}>ESTIMATE / BILL (Non-Tax)</option>
+                </select>
+                <div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">Main heading printed in bold at top of receipt</div>
+              </div>
+            </div>
+
+            <!-- Granular Tax Checkboxes -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
               <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
-                <input type="checkbox" id="cfg_showTaxBreakdown" ${cfg.showTaxBreakdown ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
+                <input type="checkbox" id="cfg_showCgst" ${cfg.showCgst !== false ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
                 <div>
-                  <div class="chk-title" style="font-weight:700; color:var(--ink);">Split CGST &amp; SGST Rows</div>
-                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Checked: Separate CGST + SGST | Unchecked: Single GST</div>
+                  <div class="chk-title" style="font-weight:700; color:var(--ink);">CGST Row (Central Tax)</div>
+                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Checked: Shows "CGST (2.5%)" | Unchecked: Hides CGST</div>
                 </div>
               </label>
+
+              <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+                <input type="checkbox" id="cfg_showSgst" ${cfg.showSgst !== false ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div class="chk-title" style="font-weight:700; color:var(--ink);">SGST / UTGST Row (State Tax)</div>
+                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Checked: Shows "SGST (2.5%)" | Unchecked: Hides SGST (for users with no SGST)</div>
+                </div>
+              </label>
+
+              <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+                <input type="checkbox" id="cfg_showIgst" ${cfg.showIgst ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div class="chk-title" style="font-weight:700; color:var(--ink);">IGST Row (Integrated Tax)</div>
+                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Checked: Shows "IGST (5.0%)" for inter-state deliveries (No SGST)</div>
+                </div>
+              </label>
+
               <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
                 <input type="checkbox" id="cfg_showTaxableBase" ${cfg.showTaxableBase ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
                 <div>
-                  <div class="chk-title" style="font-weight:700; color:var(--ink);">Show Taxable Amount Base</div>
-                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Shows net taxable base before tax calculation</div>
+                  <div class="chk-title" style="font-weight:700; color:var(--ink);">Show Taxable Base Amount</div>
+                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Shows pre-tax base subtotal before GST computation</div>
                 </div>
               </label>
+
+              <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+                <input type="checkbox" id="cfg_hideTaxIfZero" ${cfg.hideTaxIfZero !== false ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div class="chk-title" style="font-weight:700; color:var(--ink);">Auto-Hide Tax Rows if 0% / Exempt</div>
+                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">When order tax is ₹0 or exempt, automatically suppresses GST rows</div>
+                </div>
+              </label>
+
               <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
                 <input type="checkbox" id="cfg_showRoundOff" ${cfg.showRoundOff ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
                 <div>
@@ -11601,6 +11769,7 @@ For any queries or updates, reply to this message.`;
                   <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Shows +/- rounding adjustment to whole rupee</div>
                 </div>
               </label>
+
               <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
                 <input type="checkbox" id="cfg_showAmountInWords" ${cfg.showAmountInWords ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
                 <div>
@@ -11608,7 +11777,8 @@ For any queries or updates, reply to this message.`;
                   <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Shows "INR Seven Thousand Three Hundred Only" box</div>
                 </div>
               </label>
-              <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px; grid-column:span 2;">
+
+              <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
                 <input type="checkbox" id="cfg_showSavingsHighlight" ${cfg.showSavingsHighlight ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
                 <div>
                   <div class="chk-title" style="font-weight:700; color:var(--ink);">Discount Savings Highlight Banner</div>
@@ -11649,6 +11819,46 @@ For any queries or updates, reply to this message.`;
 
         <!-- RIGHT COLUMN: INTERACTIVE LIVE WYSIWYG RECEIPT PREVIEW -->
         <div class="receipt-preview-stage">
+          
+          <!-- Live User Scenario & Bill Testing Toolbar -->
+          <div style="background:#f1f5f9; border:1.5px solid #cbd5e1; border-radius:8px; padding:8px 10px; margin-bottom:10px; width:100%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:11px; font-weight:800; color:#0f172a; text-transform:uppercase; letter-spacing:0.04em;">🧪 Live User Tax Simulation</span>
+              <span style="font-size:10px; color:#64748b;">Test how invoice dynamically adapts</span>
+            </div>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+              <button type="button" class="btn btn-xs test-scenario-btn ${cfg.taxRegime === 'cgst_sgst' ? 'btn-primary' : 'btn-outline'}" data-scenario="cgst_sgst" style="font-size:10.5px; font-weight:700; padding:3px 8px;">
+                🏢 CGST + SGST (Regular)
+              </button>
+              <button type="button" class="btn btn-xs test-scenario-btn ${cfg.taxRegime === 'igst' ? 'btn-primary' : 'btn-outline'}" data-scenario="igst" style="font-size:10.5px; font-weight:700; padding:3px 8px;">
+                🚚 IGST Only (No SGST)
+              </button>
+              <button type="button" class="btn btn-xs test-scenario-btn ${cfg.taxRegime === 'composition_none' ? 'btn-primary' : 'btn-outline'}" data-scenario="composition_none" style="font-size:10.5px; font-weight:700; padding:3px 8px;">
+                📜 Bill of Supply (No Tax)
+              </button>
+              <button type="button" class="btn btn-xs test-scenario-btn" data-scenario="zero_tax" style="font-size:10.5px; font-weight:700; padding:3px 8px;">
+                0️⃣ 0% Tax / Exempt
+              </button>
+            </div>
+
+            <!-- Dynamic Item Add / Remove simulator -->
+            <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:6px; font-size:10.5px;">
+              <span style="color:#475569; font-weight:600;">Items on Bill: <b id="simItemCountDisplay">${SAMPLE_INVOICE_PREVIEW_DATA.items?.length || 4}</b></span>
+              <div style="display:flex; gap:6px;">
+                <button type="button" id="simAddItemBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff;">
+                  ➕ Add Dish
+                </button>
+                <button type="button" id="simRemoveItemBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff;">
+                  ➖ Remove Dish
+                </button>
+                <button type="button" id="simResetItemsBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff;">
+                  ↺ Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:12px; padding:0 4px;">
             <div style="font-size:12px; font-weight:800; color:#334155; display:flex; align-items:center; gap:6px;">
               <span>👀 Live Document Preview:</span>
@@ -11753,7 +11963,13 @@ For any queries or updates, reply to this message.`;
         showItemTaxRate: Boolean(demo.showItemTaxRate),
         showTaxModeBadge: Boolean(demo.showTaxModeBadge),
         showItemAddons: Boolean(demo.showItemAddons),
+        taxRegime: demo.taxRegime || "cgst_sgst",
+        documentTitle: demo.documentTitle || "TAX INVOICE",
         showTaxBreakdown: demo.showTaxBreakdown !== undefined ? Boolean(demo.showTaxBreakdown) : true,
+        showCgst: demo.showCgst !== undefined ? Boolean(demo.showCgst) : true,
+        showSgst: demo.showSgst !== undefined ? Boolean(demo.showSgst) : true,
+        showIgst: Boolean(demo.showIgst),
+        hideTaxIfZero: demo.hideTaxIfZero !== undefined ? Boolean(demo.hideTaxIfZero) : true,
         showTaxableBase: demo.showTaxableBase !== undefined ? Boolean(demo.showTaxableBase) : true,
         showTotalQuantity: demo.showTotalQuantity !== undefined ? Boolean(demo.showTotalQuantity) : true,
         showRoundOff: Boolean(demo.showRoundOff),
@@ -11825,7 +12041,13 @@ For any queries or updates, reply to this message.`;
             showItemTaxRate: false,
             showTaxModeBadge: false,
             showItemAddons: false,
+            taxRegime: "cgst_sgst",
+            documentTitle: "TAX INVOICE",
             showTaxBreakdown: true,
+            showCgst: true,
+            showSgst: true,
+            showIgst: false,
+            hideTaxIfZero: true,
             showTaxableBase: true,
             showTotalQuantity: true,
             showRoundOff: false,
@@ -11900,12 +12122,50 @@ For any queries or updates, reply to this message.`;
       }
     });
 
+    // Connect Tax Regime and Document Title Selectors
+    document.getElementById("cfg_taxRegime")?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      invoiceMasterConfig.taxRegime = val;
+      if (val === "composition_none") {
+        invoiceMasterConfig.documentTitle = "BILL OF SUPPLY";
+        invoiceMasterConfig.showCgst = false;
+        invoiceMasterConfig.showSgst = false;
+        invoiceMasterConfig.showIgst = false;
+      } else if (val === "igst") {
+        invoiceMasterConfig.documentTitle = "TAX INVOICE";
+        invoiceMasterConfig.showCgst = false;
+        invoiceMasterConfig.showSgst = false;
+        invoiceMasterConfig.showIgst = true;
+      } else if (val === "cgst_sgst") {
+        invoiceMasterConfig.documentTitle = "TAX INVOICE";
+        invoiceMasterConfig.showCgst = true;
+        invoiceMasterConfig.showSgst = true;
+        invoiceMasterConfig.showIgst = false;
+      } else if (val === "single_gst") {
+        invoiceMasterConfig.documentTitle = "TAX INVOICE";
+        invoiceMasterConfig.showTaxBreakdown = false;
+      }
+      recalcSampleInvoiceTotals();
+      localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+      renderMasterInvoiceStudio();
+      updateLivePreview();
+      showToast(`Tax regime set to: ${e.target.options[e.target.selectedIndex].text}`);
+    });
+
+    document.getElementById("cfg_documentTitle")?.addEventListener("change", (e) => {
+      invoiceMasterConfig.documentTitle = e.target.value;
+      localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+      updateLivePreview();
+      showToast(`Document header title set to: ${e.target.value}`);
+    });
+
     // Connect 100% Reactive Checkbox Toggles with Realtime Preview & Instant Toasts
     const checkboxFields = [
       "showLogo", "showInvoiceSeries", "showTokenNumber", "showTableAndFloor",
       "showServerName", "showCustomerDetails", "showPaymentMode", "showSerialNo",
       "showHsnSac", "showItemTaxRate", "showTaxModeBadge", "showItemAddons",
-      "showTotalQuantity", "showTaxBreakdown", "showTaxableBase", "showRoundOff",
+      "showTotalQuantity", "showTaxBreakdown", "showCgst", "showSgst", "showIgst",
+      "showTaxableBase", "hideTaxIfZero", "showRoundOff",
       "showAmountInWords", "showSavingsHighlight", "enableUpiQr", "enableReviewQr"
     ];
     checkboxFields.forEach(field => {
@@ -11920,6 +12180,104 @@ For any queries or updates, reply to this message.`;
           showToast(e.target.checked ? `✓ Added to invoice: ${title}` : `✕ Removed from invoice: ${title}`);
         });
       }
+    });
+
+    // Connect Live Simulation Scenario Switcher Buttons
+    cont.querySelectorAll(".test-scenario-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const sc = btn.dataset.scenario;
+        if (sc === "cgst_sgst") {
+          invoiceMasterConfig.taxRegime = "cgst_sgst";
+          invoiceMasterConfig.documentTitle = "TAX INVOICE";
+          invoiceMasterConfig.showCgst = true;
+          invoiceMasterConfig.showSgst = true;
+          invoiceMasterConfig.showIgst = false;
+          (SAMPLE_INVOICE_PREVIEW_DATA.items || []).forEach(it => { it.gstRate = 5; });
+          showToast("🏢 Switched to Intra-State GST (CGST + SGST)");
+        } else if (sc === "igst") {
+          invoiceMasterConfig.taxRegime = "igst";
+          invoiceMasterConfig.documentTitle = "TAX INVOICE";
+          invoiceMasterConfig.showCgst = false;
+          invoiceMasterConfig.showSgst = false;
+          invoiceMasterConfig.showIgst = true;
+          (SAMPLE_INVOICE_PREVIEW_DATA.items || []).forEach(it => { it.gstRate = 5; });
+          showToast("🚚 Switched to Inter-State IGST (SGST Hidden)");
+        } else if (sc === "composition_none") {
+          invoiceMasterConfig.taxRegime = "composition_none";
+          invoiceMasterConfig.documentTitle = "BILL OF SUPPLY";
+          invoiceMasterConfig.showCgst = false;
+          invoiceMasterConfig.showSgst = false;
+          invoiceMasterConfig.showIgst = false;
+          showToast("📜 Switched to Composition Scheme (Bill of Supply · No Tax)");
+        } else if (sc === "zero_tax") {
+          invoiceMasterConfig.taxRegime = "single_gst";
+          invoiceMasterConfig.documentTitle = "RETAIL INVOICE";
+          invoiceMasterConfig.hideTaxIfZero = true;
+          (SAMPLE_INVOICE_PREVIEW_DATA.items || []).forEach(it => { it.gstRate = 0; });
+          showToast("0️⃣ Switched to 0% Tax / Exempt Slip");
+        }
+        recalcSampleInvoiceTotals();
+        localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+        renderMasterInvoiceStudio();
+        updateLivePreview();
+      });
+    });
+
+    // Connect Dynamic Item Add / Remove Simulator
+    document.getElementById("simAddItemBtn")?.addEventListener("click", () => {
+      const sampleNames = [
+        { name: "Paneer Butter Masala", price: 340, gstRate: 5, hsn: "996331" },
+        { name: "Butter Naan (2 pcs)", price: 120, gstRate: 5, hsn: "996331" },
+        { name: "Fresh Lime Soda", price: 90, gstRate: 5, hsn: "996331" },
+        { name: "Gulab Jamun with Ice Cream", price: 160, gstRate: 5, hsn: "996331" },
+        { name: "Special Chicken Biryani", price: 420, gstRate: 5, hsn: "996331" }
+      ];
+      const randomItem = sampleNames[Math.floor(Math.random() * sampleNames.length)];
+      if (!SAMPLE_INVOICE_PREVIEW_DATA.items) SAMPLE_INVOICE_PREVIEW_DATA.items = [];
+      SAMPLE_INVOICE_PREVIEW_DATA.items.push({
+        name: randomItem.name,
+        qty: 1.00,
+        price: randomItem.price,
+        taxType: "inclusive",
+        gstRate: invoiceMasterConfig.taxRegime === "composition_none" ? 0 : randomItem.gstRate,
+        hsn: randomItem.hsn
+      });
+      recalcSampleInvoiceTotals();
+      const countEl = document.getElementById("simItemCountDisplay");
+      if (countEl) countEl.textContent = SAMPLE_INVOICE_PREVIEW_DATA.items.length;
+      updateLivePreview();
+      showToast(`➕ Added '${randomItem.name}' to invoice preview!`);
+    });
+
+    document.getElementById("simRemoveItemBtn")?.addEventListener("click", () => {
+      if (SAMPLE_INVOICE_PREVIEW_DATA.items && SAMPLE_INVOICE_PREVIEW_DATA.items.length > 1) {
+        const removed = SAMPLE_INVOICE_PREVIEW_DATA.items.pop();
+        recalcSampleInvoiceTotals();
+        const countEl = document.getElementById("simItemCountDisplay");
+        if (countEl) countEl.textContent = SAMPLE_INVOICE_PREVIEW_DATA.items.length;
+        updateLivePreview();
+        showToast(`➖ Removed '${removed.name}' from invoice preview`);
+      } else {
+        showToast("Minimum 1 item required on receipt", "warning");
+      }
+    });
+
+    document.getElementById("simResetItemsBtn")?.addEventListener("click", () => {
+      if (activeUploadedDemoData?.sampleData?.items) {
+        SAMPLE_INVOICE_PREVIEW_DATA.items = JSON.parse(JSON.stringify(activeUploadedDemoData.sampleData.items));
+      } else {
+        SAMPLE_INVOICE_PREVIEW_DATA.items = [
+          { name: "KG-Vegetable Biriyani", qty: 2.50, price: 1100.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+          { name: "KG-Veg Kolhapuri", qty: 2.00, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+          { name: "Kg-Steamed Basmati Rice", qty: 2.50, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+          { name: "Transport Services", qty: 1.00, price: 500.00, taxType: "inclusive", gstRate: 5, hsn: "996511" }
+        ];
+      }
+      recalcSampleInvoiceTotals();
+      const countEl = document.getElementById("simItemCountDisplay");
+      if (countEl) countEl.textContent = SAMPLE_INVOICE_PREVIEW_DATA.items.length;
+      updateLivePreview();
+      showToast("↺ Receipt items reset to standard bill");
     });
 
     // Save Template Button
