@@ -3107,12 +3107,29 @@
             <option value="delivery">🛵 Delivery</option>
             <option value="catering">⚖️ Bulk Catering (KG)</option>
           </select>
-          <!-- Date Filter -->
-          <select id="billingDateFilter" class="master-select-filter">
-            <option value="all">All Dates</option>
-            <option value="today" selected>📅 Today</option>
+          <!-- Date Filter Presets -->
+          <select id="billingDatePreset" class="master-select-filter" style="min-width:165px;">
+            <option value="all" selected>🌐 All Dates</option>
+            <option value="today">📅 Today</option>
             <option value="yesterday">📅 Yesterday</option>
+            <option value="last7days">🗓️ Last 7 Days (Week)</option>
+            <option value="thisMonth">🗓️ This Month</option>
+            <option value="lastMonth">🗓️ Last Month</option>
+            <option value="custom">📆 Custom Range</option>
           </select>
+
+          <!-- From and To Date Inputs -->
+          <div class="billing-date-range-box" id="billingDateRangeBox" style="display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 8px;">
+            <div style="display:inline-flex;align-items:center;gap:4px;">
+              <span style="font-size:11px;font-weight:700;color:var(--ink-soft);">From:</span>
+              <input type="date" id="billingDateFrom" style="border:none;background:transparent;font-size:12px;color:var(--ink);font-weight:600;outline:none;font-family:inherit;cursor:pointer;">
+            </div>
+            <span style="color:var(--line);font-weight:bold;">–</span>
+            <div style="display:inline-flex;align-items:center;gap:4px;">
+              <span style="font-size:11px;font-weight:700;color:var(--ink-soft);">To:</span>
+              <input type="date" id="billingDateTo" style="border:none;background:transparent;font-size:12px;color:var(--ink);font-weight:600;outline:none;font-family:inherit;cursor:pointer;">
+            </div>
+          </div>
           <button type="button" class="btn btn-sm" id="billingResetFiltersBtn" title="Reset all search filters" style="padding:6px 12px;font-size:12px;">
             ✕ Reset
           </button>
@@ -4288,7 +4305,8 @@
       type: "dineIn",
       customerName: "Sanjay Borkar",
       customerPhone: "9822104523",
-      dateFormatted: "07/09/2026",
+      dateFormatted: "28/08/2026",
+      isoDate: "2026-08-28",
       time: "12:15",
       subtotal: 1850.00,
       discountType: "pct",
@@ -4320,7 +4338,8 @@
       type: "dineIn",
       customerName: "Rohan Deshmukh",
       customerPhone: "9422058891",
-      dateFormatted: "07/09/2026",
+      dateFormatted: "21/09/2026",
+      isoDate: "2026-09-21",
       time: "13:05",
       subtotal: 3420.00,
       discountType: "flat",
@@ -4352,7 +4371,8 @@
       type: "catering",
       customerName: "Vijay Khorjuvekar",
       customerPhone: "8830768469",
-      dateFormatted: "07/09/2026",
+      dateFormatted: "17/09/2026",
+      isoDate: "2026-09-17",
       time: "14:30",
       subtotal: 7300.00,
       discountType: "pct",
@@ -4384,7 +4404,8 @@
       type: "dineIn",
       customerName: "Pooja Sawant",
       customerPhone: "9764512389",
-      dateFormatted: "07/09/2026",
+      dateFormatted: "22/09/2026",
+      isoDate: "2026-09-22",
       time: "15:10",
       subtotal: 1250.00,
       discountType: "pct",
@@ -4414,7 +4435,8 @@
       type: "catering",
       customerName: "Dr. Anish Kamat",
       customerPhone: "9823419022",
-      dateFormatted: "07/09/2026",
+      dateFormatted: "22/09/2026",
+      isoDate: "2026-09-22",
       time: "16:45",
       subtotal: 12400.00,
       discountType: "pct",
@@ -7244,6 +7266,7 @@
 
     const now = new Date();
     const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+    const isoDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     const inv = {
       id: invId,
@@ -7254,6 +7277,7 @@
       customerName: currentOrderSession.customerName || "Vijay Khorjuvekar",
       customerPhone: currentOrderSession.customerPhone || "8830768469",
       dateFormatted,
+      isoDate,
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       subtotal: sub,
       discountType: discType,
@@ -8142,13 +8166,75 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
   // =========================================================================
   // 4. BILLING & SETTLED INVOICES VIEW (TABLE VIEW WITH FILTERS, KPIS & EXPORT)
   // =========================================================================
+  function formatIsoDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function getInvoiceIsoDate(inv) {
+    if (inv.isoDate) return inv.isoDate;
+    if (inv.dateFormatted) {
+      const parts = inv.dateFormatted.split('/');
+      if (parts.length === 3) {
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+    }
+    return formatIsoDate(new Date());
+  }
+
   let billingFilters = {
     search: "",
     series: "",
     payment: "",
     type: "",
-    date: "today"
+    datePreset: "all",
+    dateFrom: "",
+    dateTo: ""
   };
+
+  function applyBillingDatePreset(presetKey) {
+    const today = new Date();
+    let from = "";
+    let to = "";
+
+    if (presetKey === "today") {
+      from = formatIsoDate(today);
+      to = formatIsoDate(today);
+    } else if (presetKey === "yesterday") {
+      const yest = new Date(today);
+      yest.setDate(yest.getDate() - 1);
+      from = formatIsoDate(yest);
+      to = formatIsoDate(yest);
+    } else if (presetKey === "last7days") {
+      const past7 = new Date(today);
+      past7.setDate(past7.getDate() - 6);
+      from = formatIsoDate(past7);
+      to = formatIsoDate(today);
+    } else if (presetKey === "thisMonth") {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      from = formatIsoDate(startOfMonth);
+      to = formatIsoDate(today);
+    } else if (presetKey === "lastMonth") {
+      const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+      from = formatIsoDate(startOfLastMonth);
+      to = formatIsoDate(endOfLastMonth);
+    } else if (presetKey === "all") {
+      from = "";
+      to = "";
+    }
+
+    billingFilters.datePreset = presetKey;
+    billingFilters.dateFrom = from;
+    billingFilters.dateTo = to;
+
+    const fromInput = document.getElementById("billingDateFrom");
+    const toInput = document.getElementById("billingDateTo");
+    if (fromInput) fromInput.value = from;
+    if (toInput) toInput.value = to;
+  }
 
   function exportBillingCsv() {
     const list = getFilteredInvoices();
@@ -8184,7 +8270,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       return [
         `"${inv.id}"`,
         `"${compConf.code}"`,
-        `"${inv.dateFormatted || '07/09/2026'}"`,
+        `"${inv.dateFormatted || '22/09/2026'}"`,
         `"${inv.time || '12:00'}"`,
         `"${inv.tableLabel || ''}"`,
         `"${inv.type || 'dineIn'}"`,
@@ -8218,7 +8304,6 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     const series = billingFilters.series;
     const payment = billingFilters.payment;
     const type = billingFilters.type;
-    const date = billingFilters.date;
 
     return invoices.filter(inv => {
       // Search match
@@ -8245,30 +8330,37 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       // Type match
       if (type && inv.type !== type) return false;
 
-      // Date match
-      if (date === "yesterday" && inv.dateFormatted === "07/09/2026") return true; // mock date support
+      // Date Range match (From and To)
+      const invIso = getInvoiceIsoDate(inv);
+      if (billingFilters.dateFrom && invIso < billingFilters.dateFrom) return false;
+      if (billingFilters.dateTo && invIso > billingFilters.dateTo) return false;
+
       return true;
     });
   }
 
   function renderBilling() {
-    // 1. Update KPI Summary Cards
-    const totalRev = invoices.filter(i => i.status === "paid").reduce((s, i) => s + (Number(i.total) || 0), 0);
-    const totalCount = invoices.filter(i => i.status === "paid").length;
+    // Filter Invoices & Render Table
+    const filtered = getFilteredInvoices();
+    const paidFiltered = filtered.filter(i => i.status === "paid");
 
-    const amoncarInvoices = invoices.filter(i => (i.companySeries === "amoncar" || (i.id && i.id.startsWith("ACCS"))) && i.status === "paid");
+    // 1. Update KPI Summary Cards based on filtered results
+    const totalRev = paidFiltered.reduce((s, i) => s + (Number(i.total) || 0), 0);
+    const totalCount = paidFiltered.length;
+
+    const amoncarInvoices = paidFiltered.filter(i => (i.companySeries === "amoncar" || (i.id && i.id.startsWith("ACCS"))));
     const amoncarRev = amoncarInvoices.reduce((s, i) => s + (Number(i.total) || 0), 0);
 
-    const ktaInvoices = invoices.filter(i => (i.companySeries === "kta" || (i.id && i.id.startsWith("KTA"))) && i.status === "paid");
+    const ktaInvoices = paidFiltered.filter(i => (i.companySeries === "kta" || (i.id && i.id.startsWith("KTA"))));
     const ktaRev = ktaInvoices.reduce((s, i) => s + (Number(i.total) || 0), 0);
 
-    const cashRev = invoices.filter(i => i.paymentMode === "Cash" && i.status === "paid").reduce((s, i) => s + (Number(i.total) || 0), 0);
-    const digitalRev = invoices.filter(i => i.paymentMode !== "Cash" && i.status === "paid").reduce((s, i) => s + (Number(i.total) || 0), 0);
+    const cashRev = paidFiltered.filter(i => i.paymentMode === "Cash").reduce((s, i) => s + (Number(i.total) || 0), 0);
+    const digitalRev = paidFiltered.filter(i => i.paymentMode !== "Cash").reduce((s, i) => s + (Number(i.total) || 0), 0);
 
     const elTotRev = document.getElementById("kpiTotalRevenue");
     if (elTotRev) elTotRev.textContent = money(totalRev);
     const elTotInv = document.getElementById("kpiTotalInvoices");
-    if (elTotInv) elTotInv.textContent = `${totalCount} invoice${totalCount !== 1 ? 's' : ''} settled today`;
+    if (elTotInv) elTotInv.textContent = `${totalCount} invoice${totalCount !== 1 ? 's' : ''} settled`;
 
     const elAmRev = document.getElementById("kpiAmoncarRevenue");
     if (elAmRev) elAmRev.textContent = money(amoncarRev);
@@ -8285,8 +8377,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     const elDig = document.getElementById("kpiDigitalVal");
     if (elDig) elDig.textContent = `${money(digitalRev)} Digital`;
 
-    // 2. Filter Invoices & Render Table
-    const filtered = getFilteredInvoices();
+    // 2. Render Table Body
     const tbody = document.getElementById("billingTableBody");
     if (!tbody) return;
 
@@ -8430,7 +8521,9 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     billingFilters.series = "";
     billingFilters.payment = "";
     billingFilters.type = "";
-    billingFilters.date = "today";
+    billingFilters.datePreset = "all";
+    billingFilters.dateFrom = "";
+    billingFilters.dateTo = "";
 
     const sIn = document.getElementById("billingSearchInput");
     if (sIn) sIn.value = "";
@@ -8440,8 +8533,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     if (sPay) sPay.value = "";
     const sTyp = document.getElementById("billingTypeFilter");
     if (sTyp) sTyp.value = "";
-    const sDat = document.getElementById("billingDateFilter");
-    if (sDat) sDat.value = "today";
+    const sPre = document.getElementById("billingDatePreset");
+    if (sPre) sPre.value = "all";
+    const sFrom = document.getElementById("billingDateFrom");
+    if (sFrom) sFrom.value = "";
+    const sTo = document.getElementById("billingDateTo");
+    if (sTo) sTo.value = "";
 
     renderBilling();
   }
@@ -8463,8 +8560,22 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     billingFilters.type = e.target.value;
     renderBilling();
   });
-  document.getElementById("billingDateFilter")?.addEventListener("change", (e) => {
-    billingFilters.date = e.target.value;
+  document.getElementById("billingDatePreset")?.addEventListener("change", (e) => {
+    applyBillingDatePreset(e.target.value);
+    renderBilling();
+  });
+  document.getElementById("billingDateFrom")?.addEventListener("change", (e) => {
+    billingFilters.dateFrom = e.target.value;
+    billingFilters.datePreset = "custom";
+    const sPre = document.getElementById("billingDatePreset");
+    if (sPre) sPre.value = "custom";
+    renderBilling();
+  });
+  document.getElementById("billingDateTo")?.addEventListener("change", (e) => {
+    billingFilters.dateTo = e.target.value;
+    billingFilters.datePreset = "custom";
+    const sPre = document.getElementById("billingDatePreset");
+    if (sPre) sPre.value = "custom";
     renderBilling();
   });
   document.getElementById("billingResetFiltersBtn")?.addEventListener("click", resetBillingFilters);
