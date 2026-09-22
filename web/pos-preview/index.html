@@ -1667,6 +1667,242 @@
   .action-icon-btn.edit:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-tint); }
   .action-icon-btn.delete:hover { color: var(--danger); border-color: #fca5a5; background: #fef2f2; }
 
+  /* =========================================================================
+     BILLING SCREEN & COMPANY INVOICE SERIES SYSTEM
+     ========================================================================= */
+  .billing-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .billing-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .billing-kpi-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .billing-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg, 0 10px 25px rgba(0,0,0,0.06));
+  }
+  .billing-kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-soft);
+  }
+  .billing-kpi-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    margin: 6px 0 3px;
+  }
+  .billing-kpi-sub {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .billing-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .billing-search-box {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+    max-width: 420px;
+  }
+  .billing-search-box input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px 8px 34px;
+    font-size: 13px;
+    background: var(--panel);
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .billing-search-box input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(1, 122, 156, 0.15);
+  }
+  .billing-search-box span {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    color: var(--ink-soft);
+  }
+  .billing-filters-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Series Badges */
+  .series-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .03em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .series-badge-accs {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .series-badge-kta {
+    background: rgba(139, 92, 246, 0.12);
+    color: #7c3aed;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+  }
+  [data-theme="dark"] .series-badge-accs {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.4);
+  }
+  [data-theme="dark"] .series-badge-kta {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c084fc;
+    border-color: rgba(192, 132, 252, 0.4);
+  }
+
+  /* Payment Mode Pills */
+  .payment-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2.5px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .payment-pill-cash {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .payment-pill-upi {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+    border: 1px solid rgba(37, 99, 235, 0.3);
+  }
+  .payment-pill-card {
+    background: rgba(124, 58, 237, 0.12);
+    color: #6d28d9;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+  }
+  [data-theme="dark"] .payment-pill-cash {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.4);
+  }
+  [data-theme="dark"] .payment-pill-upi {
+    background: rgba(37, 99, 235, 0.2);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+  [data-theme="dark"] .payment-pill-card {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+    border-color: rgba(167, 139, 250, 0.4);
+  }
+
+  .inv-id-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+  }
+  .inv-id-link:hover {
+    color: var(--primary-light, #0284c7);
+  }
+
+  /* POS Cart Company Series Selector */
+  .pos-company-selector-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .pos-company-label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    letter-spacing: .05em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pos-series-switcher {
+    display: flex;
+    gap: 4px;
+    background: var(--line-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px;
+  }
+  .btn-series-toggle {
+    border: none;
+    background: transparent;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: all .15s ease;
+  }
+  .btn-series-toggle.active {
+    background: var(--panel);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-series-toggle[data-series="amoncar"].active {
+    color: #059669;
+  }
+  .btn-series-toggle[data-series="kta"].active {
+    color: #7c3aed;
+  }
+  [data-theme="dark"] .btn-series-toggle[data-series="amoncar"].active {
+    color: #34d399;
+  }
+  [data-theme="dark"] .btn-series-toggle[data-series="kta"].active {
+    color: #c084fc;
+  }
+
   .receipt-slip {
     background: #fff; color: #000; font-family: 'JetBrains Mono', monospace; padding: 18px;
     border-radius: 8px; border: 1px dashed #cbd5e1; font-size: 12px;
@@ -2625,6 +2861,21 @@
             <button class="btn btn-sm btn-danger" id="clearCartBtn" title="Clear only unsent items">Clear New</button>
           </div>
 
+          <!-- Company Invoice Series Selector -->
+          <div class="pos-company-selector-bar">
+            <span class="pos-company-label">
+              <span>🏢</span> Invoice Series:
+            </span>
+            <div class="pos-series-switcher" id="posCartSeriesSwitcher">
+              <button type="button" class="btn-series-toggle active" data-series="amoncar" title="Amoncar Series: ACCS/00/26-27">
+                Amoncar (ACCS)
+              </button>
+              <button type="button" class="btn-series-toggle" data-series="kta" title="KTA Series: KTA-KTS-BC/00/26-27">
+                KTA (KTS-BC)
+              </button>
+            </div>
+          </div>
+
           <!-- Customer details input (Name & Phone) -->
           <div class="customer-details-box">
             <div>
@@ -2780,13 +3031,116 @@
       <div class="kanban-board" id="kotKanbanBoard"></div>
     </div>
 
-    <!-- VIEW 4: BILLING INVOICES -->
+    <!-- VIEW 4: BILLING INVOICES & SETTLEMENTS -->
     <div class="view" id="view-billing">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <span style="font-size:12.5px;color:var(--ink-soft);">Settled receipts &amp; historical invoices generated today.</span>
-        <button class="btn btn-primary" id="refreshInvoicesBtn">↻ Refresh List</button>
+      <!-- Top Overview Bar -->
+      <div class="billing-header-row">
+        <div>
+          <h2 style="font-size:18px;font-weight:800;color:var(--ink);margin:0 0 4px;display:flex;align-items:center;gap:8px;">
+            <span>🧾</span> Settled Billing &amp; Tax Invoices
+          </h2>
+          <span style="font-size:12px;color:var(--ink-soft);">
+            Audit settled invoices, filter between Amoncar &amp; KTA series, search records, and export accounting reports.
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-sm" id="exportBillingCsvBtn" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;">
+            📥 Export CSV
+          </button>
+          <button class="btn btn-sm btn-primary" id="refreshInvoicesBtn" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;">
+            ↻ Refresh List
+          </button>
+        </div>
       </div>
-      <div id="invoiceList" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+      <!-- KPI Summary Cards -->
+      <div class="billing-kpi-grid" id="billingKpiGrid">
+        <div class="billing-kpi-card" style="border-left:4px solid var(--primary);">
+          <div class="billing-kpi-label">Total Settled Revenue</div>
+          <div class="billing-kpi-val" id="kpiTotalRevenue">₹0.00</div>
+          <div class="billing-kpi-sub" id="kpiTotalInvoices">0 invoices settled today</div>
+        </div>
+        <div class="billing-kpi-card" style="border-left:4px solid #10b981;">
+          <div class="billing-kpi-label" style="color:#059669;">Amoncar Series (ACCS)</div>
+          <div class="billing-kpi-val" id="kpiAmoncarRevenue" style="color:#059669;">₹0.00</div>
+          <div class="billing-kpi-sub" id="kpiAmoncarCount">0 invoices · Format ACCS/00/26-27</div>
+        </div>
+        <div class="billing-kpi-card" style="border-left:4px solid #8b5cf6;">
+          <div class="billing-kpi-label" style="color:#7c3aed;">KTA Series (KTS-BC)</div>
+          <div class="billing-kpi-val" id="kpiKtaRevenue" style="color:#7c3aed;">₹0.00</div>
+          <div class="billing-kpi-sub" id="kpiKtaCount">0 invoices · Format KTA-KTS-BC/00/26-27</div>
+        </div>
+        <div class="billing-kpi-card" style="border-left:4px solid #f59e0b;">
+          <div class="billing-kpi-label">Cash vs Digital Collection</div>
+          <div class="billing-kpi-val" id="kpiCashVsUpi" style="font-size:15px;margin:8px 0 4px;">
+            <span style="color:#d97706;" id="kpiCashVal">₹0.00 Cash</span> · <span style="color:#2563eb;" id="kpiDigitalVal">₹0.00 Digital</span>
+          </div>
+          <div class="billing-kpi-sub" id="kpiDigitalBreakdown">Split: Cash, UPI, and Card</div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Bar -->
+      <div class="billing-filter-bar">
+        <div class="billing-search-box">
+          <span>🔍</span>
+          <input type="text" id="billingSearchInput" placeholder="Search by Invoice #, Customer, Phone, Table...">
+        </div>
+        <div class="billing-filters-row">
+          <!-- Series Filter -->
+          <select id="billingCompanyFilter" class="master-select-filter" style="min-width:185px;">
+            <option value="">All Company Series</option>
+            <option value="amoncar">🏢 Amoncar (ACCS/00/26-27)</option>
+            <option value="kta">🏢 KTA (KTA-KTS-BC/00/26-27)</option>
+          </select>
+          <!-- Payment Mode Filter -->
+          <select id="billingPaymentFilter" class="master-select-filter">
+            <option value="">All Payment Modes</option>
+            <option value="Cash">💵 Cash</option>
+            <option value="UPI">📱 UPI / QR</option>
+            <option value="Card">💳 Card</option>
+          </select>
+          <!-- Order Type Filter -->
+          <select id="billingTypeFilter" class="master-select-filter">
+            <option value="">All Order Types</option>
+            <option value="dineIn">🍽️ Dine In</option>
+            <option value="takeaway">🛍️ Takeaway</option>
+            <option value="delivery">🛵 Delivery</option>
+            <option value="catering">⚖️ Bulk Catering (KG)</option>
+          </select>
+          <!-- Date Filter -->
+          <select id="billingDateFilter" class="master-select-filter">
+            <option value="all">All Dates</option>
+            <option value="today" selected>📅 Today</option>
+            <option value="yesterday">📅 Yesterday</option>
+          </select>
+          <button type="button" class="btn btn-sm" id="billingResetFiltersBtn" title="Reset all search filters" style="padding:6px 12px;font-size:12px;">
+            ✕ Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Invoices Structured Table View -->
+      <div class="master-table-card billing-table-card">
+        <table class="master-table billing-table" id="billingInvoicesTable">
+          <thead>
+            <tr>
+              <th style="width:160px;">INVOICE #</th>
+              <th style="width:130px;">SERIES</th>
+              <th style="width:115px;">DATE &amp; TIME</th>
+              <th style="width:125px;">TABLE / SOURCE</th>
+              <th>CUSTOMER</th>
+              <th>ITEMS SUMMARY</th>
+              <th style="text-align:right;width:105px;">TAXABLE</th>
+              <th style="text-align:right;width:95px;">GST (5%)</th>
+              <th style="text-align:right;width:115px;">TOTAL</th>
+              <th style="width:105px;">PAYMENT</th>
+              <th style="width:90px;">STATUS</th>
+              <th style="text-align:right;width:145px;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="billingTableBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- VIEW 5: MASTERS (Categorized from JUST_POS_MAIN) -->
@@ -3833,15 +4187,67 @@
     }
   ];
 
-  let lastInvoiceSeq = parseInt(localStorage.getItem("pos_last_invoice_seq") || "68", 10);
+  // =========================================================================
+  // COMPANY INVOICE SERIES SYSTEM (Amoncar: ACCS/00/26-27 | KTA: KTA-KTS-BC/00/26-27)
+  // =========================================================================
+  const companySeriesConfig = {
+    amoncar: {
+      key: "amoncar",
+      code: "ACCS",
+      name: "A unit of Amoncar Classic Catering Services Pvt Ltd.",
+      shortName: "Amoncar Classic",
+      seriesFormat: "ACCS/00/26-27",
+      prefix: "ACCS",
+      fy: "26-27",
+      padDigits: 2,
+      address: "Athil Peth, Bicholim, Goa - 403504, India",
+      phone: "7767004056",
+      gstin: "30AAQCA8024P1ZC",
+      pan: "AAQCA8024P",
+      tagline: "Fine Catering & Dining Experiences"
+    },
+    kta: {
+      key: "kta",
+      code: "KTA-KTS-BC",
+      name: "KTA - KTS Banquet & Catering Services",
+      shortName: "KTA Banquets",
+      seriesFormat: "KTA-KTS-BC/00/26-27",
+      prefix: "KTA-KTS-BC",
+      fy: "26-27",
+      padDigits: 2,
+      address: "KTA Towers, Panaji / Margao Highway, Goa - 403001, India",
+      phone: "8830768469",
+      gstin: "30AAEFK4321Q1Z8",
+      pan: "AAEFK4321Q",
+      tagline: "Premier Banquets & Outdoor Catering"
+    }
+  };
 
-  function getNextSequentialInvoiceNumber(hasKgItems = false) {
-    lastInvoiceSeq += 1;
-    localStorage.setItem("pos_last_invoice_seq", lastInvoiceSeq.toString());
-    const seqStr = String(lastInvoiceSeq).padStart(5, '0');
-    const fy = "26-27";
-    const prefix = hasKgItems ? "KTA-KG" : "KTA";
-    return `${prefix}/${seqStr}/${fy}`;
+  let activeCompanySeries = localStorage.getItem("pos_active_company_series") || "amoncar";
+
+  function peekNextInvoiceNumber(companyKey = activeCompanySeries) {
+    const conf = companySeriesConfig[companyKey] || companySeriesConfig.amoncar;
+    const storageKey = `pos_seq_${conf.key}`;
+    const defaultSeq = conf.key === 'amoncar' ? 4 : 3;
+    const currentSeq = parseInt(localStorage.getItem(storageKey) || defaultSeq.toString(), 10);
+    const seqStr = String(currentSeq).padStart(conf.padDigits, '0');
+    return `${conf.prefix}/${seqStr}/${conf.fy}`;
+  }
+
+  function commitNextInvoiceNumber(companyKey = activeCompanySeries) {
+    const conf = companySeriesConfig[companyKey] || companySeriesConfig.amoncar;
+    const storageKey = `pos_seq_${conf.key}`;
+    const defaultSeq = conf.key === 'amoncar' ? 4 : 3;
+    let currentSeq = parseInt(localStorage.getItem(storageKey) || defaultSeq.toString(), 10);
+    const seqStr = String(currentSeq).padStart(conf.padDigits, '0');
+    const invoiceId = `${conf.prefix}/${seqStr}/${conf.fy}`;
+    localStorage.setItem(storageKey, (currentSeq + 1).toString());
+    return { invoiceId, seqStr, companyKey: conf.key, config: conf };
+  }
+
+  // Backwards compatibility alias
+  function getNextSequentialInvoiceNumber() {
+    return commitNextInvoiceNumber(activeCompanySeries).invoiceId;
   }
 
   function numberToWordsINR(amount) {
@@ -3875,18 +4281,89 @@
 
   let invoices = [
     {
-      id: "KTA-KG/00068/26-27",
-      orderCode: "ORD-0068",
+      id: "ACCS/01/26-27",
+      companySeries: "amoncar",
+      orderCode: "ORD-0091",
+      tableLabel: "T-2",
+      type: "dineIn",
+      customerName: "Sanjay Borkar",
+      customerPhone: "9822104523",
+      dateFormatted: "07/09/2026",
+      time: "12:15",
+      subtotal: 1850.00,
+      discountType: "pct",
+      discountVal: 0,
+      discountAmount: 0,
+      taxableAmount: 1850.00,
+      taxEnabled: true,
+      taxRate: 5,
+      cgst: 46.25,
+      sgst: 46.25,
+      serviceCharge: 0,
+      total: 1942.50,
+      totalQty: 5.00,
+      amountInWords: "INR One Thousand Nine Hundred Forty Two and Fifty Paise Only",
+      status: "paid",
+      paymentMode: "UPI",
+      items: [
+        { name: "Butter Chicken", qty: 1, unitMode: "portion", price: 380 },
+        { name: "Paneer Butter Masala", qty: 1, unitMode: "portion", price: 320 },
+        { name: "Butter Naan", qty: 3, unitMode: "portion", price: 60 },
+        { name: "Jeera Rice", qty: 1, unitMode: "portion", price: 210 }
+      ]
+    },
+    {
+      id: "ACCS/02/26-27",
+      companySeries: "amoncar",
+      orderCode: "ORD-0092",
+      tableLabel: "VIP-1",
+      type: "dineIn",
+      customerName: "Rohan Deshmukh",
+      customerPhone: "9422058891",
+      dateFormatted: "07/09/2026",
+      time: "13:05",
+      subtotal: 3420.00,
+      discountType: "flat",
+      discountVal: 200,
+      discountAmount: 200,
+      taxableAmount: 3220.00,
+      taxEnabled: true,
+      taxRate: 5,
+      cgst: 80.50,
+      sgst: 80.50,
+      serviceCharge: 161.00,
+      total: 3462.00,
+      totalQty: 8.00,
+      amountInWords: "INR Three Thousand Four Hundred Sixty Two Only",
+      status: "paid",
+      paymentMode: "Card",
+      items: [
+        { name: "Chicken Tikka Platter", qty: 2, unitMode: "portion", price: 550 },
+        { name: "Dal Makhani", qty: 1, unitMode: "portion", price: 280 },
+        { name: "Mutton Rogan Josh", qty: 1, unitMode: "portion", price: 490 },
+        { name: "Garlic Naan", qty: 4, unitMode: "portion", price: 75 }
+      ]
+    },
+    {
+      id: "KTA-KTS-BC/01/26-27",
+      companySeries: "kta",
+      orderCode: "ORD-0093",
       tableLabel: "Catering",
-      type: "takeaway",
+      type: "catering",
       customerName: "Vijay Khorjuvekar",
       customerPhone: "8830768469",
       dateFormatted: "07/09/2026",
       time: "14:30",
       subtotal: 7300.00,
+      discountType: "pct",
+      discountVal: 0,
+      discountAmount: 0,
       taxableAmount: 6952.36,
+      taxEnabled: true,
+      taxRate: 5,
       cgst: 173.82,
       sgst: 173.82,
+      serviceCharge: 0,
       total: 7300.00,
       totalQty: 8.00,
       amountInWords: "INR Seven Thousand Three Hundred Only",
@@ -3897,6 +4374,67 @@
         { name: "KG-Veg Kolhapuri", qty: 2.00, unitMode: "kg", weightKg: 2.00, price: 900, pricePerKg: 900 },
         { name: "Kg-Steamed Basmati Rice", qty: 2.50, unitMode: "kg", weightKg: 2.50, price: 900, pricePerKg: 900 },
         { name: "Transport Services", qty: 1.00, unitMode: "portion", price: 500 }
+      ]
+    },
+    {
+      id: "ACCS/03/26-27",
+      companySeries: "amoncar",
+      orderCode: "ORD-0094",
+      tableLabel: "T-5",
+      type: "dineIn",
+      customerName: "Pooja Sawant",
+      customerPhone: "9764512389",
+      dateFormatted: "07/09/2026",
+      time: "15:10",
+      subtotal: 1250.00,
+      discountType: "pct",
+      discountVal: 10,
+      discountAmount: 125.00,
+      taxableAmount: 1125.00,
+      taxEnabled: true,
+      taxRate: 5,
+      cgst: 28.13,
+      sgst: 28.13,
+      serviceCharge: 0,
+      total: 1181.26,
+      totalQty: 3.00,
+      amountInWords: "INR One Thousand One Hundred Eighty One Only",
+      status: "paid",
+      paymentMode: "UPI",
+      items: [
+        { name: "Veg Hakka Noodles", qty: 2, unitMode: "portion", price: 260 },
+        { name: "Chilli Paneer Gravy", qty: 1, unitMode: "portion", price: 340 }
+      ]
+    },
+    {
+      id: "KTA-KTS-BC/02/26-27",
+      companySeries: "kta",
+      orderCode: "ORD-0095",
+      tableLabel: "Banquet-A",
+      type: "catering",
+      customerName: "Dr. Anish Kamat",
+      customerPhone: "9823419022",
+      dateFormatted: "07/09/2026",
+      time: "16:45",
+      subtotal: 12400.00,
+      discountType: "pct",
+      discountVal: 5,
+      discountAmount: 620.00,
+      taxableAmount: 11780.00,
+      taxEnabled: true,
+      taxRate: 5,
+      cgst: 294.50,
+      sgst: 294.50,
+      serviceCharge: 0,
+      total: 12369.00,
+      totalQty: 9.00,
+      amountInWords: "INR Twelve Thousand Three Hundred Sixty Nine Only",
+      status: "paid",
+      paymentMode: "UPI",
+      items: [
+        { name: "KG-Chicken Dum Biryani", qty: 5.00, unitMode: "kg", weightKg: 5.00, price: 1400, pricePerKg: 1400 },
+        { name: "KG-Mutton Sukka", qty: 3.00, unitMode: "kg", weightKg: 3.00, price: 1800, pricePerKg: 1800 },
+        { name: "Gulab Jamun Bulk (50 Pcs)", qty: 1.00, unitMode: "portion", price: 1200 }
       ]
     }
   ];
@@ -4270,6 +4808,13 @@
         }
       } else {
         showView(reqView);
+      }
+      if (urlParams.get("openreceipt")) {
+        const targetId = urlParams.get("openreceipt");
+        const inv = invoices.find(x => x.id === targetId) || (targetId === 'kta' ? invoices.find(x => x.companySeries === 'kta') : invoices[0]);
+        if (inv) {
+          setTimeout(() => { showInvoiceModal(inv); }, 250);
+        }
       }
     }, 150);
   }
@@ -6097,6 +6642,28 @@
     if (currentOrderSession.serviceChargeEnabled === undefined) currentOrderSession.serviceChargeEnabled = masterTaxConfig.serviceChargeEnabled;
     if (currentOrderSession.serviceChargeRate === undefined) currentOrderSession.serviceChargeRate = masterTaxConfig.serviceChargeRate;
 
+    // Synchronize Company Invoice Series Selector in Cart
+    if (!currentOrderSession.companySeries) {
+      currentOrderSession.companySeries = activeCompanySeries || "amoncar";
+    }
+    const seriesSwitcher = document.getElementById("posCartSeriesSwitcher");
+    if (seriesSwitcher) {
+      seriesSwitcher.querySelectorAll(".btn-series-toggle").forEach(btn => {
+        const isAct = btn.dataset.series === currentOrderSession.companySeries;
+        btn.classList.toggle("active", isAct);
+        btn.onclick = (e) => {
+          e.preventDefault();
+          const s = btn.dataset.series;
+          activeCompanySeries = s;
+          localStorage.setItem("pos_active_company_series", s);
+          currentOrderSession.companySeries = s;
+          seriesSwitcher.querySelectorAll(".btn-series-toggle").forEach(b => b.classList.toggle("active", b.dataset.series === s));
+          const conf = companySeriesConfig[s] || companySeriesConfig.amoncar;
+          showToast(`🏢 Billing Series: ${conf.shortName} (${conf.seriesFormat})`);
+        };
+      });
+    }
+
     // Totals Calculation
     const sub = itemsList.reduce((s, i) => s + (i.price * i.qty), 0);
 
@@ -6643,9 +7210,6 @@
     window.print();
   });
 
-  // =========================================================================
-  // GENERATE INVOICE & SETTLEMENT (AMONCAR CLASSIC CATERING & SEQUENTIAL INVOICE)
-  // =========================================================================
   let currentInvoiceTab = "tax_invoice"; // "tax_invoice", "gate_pass", "digital"
 
   document.getElementById("checkoutBtn").addEventListener("click", () => {
@@ -6654,8 +7218,8 @@
       return;
     }
 
-    const hasKgItems = currentOrderSession.items.some(i => i.unitMode === 'kg');
-    const invId = getNextSequentialInvoiceNumber(hasKgItems);
+    const companyKey = currentOrderSession.companySeries || activeCompanySeries || "amoncar";
+    const invId = peekNextInvoiceNumber(companyKey);
 
     const sub = currentOrderSession.items.reduce((s, i) => s + (i.price * i.qty), 0);
     const discType = currentOrderSession.discountType || 'pct';
@@ -6683,6 +7247,7 @@
 
     const inv = {
       id: invId,
+      companySeries: companyKey,
       orderCode: currentOrderSession.orderId,
       tableLabel: currentOrderSession.shortcode || currentOrderSession.label,
       type: currentOrderSession.orderType,
@@ -6713,6 +7278,10 @@
 
   function showInvoiceModal(inv) {
     const isPaid = (inv.status === "paid");
+    if (!inv.companySeries) {
+      inv.companySeries = (inv.id && inv.id.startsWith("ACCS")) ? "amoncar" : ((inv.id && inv.id.startsWith("KTA")) ? "kta" : (activeCompanySeries || "amoncar"));
+    }
+
     const titleEl = document.getElementById("invoiceModalTitle");
     if (titleEl) titleEl.textContent = isPaid ? `Invoice ${inv.id} (Paid)` : `Tax Invoice & Settle · ${inv.id}`;
 
@@ -6723,16 +7292,26 @@
     const totalQtyVal = Number(inv.totalQty || (inv.items || []).reduce((s,i) => s + (i.unitMode === 'kg' ? (i.weightKg * i.qty) : i.qty), 0)).toFixed(2);
 
     function renderActiveInvoiceTab() {
+      const compConf = companySeriesConfig[inv.companySeries] || companySeriesConfig.amoncar;
       let slipHtml = '';
 
       if (currentInvoiceTab === "gate_pass") {
-        // Image 3: Gate Pass / Dispatch Slip
+        // Gate Pass / Dispatch Slip
         slipHtml = `
           <div id="thermalPrintReceipt" class="amoncar-invoice-box">
+            <div class="amoncar-header" style="margin-bottom:8px;">
+              <div class="comp-name" style="font-size:13px;">${compConf.name}</div>
+              <div class="comp-sub">${compConf.address}</div>
+              <div class="invoice-title" style="margin-top:6px;border-color:#334155;">GATE PASS / DISPATCH SLIP</div>
+            </div>
             <table class="amoncar-meta-table">
               <tr>
                 <td class="label-cell">Invoice No</td>
                 <td class="val-cell">${inv.id}</td>
+              </tr>
+              <tr>
+                <td class="label-cell">Series</td>
+                <td class="val-cell">${compConf.code} (${compConf.seriesFormat})</td>
               </tr>
               <tr>
                 <td class="label-cell">Dt</td>
@@ -6777,21 +7356,25 @@
           </div>
         `;
       } else {
-        // Image 2: Tax Invoice
+        // Tax Invoice
         slipHtml = `
           <div id="thermalPrintReceipt" class="amoncar-invoice-box">
             <div class="amoncar-header">
-              <div class="comp-name">A unit of Amoncar Classic Catering Services Pvt Ltd.</div>
-              <div class="comp-sub">Athil Peth, Bicholim, GoaBICHOLIM,<br>Goa - 403504, India</div>
-              <div class="comp-sub">Phone No: 7767004056 | GST No: 30AAQCA8024P1ZC</div>
-              <div class="comp-sub">PAN : AAQCA8024P</div>
+              <div class="comp-name">${compConf.name}</div>
+              <div class="comp-sub">${compConf.address}</div>
+              <div class="comp-sub">Phone No: ${compConf.phone} | GST No: ${compConf.gstin}</div>
+              <div class="comp-sub">PAN : ${compConf.pan}</div>
               <div class="invoice-title">TAX INVOICE</div>
             </div>
 
             <table class="amoncar-meta-table">
               <tr>
                 <td class="label-cell">Invoice No</td>
-                <td class="val-cell">${inv.id}</td>
+                <td class="val-cell"><b>${inv.id}</b></td>
+              </tr>
+              <tr>
+                <td class="label-cell">Series :</td>
+                <td class="val-cell"><span style="font-family:monospace;font-weight:700;">${compConf.code} (${compConf.seriesFormat})</span></td>
               </tr>
               <tr>
                 <td class="label-cell">Dt</td>
@@ -6904,6 +7487,30 @@
       }
 
       body.innerHTML = `
+        <!-- Company Invoice Series Switcher -->
+        <div class="company-series-selector-bar no-print" style="margin-bottom:12px;padding:8px 12px;background:var(--line-soft);border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div>
+            <div style="font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;">Company Invoice Series</div>
+            <div style="font-size:12px;font-weight:800;color:var(--ink);" id="modalActiveSeriesName">
+              ${compConf.shortName} (${compConf.seriesFormat})
+            </div>
+          </div>
+          ${!isPaid ? `
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-sm ${inv.companySeries === 'amoncar' ? 'btn-primary' : ''}" id="modalSwitchAmoncar" style="font-size:11px;font-weight:700;padding:4px 9px;">
+              🏢 Amoncar (ACCS)
+            </button>
+            <button type="button" class="btn btn-sm ${inv.companySeries === 'kta' ? 'btn-primary' : ''}" id="modalSwitchKta" style="font-size:11px;font-weight:700;padding:4px 9px;">
+              🏢 KTA (KTS-BC)
+            </button>
+          </div>
+          ` : `
+          <span class="series-badge ${inv.companySeries === 'amoncar' ? 'series-badge-accs' : 'series-badge-kta'}">
+            ${compConf.code} SERIES
+          </span>
+          `}
+        </div>
+
         <!-- Switchable Tabs: Tax Invoice vs Gate Pass vs Digital Dispatch -->
         <div class="receipt-view-tabs no-print">
           <button type="button" class="receipt-view-tab ${currentInvoiceTab === 'tax_invoice' ? 'active' : ''}" id="tabTaxInvoice">
@@ -6958,6 +7565,21 @@
         ` : ''}
       `;
 
+      // Wire Series switcher inside modal
+      body.querySelector("#modalSwitchAmoncar")?.addEventListener("click", () => {
+        inv.companySeries = "amoncar";
+        inv.id = peekNextInvoiceNumber("amoncar");
+        if (titleEl) titleEl.textContent = `Tax Invoice & Settle · ${inv.id}`;
+        renderActiveInvoiceTab();
+      });
+
+      body.querySelector("#modalSwitchKta")?.addEventListener("click", () => {
+        inv.companySeries = "kta";
+        inv.id = peekNextInvoiceNumber("kta");
+        if (titleEl) titleEl.textContent = `Tax Invoice & Settle · ${inv.id}`;
+        renderActiveInvoiceTab();
+      });
+
       // Wire Tab clicks
       body.querySelector("#tabTaxInvoice")?.addEventListener("click", () => {
         currentInvoiceTab = "tax_invoice";
@@ -6993,8 +7615,9 @@
           const taxText = (inv.taxEnabled && inv.taxRate > 0) ? `*CGST (${(inv.taxRate / 2).toFixed(1)}%):* ₹${inv.cgst.toFixed(2)}\n*SGST (${(inv.taxRate / 2).toFixed(1)}%):* ₹${inv.sgst.toFixed(2)}` : `*GST:* Exempt / ₹0.00`;
           const scText = inv.serviceCharge > 0 ? `\n*Service Charge (5%):* ₹${inv.serviceCharge.toFixed(2)}` : '';
 
-          const waText = `🧾 *A unit of Amoncar Classic Catering Services Pvt Ltd.*
+          const waText = `🧾 *${compConf.name}*
 *Tax Invoice:* ${inv.id}
+*Company Series:* ${compConf.code} (${compConf.seriesFormat})
 *Date:* ${inv.dateFormatted || '07/09/2026'} | *Bill Type:* ${billTypeDisplay}
 *Customer:* ${nameDisplay}
 *Phone:* ${phoneDisplay}
@@ -7007,7 +7630,7 @@ ${taxText}${scText}
 *Bill Total:* ₹${inv.total.toFixed(2)}
 _${inv.amountInWords || numberToWordsINR(inv.total)}_
 ━━━━━━━━━━━━━━━━━━
-🙏 *Thank you for your business!*`;
+🙏 *Thank you for your business with ${compConf.shortName}!*`;
 
           const waUrl = `https://api.whatsapp.com/send?phone=${rawPhone}&text=${encodeURIComponent(waText)}`;
           window.open(waUrl, "_blank");
@@ -7039,7 +7662,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
               statusMsg.style.display = "block";
               statusMsg.style.background = "#e0f2fe";
               statusMsg.style.color = "#0369a1";
-              statusMsg.textContent = `✓ SMS dispatched: "Invoice ${inv.id} for ₹${inv.total} settled via ${billTypeDisplay}. Thanks from Amoncar Catering!"`;
+              statusMsg.textContent = `✓ SMS dispatched: "Invoice ${inv.id} for ₹${inv.total} settled via ${billTypeDisplay}. Thanks from ${compConf.shortName}!"`;
             }
             showToast(`✓ SMS invoice dispatched to +${rawPhone}!`);
           }, 600);
@@ -7096,6 +7719,9 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       const payBtn = foot.querySelector("#payInvoiceBtn");
       payBtn.onclick = () => {
         const mode = body.querySelector("input[name='payMode']:checked")?.value || "Cash";
+        // Commit sequential invoice number for the selected company
+        const committed = commitNextInvoiceNumber(inv.companySeries || "amoncar");
+        inv.id = committed.invoiceId;
         inv.status = "paid";
         inv.paymentMode = mode;
         apiClient.payInvoice(inv.id, mode);
@@ -7119,7 +7745,8 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
         currentOrderSession = null;
         closeAllModals();
-        showToast(`✓ Invoice ${inv.id} settled via ${mode}! Sequence updated.`);
+        showToast(`✓ Invoice ${inv.id} (${committed.config.shortName}) settled via ${mode}!`);
+        updateGlobalStats();
         renderTables();
         renderBilling();
         showView("billing");
@@ -7143,7 +7770,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     setCustomAddonMode: (m) => { customAddonBillingMode = m; renderCustomizationModalContent(); },
     setCustomWeightKg: (w) => { customWeightKg = w; renderCustomizationModalContent(); },
     setCustomSelections: (s) => { customSelections = s; renderCustomizationModalContent(); },
-    setCustomOrderUnitMode: (u) => { customOrderUnitMode = u; renderCustomizationModalContent(); }
+    setCustomOrderUnitMode: (u) => { customOrderUnitMode = u; renderCustomizationModalContent(); },
+    getCompanySeriesConfig: () => companySeriesConfig,
+    getActiveCompanySeries: () => activeCompanySeries,
+    setActiveCompanySeries: (s) => { activeCompanySeries = s; localStorage.setItem("pos_active_company_series", s); },
+    renderBilling: () => renderBilling(),
+    exportBillingCsv: () => exportBillingCsv()
   };
 
   // =========================================================================
@@ -7508,42 +8140,339 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
   });
 
   // =========================================================================
-  // 4. BILLING VIEW
+  // 4. BILLING & SETTLED INVOICES VIEW (TABLE VIEW WITH FILTERS, KPIS & EXPORT)
   // =========================================================================
-  function renderBilling() {
-    const container = document.getElementById("invoiceList");
-    if (invoices.length === 0) {
-      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink-soft);">No invoices generated today yet.</div>`;
+  let billingFilters = {
+    search: "",
+    series: "",
+    payment: "",
+    type: "",
+    date: "today"
+  };
+
+  function exportBillingCsv() {
+    const list = getFilteredInvoices();
+    if (list.length === 0) {
+      showToast("No invoices to export!", "error");
       return;
     }
-    container.innerHTML = invoices.map(inv => `
-      <div class="dish-card" style="cursor:pointer;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 20px;" data-invid="${inv.id}">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <b style="font-size:15px;color:var(--primary);">${inv.id}</b>
-            <span class="shortcode-badge">${inv.tableLabel}</span>
-            <span class="table-status ${inv.status === 'paid' ? 'status-available' : 'status-occupied'}">${inv.status.toUpperCase()}</span>
-          </div>
-          <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">
-            ${inv.customerName} · ${inv.time} · ${(inv.items || []).length} items · Paid via ${inv.paymentMode || 'UPI'}
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:16px;font-weight:800;color:var(--ink);">${money(inv.total)}</div>
-          <button class="btn btn-sm btn-primary" style="margin-top:4px;">View Receipt</button>
-        </div>
-      </div>
-    `).join("");
 
-    container.querySelectorAll("[data-invid]").forEach(el => {
-      el.addEventListener("click", () => {
-        const inv = invoices.find(x => x.id === el.dataset.invid);
-        if (inv) showInvoiceModal(inv);
-      });
+    const headers = [
+      "Invoice Number",
+      "Company Series",
+      "Date",
+      "Time",
+      "Table/Source",
+      "Order Type",
+      "Customer Name",
+      "Customer Phone",
+      "Item Count",
+      "Items",
+      "Subtotal",
+      "Discount",
+      "Taxable Value",
+      "GST Amount",
+      "Grand Total",
+      "Payment Mode",
+      "Status"
+    ];
+
+    const rows = list.map(inv => {
+      const compConf = companySeriesConfig[inv.companySeries] || (inv.id && inv.id.startsWith("ACCS") ? companySeriesConfig.amoncar : companySeriesConfig.kta);
+      const itemsStr = (inv.items || []).map(i => `${i.name} x${i.qty}`).join("; ");
+      const gstVal = ((inv.cgst || 0) + (inv.sgst || 0)).toFixed(2);
+      return [
+        `"${inv.id}"`,
+        `"${compConf.code}"`,
+        `"${inv.dateFormatted || '07/09/2026'}"`,
+        `"${inv.time || '12:00'}"`,
+        `"${inv.tableLabel || ''}"`,
+        `"${inv.type || 'dineIn'}"`,
+        `"${(inv.customerName || '').replace(/"/g, '""')}"`,
+        `"${inv.customerPhone || ''}"`,
+        (inv.items || []).length,
+        `"${itemsStr.replace(/"/g, '""')}"`,
+        (inv.subtotal || 0).toFixed(2),
+        (inv.discountAmount || 0).toFixed(2),
+        (inv.taxableAmount || 0).toFixed(2),
+        gstVal,
+        (inv.total || 0).toFixed(2),
+        `"${inv.paymentMode || 'Cash'}"`,
+        `"${(inv.status || 'paid').toUpperCase()}"`
+      ].join(",");
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Settled_Invoices_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`📥 Exported ${list.length} invoices to CSV!`);
+  }
+
+  function getFilteredInvoices() {
+    const q = (billingFilters.search || "").toLowerCase().trim();
+    const series = billingFilters.series;
+    const payment = billingFilters.payment;
+    const type = billingFilters.type;
+    const date = billingFilters.date;
+
+    return invoices.filter(inv => {
+      // Search match
+      if (q) {
+        const matchId = (inv.id || "").toLowerCase().includes(q);
+        const matchCust = (inv.customerName || "").toLowerCase().includes(q);
+        const matchPhone = (inv.customerPhone || "").toLowerCase().includes(q);
+        const matchTable = (inv.tableLabel || "").toLowerCase().includes(q);
+        const matchItem = (inv.items || []).some(it => (it.name || "").toLowerCase().includes(q));
+        if (!matchId && !matchCust && !matchPhone && !matchTable && !matchItem) return false;
+      }
+
+      // Series match
+      if (series) {
+        const isAmoncar = inv.companySeries === "amoncar" || (inv.id && inv.id.startsWith("ACCS"));
+        const isKta = inv.companySeries === "kta" || (inv.id && inv.id.startsWith("KTA"));
+        if (series === "amoncar" && !isAmoncar) return false;
+        if (series === "kta" && !isKta) return false;
+      }
+
+      // Payment match
+      if (payment && inv.paymentMode !== payment) return false;
+
+      // Type match
+      if (type && inv.type !== type) return false;
+
+      // Date match
+      if (date === "yesterday" && inv.dateFormatted === "07/09/2026") return true; // mock date support
+      return true;
     });
   }
 
-  document.getElementById("refreshInvoicesBtn").addEventListener("click", renderBilling);
+  function renderBilling() {
+    // 1. Update KPI Summary Cards
+    const totalRev = invoices.filter(i => i.status === "paid").reduce((s, i) => s + (Number(i.total) || 0), 0);
+    const totalCount = invoices.filter(i => i.status === "paid").length;
+
+    const amoncarInvoices = invoices.filter(i => (i.companySeries === "amoncar" || (i.id && i.id.startsWith("ACCS"))) && i.status === "paid");
+    const amoncarRev = amoncarInvoices.reduce((s, i) => s + (Number(i.total) || 0), 0);
+
+    const ktaInvoices = invoices.filter(i => (i.companySeries === "kta" || (i.id && i.id.startsWith("KTA"))) && i.status === "paid");
+    const ktaRev = ktaInvoices.reduce((s, i) => s + (Number(i.total) || 0), 0);
+
+    const cashRev = invoices.filter(i => i.paymentMode === "Cash" && i.status === "paid").reduce((s, i) => s + (Number(i.total) || 0), 0);
+    const digitalRev = invoices.filter(i => i.paymentMode !== "Cash" && i.status === "paid").reduce((s, i) => s + (Number(i.total) || 0), 0);
+
+    const elTotRev = document.getElementById("kpiTotalRevenue");
+    if (elTotRev) elTotRev.textContent = money(totalRev);
+    const elTotInv = document.getElementById("kpiTotalInvoices");
+    if (elTotInv) elTotInv.textContent = `${totalCount} invoice${totalCount !== 1 ? 's' : ''} settled today`;
+
+    const elAmRev = document.getElementById("kpiAmoncarRevenue");
+    if (elAmRev) elAmRev.textContent = money(amoncarRev);
+    const elAmCnt = document.getElementById("kpiAmoncarCount");
+    if (elAmCnt) elAmCnt.textContent = `${amoncarInvoices.length} invoices · Series ACCS/00/26-27`;
+
+    const elKtaRev = document.getElementById("kpiKtaRevenue");
+    if (elKtaRev) elKtaRev.textContent = money(ktaRev);
+    const elKtaCnt = document.getElementById("kpiKtaCount");
+    if (elKtaCnt) elKtaCnt.textContent = `${ktaInvoices.length} invoices · Series KTA-KTS-BC/00/26-27`;
+
+    const elCash = document.getElementById("kpiCashVal");
+    if (elCash) elCash.textContent = `${money(cashRev)} Cash`;
+    const elDig = document.getElementById("kpiDigitalVal");
+    if (elDig) elDig.textContent = `${money(digitalRev)} Digital`;
+
+    // 2. Filter Invoices & Render Table
+    const filtered = getFilteredInvoices();
+    const tbody = document.getElementById("billingTableBody");
+    if (!tbody) return;
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="12" style="text-align:center;padding:48px 20px;color:var(--ink-soft);">
+            <div style="font-size:28px;margin-bottom:8px;">🔍</div>
+            <b style="font-size:14px;color:var(--ink);">No invoices found matching your filters</b>
+            <div style="font-size:12px;margin-top:4px;">Try searching for a different customer, series, or reset filters.</div>
+            <button class="btn btn-sm btn-primary" id="tableEmptyResetBtn" style="margin-top:12px;">
+              ✕ Reset All Filters
+            </button>
+          </td>
+        </tr>
+      `;
+      tbody.querySelector("#tableEmptyResetBtn")?.addEventListener("click", () => {
+        resetBillingFilters();
+      });
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(inv => {
+      const isAmoncar = inv.companySeries === "amoncar" || (inv.id && inv.id.startsWith("ACCS"));
+      const seriesBadge = isAmoncar 
+        ? `<span class="series-badge series-badge-accs" title="Amoncar Series ACCS/00/26-27">ACCS</span>`
+        : `<span class="series-badge series-badge-kta" title="KTA Series KTA-KTS-BC/00/26-27">KTA-KTS-BC</span>`;
+
+      const payMode = inv.paymentMode || "Cash";
+      const payPill = payMode === "Cash" 
+        ? `<span class="payment-pill payment-pill-cash">💵 Cash</span>`
+        : (payMode === "Card" 
+            ? `<span class="payment-pill payment-pill-card">💳 Card</span>`
+            : `<span class="payment-pill payment-pill-upi">📱 UPI</span>`);
+
+      const itemsCount = (inv.items || []).length;
+      const itemsTitles = (inv.items || []).map(i => `${i.name} (${i.unitMode === 'kg' ? `${i.weightKg}kg` : `x${i.qty}`})`).join(", ");
+      const gstTotal = (inv.cgst || 0) + (inv.sgst || 0);
+
+      return `
+        <tr data-invid="${inv.id}">
+          <td>
+            <span class="inv-id-link" data-action="view-receipt" data-invid="${inv.id}" title="Click to view 80mm tax receipt">
+              ${inv.id}
+            </span>
+            <div style="font-size:10.5px;color:var(--ink-soft);margin-top:2px;">
+              ${inv.orderCode || ''}
+            </div>
+          </td>
+          <td>
+            ${seriesBadge}
+            <div style="font-size:10.5px;color:var(--ink-soft);margin-top:2px;">
+              ${isAmoncar ? 'Amoncar Classic' : 'KTA Banquets'}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:700;">${inv.dateFormatted || '07/09/2026'}</div>
+            <div style="font-size:11px;color:var(--ink-soft);display:flex;align-items:center;gap:3px;margin-top:2px;">
+              <span>⏱</span> ${inv.time || '12:00'}
+            </div>
+          </td>
+          <td>
+            <span class="shortcode-badge">${inv.tableLabel || 'Counter'}</span>
+            <div style="font-size:10.5px;color:var(--ink-soft);text-transform:capitalize;margin-top:2px;">
+              ${inv.type === 'dineIn' ? 'Dine In' : (inv.type === 'catering' ? 'Bulk Catering' : (inv.type === 'takeaway' ? 'Takeaway' : 'Delivery'))}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:700;color:var(--ink);">${inv.customerName || 'Walk-in Guest'}</div>
+            <div style="font-size:11px;color:var(--ink-soft);font-family:monospace;">${inv.customerPhone || 'N/A'}</div>
+          </td>
+          <td>
+            <div style="font-weight:700;font-size:12px;">${itemsCount} item${itemsCount !== 1 ? 's' : ''}</div>
+            <div style="font-size:11px;color:var(--ink-soft);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${itemsTitles}">
+              ${itemsTitles || 'No items listed'}
+            </div>
+          </td>
+          <td style="text-align:right;font-family:monospace;font-size:12.5px;">
+            ${money(inv.taxableAmount || inv.subtotal || 0)}
+          </td>
+          <td style="text-align:right;font-family:monospace;font-size:12px;color:var(--ink-soft);">
+            ${money(gstTotal)}
+          </td>
+          <td style="text-align:right;">
+            <b style="font-size:14px;color:var(--ink);font-family:monospace;">${money(inv.total)}</b>
+          </td>
+          <td>
+            ${payPill}
+          </td>
+          <td>
+            <span class="table-status status-available" style="padding:2px 8px;font-size:10.5px;">PAID</span>
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex;gap:4px;align-items:center;">
+              <button class="btn btn-sm btn-primary" data-action="view-receipt" data-invid="${inv.id}" title="View Receipt &amp; Gate Pass" style="padding:4px 8px;font-size:11px;">
+                🧾 Receipt
+              </button>
+              <button class="btn btn-sm" data-action="wa-receipt" data-invid="${inv.id}" title="Share via WhatsApp" style="padding:4px 7px;font-size:11px;background:#dcfce7;color:#15803d;border-color:#86efac;">
+                🟢
+              </button>
+              <button class="btn btn-sm" data-action="print-receipt" data-invid="${inv.id}" title="Print 80mm Slip" style="padding:4px 7px;font-size:11px;">
+                🖨️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    // Wire table clicks
+    tbody.querySelectorAll("[data-action='view-receipt']").forEach(btn => {
+      btn.onclick = () => {
+        const inv = invoices.find(x => x.id === btn.dataset.invid);
+        if (inv) showInvoiceModal(inv);
+      };
+    });
+
+    tbody.querySelectorAll("[data-action='wa-receipt']").forEach(btn => {
+      btn.onclick = () => {
+        const inv = invoices.find(x => x.id === btn.dataset.invid);
+        if (inv) {
+          showInvoiceModal(inv);
+          document.getElementById("tabDigitalDispatch")?.click();
+        }
+      };
+    });
+
+    tbody.querySelectorAll("[data-action='print-receipt']").forEach(btn => {
+      btn.onclick = () => {
+        const inv = invoices.find(x => x.id === btn.dataset.invid);
+        if (inv) {
+          showInvoiceModal(inv);
+          setTimeout(() => { window.print(); }, 250);
+        }
+      };
+    });
+  }
+
+  function resetBillingFilters() {
+    billingFilters.search = "";
+    billingFilters.series = "";
+    billingFilters.payment = "";
+    billingFilters.type = "";
+    billingFilters.date = "today";
+
+    const sIn = document.getElementById("billingSearchInput");
+    if (sIn) sIn.value = "";
+    const sSer = document.getElementById("billingCompanyFilter");
+    if (sSer) sSer.value = "";
+    const sPay = document.getElementById("billingPaymentFilter");
+    if (sPay) sPay.value = "";
+    const sTyp = document.getElementById("billingTypeFilter");
+    if (sTyp) sTyp.value = "";
+    const sDat = document.getElementById("billingDateFilter");
+    if (sDat) sDat.value = "today";
+
+    renderBilling();
+  }
+
+  // Setup Billing Filter Listeners
+  document.getElementById("billingSearchInput")?.addEventListener("input", (e) => {
+    billingFilters.search = e.target.value;
+    renderBilling();
+  });
+  document.getElementById("billingCompanyFilter")?.addEventListener("change", (e) => {
+    billingFilters.series = e.target.value;
+    renderBilling();
+  });
+  document.getElementById("billingPaymentFilter")?.addEventListener("change", (e) => {
+    billingFilters.payment = e.target.value;
+    renderBilling();
+  });
+  document.getElementById("billingTypeFilter")?.addEventListener("change", (e) => {
+    billingFilters.type = e.target.value;
+    renderBilling();
+  });
+  document.getElementById("billingDateFilter")?.addEventListener("change", (e) => {
+    billingFilters.date = e.target.value;
+    renderBilling();
+  });
+  document.getElementById("billingResetFiltersBtn")?.addEventListener("click", resetBillingFilters);
+  document.getElementById("refreshInvoicesBtn")?.addEventListener("click", () => {
+    renderBilling();
+    showToast("↻ Refreshed settled invoices list");
+  });
+  document.getElementById("exportBillingCsvBtn")?.addEventListener("click", exportBillingCsv);
 
   // =========================================================================
   // 4B. TABLE RESERVATIONS & BOOKINGS SYSTEM
@@ -8081,8 +9010,32 @@ For any queries or updates, reply to this message.`;
                 <input type="checkbox" id="m_showTaxBreakdown" ${masterTaxConfig.showTaxBreakdownOnInvoice ? 'checked' : ''} style="accent-color:var(--primary); cursor:pointer;"> Show CGST &amp; SGST rows on Bill
               </label>
               <label style="display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600; cursor:pointer;">
-                <input type="checkbox" id="m_allowCashierOverride" ${masterTaxConfig.allowCashierTaxOverride ? 'checked' : ''} style="accent-color:var(--primary); cursor:pointer;"> Allow Cashier 1-Click Tax Exemption at POS
+                <input type="checkbox" id="m_allowCashierTaxOverride" ${masterTaxConfig.allowCashierTaxOverride ? 'checked' : ''} style="accent-color:var(--primary); cursor:pointer;"> Allow Cashier 1-Click Tax Exemption at POS
               </label>
+            </div>
+          </div>
+
+          <!-- 4. Company Invoice Series & Sequence Numbers -->
+          <div>
+            <label style="font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">Company Series &amp; Sequence</label>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div>
+                <span style="font-size:10px; color:var(--ink-soft); display:block;">Default Series:</span>
+                <select id="m_defaultCompanySeries" style="width:100%; padding:4px 6px; font-size:11px; font-weight:600; border:1px solid var(--line); border-radius:6px; background:var(--panel);">
+                  <option value="amoncar" ${activeCompanySeries === 'amoncar' ? 'selected' : ''}>Amoncar (ACCS/00/26-27)</option>
+                  <option value="kta" ${activeCompanySeries === 'kta' ? 'selected' : ''}>KTA (KTA-KTS-BC/00/26-27)</option>
+                </select>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <div style="flex:1;">
+                  <span style="font-size:10px; color:var(--ink-soft); display:block;">ACCS Next:</span>
+                  <input type="number" id="m_seqAmoncar" value="${parseInt(localStorage.getItem('pos_seq_amoncar') || '4', 10)}" min="1" style="width:100%; padding:4px 6px; font-size:11px; font-weight:700; font-family:monospace; border:1px solid var(--line); border-radius:6px; background:var(--panel);">
+                </div>
+                <div style="flex:1;">
+                  <span style="font-size:10px; color:var(--ink-soft); display:block;">KTS-BC Next:</span>
+                  <input type="number" id="m_seqKta" value="${parseInt(localStorage.getItem('pos_seq_kta') || '3', 10)}" min="1" style="width:100%; padding:4px 6px; font-size:11px; font-weight:700; font-family:monospace; border:1px solid var(--line); border-radius:6px; background:var(--panel);">
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -8094,7 +9047,16 @@ For any queries or updates, reply to this message.`;
       const scEnabled = document.getElementById("m_serviceChargeEnabled").checked;
       const scRate = parseFloat(document.getElementById("m_serviceChargeRate").value) || 5;
       const showBreakdown = document.getElementById("m_showTaxBreakdown").checked;
-      const allowOverride = document.getElementById("m_allowCashierOverride").checked;
+      const allowOverride = document.getElementById("m_allowCashierTaxOverride").checked;
+
+      const defSeries = document.getElementById("m_defaultCompanySeries")?.value || "amoncar";
+      const seqAmoncar = parseInt(document.getElementById("m_seqAmoncar")?.value || "4", 10);
+      const seqKta = parseInt(document.getElementById("m_seqKta")?.value || "3", 10);
+
+      activeCompanySeries = defSeries;
+      localStorage.setItem("pos_active_company_series", defSeries);
+      localStorage.setItem("pos_seq_amoncar", seqAmoncar.toString());
+      localStorage.setItem("pos_seq_kta", seqKta.toString());
 
       masterTaxConfig.defaultTaxRate = slabVal;
       masterTaxConfig.taxEnabledByDefault = (slabVal > 0);
@@ -8103,7 +9065,7 @@ For any queries or updates, reply to this message.`;
       masterTaxConfig.showTaxBreakdownOnInvoice = showBreakdown;
       masterTaxConfig.allowCashierTaxOverride = allowOverride;
 
-      showToast("✓ Master Tax & Invoice rules updated across all POS terminals!");
+      showToast("✓ Master Tax, Series & Invoice rules updated across all POS terminals!");
       renderMasterStats();
     });
   }
