@@ -4031,13 +4031,13 @@
       ]
     },
     {
-      id: 14, foodType: "veg", itemName: "Kaju Katli (Pure Ghee)", shortcode: "KK-KG", categoryId: 6, price: 260,
-      pricePerKg: 950, portionWeightGrams: 250, pricingType: "both", taxType: "inclusive", gstRate: 5, itemDescription: "Handcrafted silver-leaf cashew fudge · Sold by Plate or KG · Incl. 5% GST",
+      id: 14, foodType: "veg", itemName: "Kaju Katli (Pure Ghee)", shortcode: "KK-KG", categoryId: 6, price: 950,
+      pricePerKg: 950, portionWeightGrams: 250, pricingType: "kg", unitLabel: "KG", taxType: "inclusive", gstRate: 5, itemDescription: "Handcrafted silver-leaf cashew fudge · Sold by KG (250g, 500g, 1kg) · Incl. 5% GST",
       station: "Dessert Counter", status: "active", optionGroups: []
     },
     {
-      id: 15, foodType: "veg", itemName: "Dal Makhani (Catering Bulk)", shortcode: "DMK-KG", categoryId: 2, price: 180,
-      pricePerKg: 420, portionWeightGrams: 400, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Slow-cooked bulk catering batch billed per KG for events & parties",
+      id: 15, foodType: "veg", itemName: "Dal Makhani (Catering Bulk)", shortcode: "DMK-KG", categoryId: 2, price: 420,
+      pricePerKg: 420, portionWeightGrams: 400, pricingType: "kg", unitLabel: "KG", taxType: "exclusive", gstRate: 5, itemDescription: "Slow-cooked bulk catering batch billed per KG for events & parties",
       station: "Kitchen", status: "active", optionGroups: []
     }
   ];
@@ -4110,6 +4110,7 @@
     showItemTaxRate: false,
     showTaxModeBadge: false,
     showItemAddons: false,
+    showItemUnit: true, // Displays dynamic unit (e.g. 2.50 KG / 2 Pl / 4 Pcs)
     
     // Billing & Tax Summary
     taxRegime: "cgst_sgst", // "cgst_sgst" (Intra-state CGST+SGST), "igst" (Inter-state IGST), "composition_none" (Bill of Supply), "single_gst" (Consolidated)
@@ -4140,7 +4141,8 @@
       if (saved) {
         const parsed = JSON.parse(saved);
         const merged = Object.assign({}, DEFAULT_INVOICE_CONFIG, parsed);
-        // Normalize dynamic tax properties if missing in existing localStorage
+        // Normalize dynamic tax & item unit properties if missing in existing localStorage
+        if (merged.showItemUnit === undefined) merged.showItemUnit = true;
         if (merged.showCgst === undefined) merged.showCgst = true;
         if (merged.showSgst === undefined) merged.showSgst = true;
         if (merged.showIgst === undefined) merged.showIgst = false;
@@ -10091,11 +10093,13 @@ For any queries or updates, reply to this message.`;
     tableLabel: "T-04 (Dine-In)",
     floorLabel: "Main AC Hall",
     totalQty: "8.00",
+    totalKg: 7.00,
+    totalPlates: 1.00,
     items: [
-      { name: "KG-Vegetable Biriyani", qty: 2.50, price: 1100.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
-      { name: "KG-Veg Kolhapuri", qty: 2.00, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
-      { name: "Kg-Steamed Basmati Rice", qty: 2.50, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
-      { name: "Transport Services", qty: 1.00, price: 500.00, taxType: "inclusive", gstRate: 5, hsn: "996511" }
+      { name: "KG-Vegetable Biriyani", qty: 2.50, unitMode: "kg", weightKg: 2.50, price: 1100.00, pricePerKg: 1100.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+      { name: "KG-Veg Kolhapuri", qty: 2.00, unitMode: "kg", weightKg: 2.00, price: 900.00, pricePerKg: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+      { name: "Kg-Steamed Basmati Rice", qty: 2.50, unitMode: "kg", weightKg: 2.50, price: 900.00, pricePerKg: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+      { name: "Transport Services", qty: 1.00, unitMode: "portion", unitLabel: "Trip", price: 500.00, taxType: "inclusive", gstRate: 5, hsn: "996511" }
     ],
     subtotal: 7300.00,
     discountType: "pct",
@@ -10114,10 +10118,44 @@ For any queries or updates, reply to this message.`;
   function recalcSampleInvoiceTotals() {
     const inv = SAMPLE_INVOICE_PREVIEW_DATA;
     const items = inv.items || [];
-    const subtotal = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.qty || 1)), 0);
-    const totalQty = items.reduce((sum, it) => sum + (it.unitMode === 'kg' ? (Number(it.weightKg || 1) * Number(it.qty || 1)) : Number(it.qty || 1)), 0);
+    let subtotal = 0;
+    let totalQty = 0;
+    let totalKg = 0;
+    let totalPlates = 0;
+
+    items.forEach(it => {
+      const isKg = (it.unitMode === 'kg' || it.pricingType === 'kg' || (it.name && it.name.toUpperCase().startsWith('KG')));
+      let itQty = 1;
+      if (isKg) {
+        if (it.weightKg && it.qty && it.weightKg !== it.qty && it.qty > 1) {
+          itQty = Number(it.weightKg) * Number(it.qty);
+        } else {
+          itQty = Number(it.weightKg || it.qty || 1);
+        }
+        totalKg += itQty;
+      } else {
+        itQty = Number(it.qty || 1);
+        totalPlates += itQty;
+      }
+      totalQty += itQty;
+
+      let lineAmt = 0;
+      if (isKg) {
+        if (it.pricePerKg && (it.price === it.pricePerKg || !it.price)) {
+          lineAmt = Number(it.pricePerKg) * itQty;
+        } else {
+          lineAmt = Number(it.price || 0) * (it.qty || 1);
+        }
+      } else {
+        lineAmt = Number(it.price || 0) * (it.qty || 1);
+      }
+      subtotal += lineAmt;
+    });
+
     inv.subtotal = Number(subtotal.toFixed(2));
     inv.totalQty = Number(totalQty).toFixed(2);
+    inv.totalKg = Number(totalKg.toFixed(2));
+    inv.totalPlates = Number(totalPlates.toFixed(2));
     
     const regime = invoiceMasterConfig.taxRegime || "cgst_sgst";
     if (regime === "composition_none") {
@@ -10674,18 +10712,51 @@ For any queries or updates, reply to this message.`;
               </thead>
               <tbody>
                 ${(inv.items || []).map((it, idx) => {
-                  const itQty = it.unitMode === 'kg' ? (it.weightKg * it.qty) : it.qty;
-                  const itRate = it.unitMode === 'kg' ? (it.pricePerKg || it.price) : it.price;
-                  const itAmt = it.price * it.qty;
+                  const isKg = (it.unitMode === 'kg' || it.pricingType === 'kg' || (it.name && it.name.toUpperCase().startsWith('KG')));
+                  let itQty = 1;
+                  if (isKg) {
+                    if (it.weightKg && it.qty && it.weightKg !== it.qty && it.qty > 1) {
+                      itQty = Number(it.weightKg) * Number(it.qty);
+                    } else {
+                      itQty = Number(it.weightKg || it.qty || 1);
+                    }
+                  } else {
+                    itQty = Number(it.qty || 1);
+                  }
+
+                  const itRate = isKg ? Number(it.pricePerKg || it.price || 0) : Number(it.price || 0);
+
+                  let itAmt = 0;
+                  if (isKg) {
+                    if (it.pricePerKg && (it.price === it.pricePerKg || !it.price)) {
+                      itAmt = Number(it.pricePerKg) * itQty;
+                    } else {
+                      itAmt = Number(it.price || 0) * (it.qty || 1);
+                    }
+                  } else {
+                    itAmt = Number(it.price || 0) * Number(it.qty || 1);
+                  }
+
                   const itName = it.name;
                   const isIncl = (it.taxType === 'inclusive');
                   const rateStr = it.gstRate !== undefined ? `${it.gstRate}%` : '5%';
+                  const unitLabel = isKg ? 'KG' : (it.unitLabel || (it.unitMode === 'piece' || it.pricingType === 'piece' ? 'Pcs' : (it.unitMode === 'box' || it.pricingType === 'box' ? 'Box' : 'Plate')));
+                  const unitShort = isKg ? 'kg' : (unitLabel === 'Pcs' ? 'pc' : (unitLabel === 'Box' ? 'bx' : 'pl'));
 
                   return `
                     <tr>
                       ${cfg.showSerialNo ? `<td style="padding:3px 2px; font-family:monospace; color:#475569; vertical-align:top;">${idx + 1}</td>` : ''}
                       <td style="padding:3px 4px; text-align:left; vertical-align:top; font-weight:700; word-break:break-word;">
                         ${itName}
+                        ${cfg.showItemUnit !== false ? `
+                          <div style="font-size:8px; font-weight:700; color:#334155; margin-top:1px;">
+                            ${isKg 
+                              ? `⚖️ ${Number(itQty).toFixed(2)} KG @ ₹${formatInr(itRate)}/KG` 
+                              : (unitLabel !== 'Plate' 
+                                  ? `🏷️ ${Number(itQty).toFixed(0)} ${unitLabel} @ ₹${formatInr(itRate)}/${unitLabel}` 
+                                  : `🍽️ ${Number(itQty).toFixed(0)} Plate${itQty > 1 ? 's' : ''} @ ₹${formatInr(itRate)}/Pl`)}
+                          </div>
+                        ` : ''}
                         ${cfg.showTaxModeBadge ? `
                           <div style="font-size:7.5px; font-weight:700; color:${isIncl ? '#047857' : '#1d4ed8'}; margin-top:1px;">
                             ${isIncl ? `MRP Incl. ${rateStr}` : `+${rateStr} GST`}
@@ -10697,8 +10768,8 @@ For any queries or updates, reply to this message.`;
                       </td>
                       ${cfg.showHsnSac ? `<td style="padding:3px 2px; font-family:monospace; font-size:8.5px; vertical-align:top;">${it.hsn || '9963'}</td>` : ''}
                       ${cfg.showItemTaxRate ? `<td style="padding:3px 2px; text-align:center; font-family:monospace; font-size:9px; vertical-align:top;">${rateStr}</td>` : ''}
-                      <td style="padding:3px 2px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
-                        ${Number(itQty).toFixed(2)}
+                      <td style="padding:3px 2px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700; white-space:nowrap;">
+                        ${Number(itQty).toFixed(2)}${cfg.showItemUnit !== false ? `<span style="font-size:8px;font-weight:800;color:#0f172a;margin-left:2px;">${unitShort}</span>` : ''}
                       </td>
                       <td style="padding:3px 2px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
                         ${formatInr(itRate)}
@@ -10712,9 +10783,16 @@ For any queries or updates, reply to this message.`;
 
                 <!-- Total Row -->
                 ${cfg.showTotalQuantity ? `
-                  <tr style="border-top:2px solid #000; border-bottom:2px solid #000; font-weight:900; font-size:${is58 ? '11px' : '13px'};">
+                  <tr style="border-top:2px solid #000; border-bottom:2px solid #000; font-weight:900; font-size:${is58 ? '10px' : '12px'};">
                     <td colspan="${extraColsBeforeQty}" style="padding:4px 5px; text-align:center;">Total</td>
-                    <td style="padding:4px 3px; text-align:right; font-family:monospace;">${totalQtyVal}</td>
+                    <td style="padding:4px 3px; text-align:right; font-family:monospace; white-space:nowrap;">
+                      ${totalQtyVal}
+                      ${(inv.totalKg > 0 && inv.totalPlates > 0) ? `
+                        <div style="font-size:7.5px;font-weight:700;color:#475569;margin-top:1px;">
+                          ${inv.totalKg}k + ${inv.totalPlates}pl
+                        </div>
+                      ` : ''}
+                    </td>
                     <td></td>
                     <td style="padding:4px 5px; text-align:right; font-family:monospace;">${formatInr(invTotalNum)}</td>
                   </tr>
@@ -10918,18 +10996,51 @@ For any queries or updates, reply to this message.`;
           </thead>
           <tbody>
             ${(inv.items || []).map((it, idx) => {
-              const itQty = it.unitMode === 'kg' ? (it.weightKg * it.qty) : it.qty;
-              const itRate = it.unitMode === 'kg' ? (it.pricePerKg || it.price) : it.price;
-              const itAmt = it.price * it.qty;
-              const itName = (it.unitMode === 'kg' && !it.name.toLowerCase().startsWith('kg')) ? `KG-${it.name}` : it.name;
+              const isKg = (it.unitMode === 'kg' || it.pricingType === 'kg' || (it.name && it.name.toUpperCase().startsWith('KG')));
+              let itQty = 1;
+              if (isKg) {
+                if (it.weightKg && it.qty && it.weightKg !== it.qty && it.qty > 1) {
+                  itQty = Number(it.weightKg) * Number(it.qty);
+                } else {
+                  itQty = Number(it.weightKg || it.qty || 1);
+                }
+              } else {
+                itQty = Number(it.qty || 1);
+              }
+
+              const itRate = isKg ? Number(it.pricePerKg || it.price || 0) : Number(it.price || 0);
+
+              let itAmt = 0;
+              if (isKg) {
+                if (it.pricePerKg && (it.price === it.pricePerKg || !it.price)) {
+                  itAmt = Number(it.pricePerKg) * itQty;
+                } else {
+                  itAmt = Number(it.price || 0) * (it.qty || 1);
+                }
+              } else {
+                itAmt = Number(it.price || 0) * Number(it.qty || 1);
+              }
+
+              const itName = (isKg && !it.name.toLowerCase().startsWith('kg')) ? `KG-${it.name}` : it.name;
               const isIncl = (it.taxType === 'inclusive');
               const rateStr = it.gstRate !== undefined ? `${it.gstRate}%` : '5%';
+              const unitLabel = isKg ? 'KG' : (it.unitLabel || (it.unitMode === 'piece' || it.pricingType === 'piece' ? 'Pcs' : (it.unitMode === 'box' || it.pricingType === 'box' ? 'Box' : 'Plate')));
+              const unitShort = isKg ? 'kg' : (unitLabel === 'Pcs' ? 'pc' : (unitLabel === 'Box' ? 'bx' : 'pl'));
 
               return `
                 <tr style="border-bottom:1px dashed #e2e8f0;">
                   ${cfg.showSerialNo ? `<td style="padding:3px 2px; font-family:monospace; color:#64748b;">${idx + 1}</td>` : ''}
                   <td style="padding:3px 2px;">
                     <div style="font-weight:700; color:#0f172a;">${itName}</div>
+                    ${cfg.showItemUnit !== false ? `
+                      <div style="font-size:${is58 ? '7px' : '8px'}; font-weight:700; color:#475569; margin-top:1px;">
+                        ${isKg 
+                          ? `⚖️ ${Number(itQty).toFixed(2)} KG @ ₹${Number(itRate).toFixed(2)}/kg` 
+                          : (unitLabel !== 'Plate' 
+                              ? `🏷️ ${Number(itQty).toFixed(0)} ${unitLabel} @ ₹${Number(itRate).toFixed(2)}/${unitLabel}` 
+                              : `🍽️ ${Number(itQty).toFixed(0)} Plate${itQty > 1 ? 's' : ''} @ ₹${Number(itRate).toFixed(2)}/pl`)}
+                      </div>
+                    ` : ''}
                     ${cfg.showTaxModeBadge ? `
                       <span style="font-size:${is58 ? '6.5px' : '7.5px'}; font-weight:700; padding:0 3px; border-radius:2px; ${isIncl ? 'background:#ecfdf5;color:#047857;' : 'background:#eff6ff;color:#1d4ed8;'}">
                         ${isIncl ? `MRP Incl. ${rateStr}` : `+${rateStr} GST`}
@@ -10941,7 +11052,9 @@ For any queries or updates, reply to this message.`;
                   </td>
                   ${cfg.showHsnSac ? `<td style="padding:3px 2px; font-family:monospace; font-size:7.5px; color:#475569;">${it.hsn || '9963'}</td>` : ''}
                   ${cfg.showItemTaxRate ? `<td style="padding:3px 2px; text-align:center; font-family:monospace; font-size:8px; color:#475569;">${rateStr}</td>` : ''}
-                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:700;">${Number(itQty).toFixed(2)}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:700; white-space:nowrap;">
+                    ${Number(itQty).toFixed(2)}${cfg.showItemUnit !== false ? `<span style="font-size:8px;font-weight:800;color:#0f172a;margin-left:2px;">${unitShort}</span>` : ''}
+                  </td>
                   <td style="padding:3px 2px; text-align:right; font-family:monospace;">${Number(itRate).toFixed(2)}</td>
                   <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:800; color:#0f172a;">${Number(itAmt).toFixed(2)}</td>
                 </tr>
@@ -10951,7 +11064,14 @@ For any queries or updates, reply to this message.`;
               <tr style="border-top:1px solid #000; font-weight:700;">
                 ${cfg.showSerialNo ? `<td></td>` : ''}
                 <td colspan="${(cfg.showHsnSac ? 1 : 0) + (cfg.showItemTaxRate ? 1 : 0) + 1}" style="padding:3px 2px; text-transform:uppercase; font-size:${is58 ? '7.5px' : '8.5px'};">Total Items / Qty</td>
-                <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:800;">${totalQtyVal}</td>
+                <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:800; white-space:nowrap;">
+                  ${totalQtyVal}
+                  ${(inv.totalKg > 0 && inv.totalPlates > 0) ? `
+                    <div style="font-size:7px;font-weight:700;color:#475569;margin-top:1px;">
+                      ${inv.totalKg}k + ${inv.totalPlates}pl
+                    </div>
+                  ` : ''}
+                </td>
                 <td colspan="2"></td>
               </tr>
             ` : ''}
@@ -11676,6 +11796,13 @@ For any queries or updates, reply to this message.`;
                 </div>
               </label>
               <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+                <input type="checkbox" id="cfg_showItemUnit" ${cfg.showItemUnit !== false ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
+                <div>
+                  <div class="chk-title" style="font-weight:700; color:var(--ink);">Selling Unit &amp; Weight Tag (KG / Plate / Pcs)</div>
+                  <div style="font-size:10.5px; color:var(--ink-soft); margin-top:1px;">Displays dynamic unit (e.g. 2.50 kg, 2 pl, 4 pc) &amp; rate/unit (@ ₹1,100/kg)</div>
+                </div>
+              </label>
+              <label style="display:flex; align-items:flex-start; gap:9px; font-size:12px; cursor:pointer; background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
                 <input type="checkbox" id="cfg_showTotalQuantity" ${cfg.showTotalQuantity ? 'checked' : ''} style="accent-color:var(--primary); width:16px; height:16px; margin-top:2px;">
                 <div>
                   <div class="chk-title" style="font-weight:700; color:var(--ink);">Total Items / Qty Summary Row</div>
@@ -11842,15 +11969,24 @@ For any queries or updates, reply to this message.`;
               </button>
             </div>
 
-            <!-- Dynamic Item Add / Remove simulator -->
-            <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:6px; font-size:10.5px;">
-              <span style="color:#475569; font-weight:600;">Items on Bill: <b id="simItemCountDisplay">${SAMPLE_INVOICE_PREVIEW_DATA.items?.length || 4}</b></span>
-              <div style="display:flex; gap:6px;">
-                <button type="button" id="simAddItemBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff;">
-                  ➕ Add Dish
+            <!-- Dynamic Item Add / Remove simulator (Supports Per KG, Per Plate, Per Piece) -->
+            <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:6px; font-size:10.5px; flex-wrap:wrap; gap:6px;">
+              <span style="color:#475569; font-weight:600;">
+                Bill Items: <b id="simItemCountDisplay">${SAMPLE_INVOICE_PREVIEW_DATA.items?.length || 4}</b>
+                <span id="simItemUnitBreakdown" style="font-size:9.5px;color:#0284c7;font-weight:700;margin-left:4px;">${(SAMPLE_INVOICE_PREVIEW_DATA.totalKg > 0 && SAMPLE_INVOICE_PREVIEW_DATA.totalPlates > 0) ? `(${SAMPLE_INVOICE_PREVIEW_DATA.totalKg} KG + ${SAMPLE_INVOICE_PREVIEW_DATA.totalPlates} Pl)` : ''}</span>
+              </span>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button type="button" id="simAddKgBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff; color:#059669; border-color:#059669;" title="Add KG item (weight-based)">
+                  ⚖️ + KG Dish
+                </button>
+                <button type="button" id="simAddPlateBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff; color:#2563eb; border-color:#2563eb;" title="Add Plate item (plate/portion)">
+                  🍽️ + Plate Dish
+                </button>
+                <button type="button" id="simAddPieceBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff; color:#b45309; border-color:#b45309;" title="Add Piece item (count-based)">
+                  🔢 + Pcs
                 </button>
                 <button type="button" id="simRemoveItemBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff;">
-                  ➖ Remove Dish
+                  ➖ Remove
                 </button>
                 <button type="button" id="simResetItemsBtn" class="btn btn-xs btn-outline" style="font-size:10px; font-weight:700; padding:2px 7px; background:#fff;">
                   ↺ Reset
@@ -12163,7 +12299,7 @@ For any queries or updates, reply to this message.`;
     const checkboxFields = [
       "showLogo", "showInvoiceSeries", "showTokenNumber", "showTableAndFloor",
       "showServerName", "showCustomerDetails", "showPaymentMode", "showSerialNo",
-      "showHsnSac", "showItemTaxRate", "showTaxModeBadge", "showItemAddons",
+      "showHsnSac", "showItemTaxRate", "showTaxModeBadge", "showItemAddons", "showItemUnit",
       "showTotalQuantity", "showTaxBreakdown", "showCgst", "showSgst", "showIgst",
       "showTaxableBase", "hideTaxIfZero", "showRoundOff",
       "showAmountInWords", "showSavingsHighlight", "enableUpiQr", "enableReviewQr"
@@ -12223,39 +12359,93 @@ For any queries or updates, reply to this message.`;
       });
     });
 
-    // Connect Dynamic Item Add / Remove Simulator
-    document.getElementById("simAddItemBtn")?.addEventListener("click", () => {
-      const sampleNames = [
-        { name: "Paneer Butter Masala", price: 340, gstRate: 5, hsn: "996331" },
-        { name: "Butter Naan (2 pcs)", price: 120, gstRate: 5, hsn: "996331" },
-        { name: "Fresh Lime Soda", price: 90, gstRate: 5, hsn: "996331" },
-        { name: "Gulab Jamun with Ice Cream", price: 160, gstRate: 5, hsn: "996331" },
-        { name: "Special Chicken Biryani", price: 420, gstRate: 5, hsn: "996331" }
-      ];
-      const randomItem = sampleNames[Math.floor(Math.random() * sampleNames.length)];
-      if (!SAMPLE_INVOICE_PREVIEW_DATA.items) SAMPLE_INVOICE_PREVIEW_DATA.items = [];
-      SAMPLE_INVOICE_PREVIEW_DATA.items.push({
-        name: randomItem.name,
-        qty: 1.00,
-        price: randomItem.price,
-        taxType: "inclusive",
-        gstRate: invoiceMasterConfig.taxRegime === "composition_none" ? 0 : randomItem.gstRate,
-        hsn: randomItem.hsn
-      });
+    // Connect Dynamic Item Add / Remove Simulator (KG vs Plate vs Pcs)
+    function syncSimItemDisplay() {
       recalcSampleInvoiceTotals();
       const countEl = document.getElementById("simItemCountDisplay");
+      const bdEl = document.getElementById("simItemUnitBreakdown");
       if (countEl) countEl.textContent = SAMPLE_INVOICE_PREVIEW_DATA.items.length;
+      if (bdEl) {
+        const kg = Number(SAMPLE_INVOICE_PREVIEW_DATA.totalKg || 0);
+        const pl = Number(SAMPLE_INVOICE_PREVIEW_DATA.totalPlates || 0);
+        bdEl.textContent = (kg > 0 && pl > 0) ? `(${kg} KG + ${pl} Pl)` : (kg > 0 ? `(${kg} KG)` : `(${pl} Pl)`);
+      }
       updateLivePreview();
-      showToast(`➕ Added '${randomItem.name}' to invoice preview!`);
+    }
+
+    document.getElementById("simAddKgBtn")?.addEventListener("click", () => {
+      const kgOptions = [
+        { name: "KG-Chicken Dum Biryani", qty: 2.50, unitMode: "kg", weightKg: 2.50, price: 820.00, pricePerKg: 820.00, gstRate: 5, hsn: "996331" },
+        { name: "KG-Mutton Sukka", qty: 3.00, unitMode: "kg", weightKg: 3.00, price: 1800.00, pricePerKg: 1800.00, gstRate: 5, hsn: "996331" },
+        { name: "Kaju Katli (Pure Ghee)", qty: 0.50, unitMode: "kg", weightKg: 0.50, price: 950.00, pricePerKg: 950.00, gstRate: 5, hsn: "210690" },
+        { name: "KG-Veg Pulao", qty: 1.50, unitMode: "kg", weightKg: 1.50, price: 650.00, pricePerKg: 650.00, gstRate: 5, hsn: "996331" }
+      ];
+      const r = kgOptions[Math.floor(Math.random() * kgOptions.length)];
+      if (!SAMPLE_INVOICE_PREVIEW_DATA.items) SAMPLE_INVOICE_PREVIEW_DATA.items = [];
+      SAMPLE_INVOICE_PREVIEW_DATA.items.push({
+        name: r.name,
+        qty: r.qty,
+        unitMode: "kg",
+        weightKg: r.weightKg,
+        price: r.price,
+        pricePerKg: r.pricePerKg,
+        taxType: "inclusive",
+        gstRate: invoiceMasterConfig.taxRegime === "composition_none" ? 0 : r.gstRate,
+        hsn: r.hsn
+      });
+      syncSimItemDisplay();
+      showToast(`⚖️ Added '${r.name}' (${r.weightKg} KG @ ₹${r.pricePerKg}/kg)!`);
+    });
+
+    document.getElementById("simAddPlateBtn")?.addEventListener("click", () => {
+      const plateOptions = [
+        { name: "Paneer Butter Masala", price: 280, gstRate: 5, hsn: "996331" },
+        { name: "Dal Makhani", price: 220, gstRate: 5, hsn: "996331" },
+        { name: "Veg Hakka Noodles", price: 260, gstRate: 5, hsn: "996331" },
+        { name: "Butter Chicken", price: 320, gstRate: 5, hsn: "996331" }
+      ];
+      const r = plateOptions[Math.floor(Math.random() * plateOptions.length)];
+      if (!SAMPLE_INVOICE_PREVIEW_DATA.items) SAMPLE_INVOICE_PREVIEW_DATA.items = [];
+      SAMPLE_INVOICE_PREVIEW_DATA.items.push({
+        name: r.name,
+        qty: 2.00,
+        unitMode: "portion",
+        unitLabel: "Plate",
+        price: r.price,
+        taxType: "inclusive",
+        gstRate: invoiceMasterConfig.taxRegime === "composition_none" ? 0 : r.gstRate,
+        hsn: r.hsn
+      });
+      syncSimItemDisplay();
+      showToast(`🍽️ Added '${r.name}' (2 Plates @ ₹${r.price}/pl)!`);
+    });
+
+    document.getElementById("simAddPieceBtn")?.addEventListener("click", () => {
+      const pieceOptions = [
+        { name: "Butter Naan (4 Pcs)", price: 55, qty: 4.00, unitLabel: "Pcs", gstRate: 5, hsn: "996331" },
+        { name: "Garlic Naan (2 Pcs)", price: 70, qty: 2.00, unitLabel: "Pcs", gstRate: 5, hsn: "996331" },
+        { name: "Gulab Jamun (2 Pcs)", price: 45, qty: 2.00, unitLabel: "Pcs", gstRate: 5, hsn: "210690" }
+      ];
+      const r = pieceOptions[Math.floor(Math.random() * pieceOptions.length)];
+      if (!SAMPLE_INVOICE_PREVIEW_DATA.items) SAMPLE_INVOICE_PREVIEW_DATA.items = [];
+      SAMPLE_INVOICE_PREVIEW_DATA.items.push({
+        name: r.name,
+        qty: r.qty,
+        unitMode: "piece",
+        unitLabel: r.unitLabel,
+        price: r.price,
+        taxType: "inclusive",
+        gstRate: invoiceMasterConfig.taxRegime === "composition_none" ? 0 : r.gstRate,
+        hsn: r.hsn
+      });
+      syncSimItemDisplay();
+      showToast(`🔢 Added '${r.name}' (${r.qty} Pcs @ ₹${r.price}/pc)!`);
     });
 
     document.getElementById("simRemoveItemBtn")?.addEventListener("click", () => {
       if (SAMPLE_INVOICE_PREVIEW_DATA.items && SAMPLE_INVOICE_PREVIEW_DATA.items.length > 1) {
         const removed = SAMPLE_INVOICE_PREVIEW_DATA.items.pop();
-        recalcSampleInvoiceTotals();
-        const countEl = document.getElementById("simItemCountDisplay");
-        if (countEl) countEl.textContent = SAMPLE_INVOICE_PREVIEW_DATA.items.length;
-        updateLivePreview();
+        syncSimItemDisplay();
         showToast(`➖ Removed '${removed.name}' from invoice preview`);
       } else {
         showToast("Minimum 1 item required on receipt", "warning");
@@ -12267,16 +12457,13 @@ For any queries or updates, reply to this message.`;
         SAMPLE_INVOICE_PREVIEW_DATA.items = JSON.parse(JSON.stringify(activeUploadedDemoData.sampleData.items));
       } else {
         SAMPLE_INVOICE_PREVIEW_DATA.items = [
-          { name: "KG-Vegetable Biriyani", qty: 2.50, price: 1100.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
-          { name: "KG-Veg Kolhapuri", qty: 2.00, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
-          { name: "Kg-Steamed Basmati Rice", qty: 2.50, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
-          { name: "Transport Services", qty: 1.00, price: 500.00, taxType: "inclusive", gstRate: 5, hsn: "996511" }
+          { name: "KG-Vegetable Biriyani", qty: 2.50, unitMode: "kg", weightKg: 2.50, price: 1100.00, pricePerKg: 1100.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+          { name: "KG-Veg Kolhapuri", qty: 2.00, unitMode: "kg", weightKg: 2.00, price: 900.00, pricePerKg: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+          { name: "Kg-Steamed Basmati Rice", qty: 2.50, unitMode: "kg", weightKg: 2.50, price: 900.00, pricePerKg: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+          { name: "Transport Services", qty: 1.00, unitMode: "portion", unitLabel: "Trip", price: 500.00, taxType: "inclusive", gstRate: 5, hsn: "996511" }
         ];
       }
-      recalcSampleInvoiceTotals();
-      const countEl = document.getElementById("simItemCountDisplay");
-      if (countEl) countEl.textContent = SAMPLE_INVOICE_PREVIEW_DATA.items.length;
-      updateLivePreview();
+      syncSimItemDisplay();
       showToast("↺ Receipt items reset to standard bill");
     });
 
@@ -12327,12 +12514,13 @@ For any queries or updates, reply to this message.`;
     } else if (activeMasterTab === "items") {
       const total = items.length;
       const active = items.filter(i => i.status === "active").length;
-      const avg = total > 0 ? Math.round(items.reduce((s, i) => s + (i.price || 0), 0) / total) : 0;
+      const kgCount = items.filter(i => i.pricingType === "kg" || i.pricingType === "both").length;
+      const plateCount = items.filter(i => !i.pricingType || i.pricingType === "portion" || i.pricingType === "both" || i.pricingType === "piece").length;
       stats = [
         { label: "Total Items", val: total, sub: "+6 this month" },
         { label: "Active Items", val: active, sub: "Available on menu" },
-        { label: "Inactive Items", val: total - active, sub: "Out of stock" },
-        { label: "Avg. Price", val: `₹${avg}`, sub: "Across all items" }
+        { label: "Sold by KG / Dual", val: kgCount, sub: "Weight-based pricing" },
+        { label: "Sold by Plate/Pc", val: plateCount, sub: "Count-based pricing" }
       ];
     } else if (activeMasterTab === "floors") {
       const total = floors.length;
@@ -12378,10 +12566,10 @@ For any queries or updates, reply to this message.`;
       const rollCount = printerProfiles.filter(p => p.paperSize !== "a4" && p.paperSize !== "a5").length;
       const customCount = printerProfiles.filter(p => p.paperSize === "custom" || p.paperSize === "76mm" || p.paperSize === "100mm").length;
       stats = [
-        { label: "Configured Printers", val: total, sub: "POS & Network Units" },
+        { label: "Thermal Printers", val: total, sub: `${rollCount} Roll · ${total - rollCount} Sheet` },
         { label: "Active Printers", val: active, sub: "Ready for printing" },
-        { label: "Thermal Rolls", val: rollCount, sub: "80mm / 58mm / 76mm" },
-        { label: "Custom / Sheet Formats", val: customCount || (total - rollCount), sub: "Tailored paper widths" }
+        { label: "Custom Formats", val: customCount, sub: "Custom mm widths" },
+        { label: "Driver Engine", val: "Native Web", sub: "ESC/POS & Raster" }
       ];
     } else if (activeMasterTab === "users") {
       const total = staffUsers.length;
@@ -12395,10 +12583,10 @@ For any queries or updates, reply to this message.`;
     }
 
     container.innerHTML = stats.map(s => `
-      <div class="master-stat-card">
-        <div class="m-lbl">${s.label}</div>
-        <div class="m-val">${s.val}</div>
-        <div class="m-sub">${s.sub}</div>
+      <div class="stat-card">
+        <div class="stat-label">${s.label}</div>
+        <div class="stat-value">${s.val}</div>
+        <div class="stat-sub">${s.sub}</div>
       </div>
     `).join("");
   }
@@ -12412,8 +12600,17 @@ For any queries or updates, reply to this message.`;
           <option value="veg">🟢 Veg Only</option>
           <option value="nonveg">🔴 Non-Veg Only</option>
         </select>
+        <select id="masterUnitFilter" class="master-select-filter">
+          <option value="">All Selling Units</option>
+          <option value="portion">🍽️ Per Plate</option>
+          <option value="kg">⚖️ Per KG (Weight)</option>
+          <option value="both">🔄 Dual Mode (Plate &amp; KG)</option>
+          <option value="piece">🔢 Per Piece (Pcs)</option>
+          <option value="box">📦 Per Box</option>
+        </select>
       `;
-      document.getElementById("masterFoodTypeFilter").addEventListener("change", renderMasterTable);
+      document.getElementById("masterFoodTypeFilter")?.addEventListener("change", renderMasterTable);
+      document.getElementById("masterUnitFilter")?.addEventListener("change", renderMasterTable);
     } else {
       customContainer.innerHTML = "";
     }
@@ -12424,6 +12621,7 @@ For any queries or updates, reply to this message.`;
     const query = document.getElementById("masterSearchInput").value.toLowerCase().trim();
     const statusFilter = document.getElementById("masterStatusFilter").value;
     const foodTypeFilter = document.getElementById("masterFoodTypeFilter") ? document.getElementById("masterFoodTypeFilter").value : "";
+    const unitFilter = document.getElementById("masterUnitFilter") ? document.getElementById("masterUnitFilter").value : "";
 
     // 1. CATEGORIES
     if (activeMasterTab === "categories") {
@@ -12477,10 +12675,11 @@ For any queries or updates, reply to this message.`;
     // 2. ITEMS
     else if (activeMasterTab === "items") {
       const filtered = items.filter(it => {
-        const matchQ = it.itemName.toLowerCase().includes(query) || it.shortcode.toLowerCase().includes(query);
+        const matchQ = it.itemName.toLowerCase().includes(query) || it.shortcode.toLowerCase().includes(query) || (it.unitLabel || '').toLowerCase().includes(query);
         const matchS = statusFilter ? it.status === statusFilter : true;
         const matchF = foodTypeFilter ? it.foodType === foodTypeFilter : true;
-        return matchQ && matchS && matchF;
+        const matchU = unitFilter ? (it.pricingType === unitFilter || (unitFilter === 'portion' && (!it.pricingType || it.pricingType === 'portion'))) : true;
+        return matchQ && matchS && matchF && matchU;
       });
 
       tableEl.innerHTML = `
@@ -12519,11 +12718,17 @@ For any queries or updates, reply to this message.`;
               <td><span class="shortcode-badge">${it.shortcode}</span></td>
               <td>
                 ${it.pricingType === 'kg' ? `
-                  <b style="color:var(--primary);">${money(it.pricePerKg || it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ KG</span><br>
-                  <span class="cog-badge kg-badge" style="font-size:9px;padding:1px 6px;">⚖️ Sold By KG</span>
+                  <b style="color:var(--primary);">${money(it.pricePerKg || it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ ${it.unitLabel || 'KG'}</span><br>
+                  <span class="cog-badge kg-badge" style="font-size:9.5px;padding:1px 6px;">⚖️ Sold By ${it.unitLabel || 'KG'}</span>
                 ` : it.pricingType === 'both' ? `
-                  <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:10.5px;color:var(--ink-soft);">/ Pl</span> · <b style="color:#059669;">${money(it.pricePerKg)}</b> <span style="font-size:10.5px;color:var(--ink-soft);">/ KG</span><br>
-                  <span class="cog-badge dual-mode" style="font-size:9px;padding:1px 6px;">🔄 Plate &amp; KG Dual</span>
+                  <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:10.5px;color:var(--ink-soft);">/ ${it.unitLabel?.split('/')[0]?.trim() || 'Pl'}</span> · <b style="color:#059669;">${money(it.pricePerKg)}</b> <span style="font-size:10.5px;color:var(--ink-soft);">/ KG</span><br>
+                  <span class="cog-badge dual-mode" style="font-size:9.5px;padding:1px 6px;">🔄 Plate &amp; KG Dual</span>
+                ` : it.pricingType === 'piece' ? `
+                  <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ ${it.unitLabel || 'Piece'}</span><br>
+                  <span class="cog-badge" style="font-size:9.5px;padding:1px 6px;background:rgba(245,158,11,0.12);color:#b45309;border:1px solid rgba(245,158,11,0.3);">🔢 Per Piece (${it.unitLabel || 'Pcs'})</span>
+                ` : it.pricingType === 'box' ? `
+                  <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ ${it.unitLabel || 'Box'}</span><br>
+                  <span class="cog-badge" style="font-size:9.5px;padding:1px 6px;background:rgba(139,92,246,0.12);color:#7c3aed;border:1px solid rgba(139,92,246,0.3);">📦 Per Box</span>
                 ` : `
                   <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ Plate</span>
                 `}
@@ -13235,23 +13440,29 @@ For any queries or updates, reply to this message.`;
           </div>
         </div>
 
-        <!-- Selling Basis / Pricing Unit Selector (Portion, KG, or Dual) -->
+        <!-- Selling Basis / Pricing Unit Selector (Portion, KG, Piece, Box, Dual) -->
         <div style="background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <label style="font-weight:700;font-size:12.5px;color:var(--ink);margin:0;">⚖️ Selling Basis / Pricing Unit *</label>
-            <span style="font-size:10.5px;color:var(--ink-soft);">Supports plate, weight (KG), or dual</span>
+            <label style="font-weight:700;font-size:12.5px;color:var(--ink);margin:0;">⚖️ Selling Basis / Measurement Unit *</label>
+            <span style="font-size:10.5px;color:var(--ink-soft);">Supports Per Plate, Per KG (Weight), Per Piece, Box, or Dual</span>
           </div>
-          <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;">
+          <div style="display:grid;grid-template-columns:1.2fr 0.8fr 1fr 1fr;gap:10px;">
             <div class="form-group" style="margin:0;">
-              <label style="font-size:11px;font-weight:600;">Pricing Type</label>
+              <label style="font-size:11px;font-weight:600;">Pricing Unit</label>
               <select id="m_itPricingType">
-                <option value="portion" ${rec.pricingType === 'portion' || !rec.pricingType ? 'selected' : ''}>🍽️ Portion / Plate Only (Standard)</option>
-                <option value="kg" ${rec.pricingType === 'kg' ? 'selected' : ''}>⚖️ Weight Based Only (Per KG / Sweets)</option>
-                <option value="both" ${rec.pricingType === 'both' ? 'selected' : ''}>🔄 Dual Mode (Plate &amp; KG Both)</option>
+                <option value="portion" ${rec.pricingType === 'portion' || !rec.pricingType ? 'selected' : ''}>🍽️ Per Plate / Portion</option>
+                <option value="kg" ${rec.pricingType === 'kg' ? 'selected' : ''}>⚖️ Per KG / Weight (Sweets/Biryani)</option>
+                <option value="both" ${rec.pricingType === 'both' ? 'selected' : ''}>🔄 Dual Mode (Plate &amp; KG)</option>
+                <option value="piece" ${rec.pricingType === 'piece' ? 'selected' : ''}>🔢 Per Piece / Count (Pcs)</option>
+                <option value="box" ${rec.pricingType === 'box' ? 'selected' : ''}>📦 Per Box / Pack</option>
               </select>
             </div>
+            <div class="form-group" style="margin:0;" id="grp_customUnitLabel">
+              <label style="font-size:11px;font-weight:600;">Unit Label</label>
+              <input type="text" id="m_itUnitLabel" value="${rec.unitLabel || (rec.pricingType === 'kg' ? 'KG' : rec.pricingType === 'piece' ? 'Pcs' : rec.pricingType === 'box' ? 'Box' : 'Plate')}" placeholder="e.g. Plate, KG, Pcs">
+            </div>
             <div class="form-group" style="margin:0;" id="grp_platePrice">
-              <label style="font-size:11px;font-weight:600;">Price / Plate (₹) *</label>
+              <label style="font-size:11px;font-weight:600;" id="lbl_platePrice">Price / Plate (₹) *</label>
               <input type="number" id="m_itPrice" value="${rec.price || 200}" min="0" step="1">
             </div>
             <div class="form-group" style="margin:0;" id="grp_kgPrice">
@@ -13266,7 +13477,11 @@ For any queries or updates, reply to this message.`;
                 ? 'Item will be ordered with weight presets (250g, 500g, 1Kg, 2Kg, 5Kg) or custom scale weight.' 
                 : rec.pricingType === 'both' 
                   ? 'Operator can switch between Plate portion and Weight (KG) in the POS Order Desk.' 
-                  : 'Item is sold per portion/plate (Half/Full can be configured in option groups below).'}
+                  : rec.pricingType === 'piece'
+                    ? 'Item is sold per piece / count (e.g. Naan, Samosa, Sweet piece).'
+                    : rec.pricingType === 'box'
+                      ? 'Item is sold per box/pack container.'
+                      : 'Item is sold per portion/plate (Half/Full can be configured in option groups below).'}
             </span>
           </div>
         </div>
@@ -13365,18 +13580,37 @@ For any queries or updates, reply to this message.`;
 
       function updatePricingFieldsVisibility() {
         const val = pTypeSelect.value;
+        const uLabelInput = document.getElementById("m_itUnitLabel");
+        const lblPlatePrice = document.getElementById("lbl_platePrice");
         if (val === "portion") {
-          grpPlate.style.opacity = "1";
-          grpKg.style.opacity = "0.45";
-          helpText.textContent = "Item is sold per portion/plate (Half/Full can be configured in option groups below).";
+          grpPlate.style.display = "block";
+          grpKg.style.display = "none";
+          if (lblPlatePrice) lblPlatePrice.textContent = "Price / Plate (₹) *";
+          if (uLabelInput && (!uLabelInput.value || uLabelInput.value === 'KG' || uLabelInput.value === 'Pcs' || uLabelInput.value === 'Box')) uLabelInput.value = "Plate";
+          helpText.textContent = "Item is sold per portion/plate. Billed by count (1, 2, 3 plates).";
         } else if (val === "kg") {
-          grpPlate.style.opacity = "0.45";
-          grpKg.style.opacity = "1";
-          helpText.textContent = "Item will be ordered with weight presets (250g, 500g, 1Kg, 2Kg, 5Kg) or custom scale weight.";
-        } else {
-          grpPlate.style.opacity = "1";
-          grpKg.style.opacity = "1";
-          helpText.textContent = "Dual Mode: Operator can choose Plate or KG weight dynamically during order taking.";
+          grpPlate.style.display = "none";
+          grpKg.style.display = "block";
+          if (uLabelInput && (!uLabelInput.value || uLabelInput.value === 'Plate' || uLabelInput.value === 'Pcs' || uLabelInput.value === 'Box')) uLabelInput.value = "KG";
+          helpText.textContent = "Item is sold by Weight (Per KG). Billed as Weight (kg) × Rate/KG with scale presets.";
+        } else if (val === "both") {
+          grpPlate.style.display = "block";
+          grpKg.style.display = "block";
+          if (lblPlatePrice) lblPlatePrice.textContent = "Price / Plate (₹) *";
+          if (uLabelInput) uLabelInput.value = "Plate / KG";
+          helpText.textContent = "Dual Mode: Cashier can choose either Plate portion or Weight (KG) in POS order desk.";
+        } else if (val === "piece") {
+          grpPlate.style.display = "block";
+          grpKg.style.display = "none";
+          if (lblPlatePrice) lblPlatePrice.textContent = "Price / Piece (₹) *";
+          if (uLabelInput && (!uLabelInput.value || uLabelInput.value === 'Plate' || uLabelInput.value === 'KG' || uLabelInput.value === 'Box')) uLabelInput.value = "Pcs";
+          helpText.textContent = "Item is sold per piece / count (e.g., Naan, Roti, Samosa, Single Sweet).";
+        } else if (val === "box") {
+          grpPlate.style.display = "block";
+          grpKg.style.display = "none";
+          if (lblPlatePrice) lblPlatePrice.textContent = "Price / Box (₹) *";
+          if (uLabelInput && (!uLabelInput.value || uLabelInput.value === 'Plate' || uLabelInput.value === 'KG' || uLabelInput.value === 'Pcs')) uLabelInput.value = "Box";
+          helpText.textContent = "Item is sold per Box / Pack (e.g. Gift Pack, 1KG Sweet Box).";
         }
       }
       pTypeSelect?.addEventListener("change", updatePricingFieldsVisibility);
@@ -13783,9 +14017,13 @@ For any queries or updates, reply to this message.`;
       const short = document.getElementById("m_itShort").value.trim().toUpperCase();
       const catId = Number(document.getElementById("m_itCat").value);
       const pricingType = document.getElementById("m_itPricingType") ? document.getElementById("m_itPricingType").value : "portion";
-      const price = Number(document.getElementById("m_itPrice").value) || 0;
+      let price = Number(document.getElementById("m_itPrice").value) || 0;
       const pricePerKg = document.getElementById("m_itPricePerKg") ? (Number(document.getElementById("m_itPricePerKg").value) || 0) : 0;
       const portionWeightGrams = document.getElementById("m_itPortionGrams") ? (Number(document.getElementById("m_itPortionGrams").value) || 350) : 350;
+      const unitLabel = document.getElementById("m_itUnitLabel") ? document.getElementById("m_itUnitLabel").value.trim() : (pricingType === 'kg' ? 'KG' : pricingType === 'piece' ? 'Pcs' : pricingType === 'box' ? 'Box' : 'Plate');
+      if (pricingType === 'kg' && pricePerKg > 0 && price === 0) {
+        price = pricePerKg;
+      }
       const taxType = document.getElementById("m_itTaxType") ? document.getElementById("m_itTaxType").value : "exclusive";
       const gstRate = document.getElementById("m_itGstRate") ? (Number(document.getElementById("m_itGstRate").value) || 0) : 5;
       const station = document.getElementById("m_itStation").value;
@@ -13813,6 +14051,7 @@ For any queries or updates, reply to this message.`;
           shortcode: short, 
           categoryId: catId, 
           pricingType,
+          unitLabel,
           price, 
           pricePerKg,
           portionWeightGrams,
@@ -13824,7 +14063,7 @@ For any queries or updates, reply to this message.`;
           optionGroups: cleanOptionGroups 
         });
         apiClient.saveItem(it);
-        showToast(`Item '${name}' updated (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()})!`);
+        showToast(`Item '${name}' updated (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()} [${unitLabel}])!`);
       } else {
         const newItem = { 
           id: Date.now(), 
@@ -13833,6 +14072,7 @@ For any queries or updates, reply to this message.`;
           shortcode: short, 
           categoryId: catId, 
           pricingType,
+          unitLabel,
           price, 
           pricePerKg,
           portionWeightGrams,
@@ -13845,7 +14085,7 @@ For any queries or updates, reply to this message.`;
         };
         items.push(newItem);
         apiClient.saveItem(newItem);
-        showToast(`Item '${name}' added (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()})!`);
+        showToast(`Item '${name}' added (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()} [${unitLabel}])!`);
       }
       renderPosMenu();
     } else if (type === "floors") {
@@ -14052,8 +14292,8 @@ For any queries or updates, reply to this message.`;
             ${rec.foodType === 'nonveg' ? '<span class="nonveg-icon"><span></span></span>' : '<span class="veg-icon"><span></span></span>'}
             <b>${rec.itemName}</b> (${rec.shortcode})
           </div>
-          <div><b>Selling Basis:</b> ${rec.pricingType === 'kg' ? '<span style="color:#059669;font-weight:700;">⚖️ Sold by Weight (Per KG)</span>' : rec.pricingType === 'both' ? '<span style="color:#0284c7;font-weight:700;">🔄 Dual Mode (Plate &amp; KG Both)</span>' : '🍽️ Portion / Plate'}</div>
-          <div><b>Price / Plate:</b> ${money(rec.price)}</div>
+          <div><b>Selling Basis &amp; Unit:</b> ${rec.pricingType === 'kg' ? '<span style="color:#059669;font-weight:700;">⚖️ Sold by Weight (Per KG)</span>' : rec.pricingType === 'both' ? '<span style="color:#0284c7;font-weight:700;">🔄 Dual Mode (Plate &amp; KG Both)</span>' : rec.pricingType === 'piece' ? '<span style="color:#d97706;font-weight:700;">🔢 Per Piece / Count</span>' : rec.pricingType === 'box' ? '<span style="color:#8b5cf6;font-weight:700;">📦 Per Box / Pack</span>' : '<span style="color:#4f46e5;font-weight:700;">🍽️ Portion / Plate</span>'} (${rec.unitLabel || (rec.pricingType === 'kg' ? 'KG' : rec.pricingType === 'piece' ? 'Pcs' : rec.pricingType === 'box' ? 'Box' : 'Plate')})</div>
+          <div><b>Price / ${rec.unitLabel || (rec.pricingType === 'kg' ? 'KG' : rec.pricingType === 'piece' ? 'Piece' : rec.pricingType === 'box' ? 'Box' : 'Plate')}:</b> ${money(rec.price)}</div>
           ${rec.pricePerKg ? `<div><b>Rate per KG:</b> <b style="color:var(--primary);">${money(rec.pricePerKg)} / KG</b></div>` : ''}
           ${rec.portionWeightGrams ? `<div><b>Approx Portion Weight:</b> ~${rec.portionWeightGrams}g</div>` : ''}
           <div><b>Station:</b> ${rec.station}</div>
