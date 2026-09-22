@@ -5641,6 +5641,36 @@
           if (chip) chip.click();
         }, 250);
       }
+      if (urlParams.get("enable_toggles")) {
+        const toEnable = urlParams.get("enable_toggles").split(",");
+        setTimeout(() => {
+          toEnable.forEach(k => {
+            invoiceMasterConfig[k.trim()] = true;
+            const chk = document.getElementById(`cfg_${k.trim()}`);
+            if (chk) chk.checked = true;
+          });
+          localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+          const previewEl = document.getElementById("liveInvoiceBuilderPreview");
+          if (previewEl) {
+            previewEl.innerHTML = generateDocumentSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, activeInvoiceDocType, invoiceMasterConfig);
+          }
+        }, 300);
+      }
+      if (urlParams.get("disable_toggles")) {
+        const toDisable = urlParams.get("disable_toggles").split(",");
+        setTimeout(() => {
+          toDisable.forEach(k => {
+            invoiceMasterConfig[k.trim()] = false;
+            const chk = document.getElementById(`cfg_${k.trim()}`);
+            if (chk) chk.checked = false;
+          });
+          localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+          const previewEl = document.getElementById("liveInvoiceBuilderPreview");
+          if (previewEl) {
+            previewEl.innerHTML = generateDocumentSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, activeInvoiceDocType, invoiceMasterConfig);
+          }
+        }, 300);
+      }
       if (urlParams.get("openprintermodal") === "true") {
         setTimeout(() => {
           openPrinterProfileModal(null);
@@ -10492,7 +10522,7 @@ For any queries or updates, reply to this message.`;
           </div>
 
           <!-- Solid Black Outer Grid Box -->
-          <div style="border:2px solid #000; background:#fff; box-sizing:border-box; width:100%;">
+          <div style="border:2px solid #000; background:#fff; box-sizing:border-box; width:100%; overflow:hidden;">
             
             <!-- Metadata Rows Section -->
             ${hasMeta ? `
@@ -10545,16 +10575,16 @@ For any queries or updates, reply to this message.`;
             ` : ''}
 
             <!-- Items Table -->
-            <table style="width:100%; border-collapse:collapse; font-size:${is58 ? '10px' : '12px'}; line-height:1.25;">
+            <table style="width:100%; border-collapse:collapse; font-size:${is58 ? '9px' : '11px'}; line-height:1.25; table-layout:auto;">
               <thead>
-                <tr style="border-bottom:2px solid #000; font-weight:900; font-size:${is58 ? '10.5px' : '12.5px'};">
-                  ${cfg.showSerialNo ? `<th style="padding:4px 3px; text-align:left; width:22px;">#</th>` : ''}
-                  <th style="padding:4px 5px; text-align:left;">Description</th>
-                  ${cfg.showHsnSac ? `<th style="padding:4px 3px; text-align:left; width:44px;">HSN</th>` : ''}
-                  ${cfg.showItemTaxRate ? `<th style="padding:4px 3px; text-align:center; width:38px;">GST%</th>` : ''}
-                  <th style="padding:4px 3px; text-align:right; width:${is58 ? '36px' : '44px'};">Qty</th>
-                  <th style="padding:4px 3px; text-align:right; width:${is58 ? '54px' : '68px'};">Item Rate</th>
-                  <th style="padding:4px 5px; text-align:right; width:${is58 ? '54px' : '68px'};">Amount</th>
+                <tr style="border-bottom:2px solid #000; font-weight:900; font-size:${is58 ? '9.5px' : '11.5px'};">
+                  ${cfg.showSerialNo ? `<th style="padding:3px 2px; text-align:left; width:16px;">#</th>` : ''}
+                  <th style="padding:3px 4px; text-align:left;">Description</th>
+                  ${cfg.showHsnSac ? `<th style="padding:3px 2px; text-align:left; width:34px;">HSN</th>` : ''}
+                  ${cfg.showItemTaxRate ? `<th style="padding:3px 2px; text-align:center; width:30px;">GST%</th>` : ''}
+                  <th style="padding:3px 2px; text-align:right; width:${is58 ? '28px' : '36px'};">Qty</th>
+                  <th style="padding:3px 2px; text-align:right; width:${is58 ? '44px' : '54px'};">Item Rate</th>
+                  <th style="padding:3px 4px; text-align:right; width:${is58 ? '46px' : '58px'};">Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -10568,8 +10598,8 @@ For any queries or updates, reply to this message.`;
 
                   return `
                     <tr>
-                      ${cfg.showSerialNo ? `<td style="padding:3.5px 3px; font-family:monospace; color:#475569; vertical-align:top;">${idx + 1}</td>` : ''}
-                      <td style="padding:3.5px 5px; text-align:left; vertical-align:top; font-weight:700; word-break:break-word;">
+                      ${cfg.showSerialNo ? `<td style="padding:3px 2px; font-family:monospace; color:#475569; vertical-align:top;">${idx + 1}</td>` : ''}
+                      <td style="padding:3px 4px; text-align:left; vertical-align:top; font-weight:700; word-break:break-word;">
                         ${itName}
                         ${cfg.showTaxModeBadge ? `
                           <div style="font-size:7.5px; font-weight:700; color:${isIncl ? '#047857' : '#1d4ed8'}; margin-top:1px;">
@@ -10580,15 +10610,15 @@ For any queries or updates, reply to this message.`;
                           <div style="font-size:8px; color:#64748b; margin-top:1px;">+ ${(it.addons && it.addons.length) ? it.addons.map(a => a.name).join(', ') : 'Extra Salan / Raita'}</div>
                         ` : ''}
                       </td>
-                      ${cfg.showHsnSac ? `<td style="padding:3.5px 3px; font-family:monospace; font-size:9px; vertical-align:top;">${it.hsn || '9963'}</td>` : ''}
-                      ${cfg.showItemTaxRate ? `<td style="padding:3.5px 3px; text-align:center; font-family:monospace; font-size:9.5px; vertical-align:top;">${rateStr}</td>` : ''}
-                      <td style="padding:3.5px 3px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
+                      ${cfg.showHsnSac ? `<td style="padding:3px 2px; font-family:monospace; font-size:8.5px; vertical-align:top;">${it.hsn || '9963'}</td>` : ''}
+                      ${cfg.showItemTaxRate ? `<td style="padding:3px 2px; text-align:center; font-family:monospace; font-size:9px; vertical-align:top;">${rateStr}</td>` : ''}
+                      <td style="padding:3px 2px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
                         ${Number(itQty).toFixed(2)}
                       </td>
-                      <td style="padding:3.5px 3px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
+                      <td style="padding:3px 2px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
                         ${formatInr(itRate)}
                       </td>
-                      <td style="padding:3.5px 5px; text-align:right; vertical-align:top; font-family:monospace; font-weight:800;">
+                      <td style="padding:3px 4px; text-align:right; vertical-align:top; font-family:monospace; font-weight:800;">
                         ${formatInr(itAmt)}
                       </td>
                     </tr>
