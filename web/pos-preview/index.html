@@ -2402,6 +2402,123 @@
     justify-content: space-between;
   }
 
+  /* Invoice & Print Master Studio Styling */
+  .invoice-builder-layout {
+    display: grid;
+    grid-template-columns: minmax(380px, 1.25fr) minmax(320px, 1fr);
+    gap: 20px;
+    align-items: flex-start;
+  }
+  @media (max-width: 1080px) {
+    .invoice-builder-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+  .invoice-control-section {
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .invoice-control-header {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .paper-format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .paper-format-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 8px;
+    border: 2px solid var(--line);
+    background: var(--surface-subtle);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+  .paper-format-btn:hover {
+    border-color: var(--primary-light);
+    background: var(--panel);
+  }
+  .paper-format-btn.active {
+    border-color: var(--primary);
+    background: var(--panel);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    color: var(--primary);
+  }
+  .paper-format-btn .format-sub {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+  .receipt-preview-stage {
+    background: #f1f5f9;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+  .receipt-paper-roll {
+    background: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.06);
+    margin: 0 auto;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+    position: relative;
+    border: 1px solid #cbd5e1;
+  }
+  .receipt-paper-roll.size-80mm {
+    width: 320px;
+    padding: 14px 12px;
+    font-size: 10.5px;
+    border-radius: 4px;
+  }
+  .receipt-paper-roll.size-58mm {
+    width: 250px;
+    padding: 10px 8px;
+    font-size: 9px;
+    border-radius: 4px;
+  }
+  .receipt-paper-roll.size-a4 {
+    width: 100%;
+    max-width: 500px;
+    padding: 22px 20px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .receipt-paper-roll.size-a5 {
+    width: 100%;
+    max-width: 390px;
+    padding: 16px 14px;
+    font-size: 10px;
+    border-radius: 6px;
+  }
 
   /* 80mm Thermal Printer Settings: matches POSPrinter POS-80C 80(72)mm x 297mm */
   @media print {
@@ -3168,6 +3285,7 @@
         <button class="cat-tab" data-master="floors">Floor Master</button>
         <button class="cat-tab" data-master="tables">Table Master</button>
         <button class="cat-tab" data-master="taxes">Tax Master</button>
+        <button class="cat-tab" data-master="invoices">Invoice &amp; Print Master</button>
         <button class="cat-tab" data-master="roles">Roles &amp; Rights</button>
         <button class="cat-tab" data-master="users">Staff Master</button>
       </div>
@@ -3196,7 +3314,10 @@
       <!-- Master Tax & Invoice Rules Configuration Card (Shown on Tax Master tab) -->
       <div id="masterTaxConfigContainer" style="display:none;margin-bottom:16px;"></div>
 
-      <div class="master-table-card">
+      <!-- Master Invoice & Print Customization Studio (Shown on Invoice & Print Master tab) -->
+      <div id="masterInvoiceConfigContainer" style="display:none;margin-bottom:16px;"></div>
+
+      <div class="master-table-card" id="masterTableWrapper">
         <table class="master-table" id="masterDataTable"></table>
       </div>
     </div>
@@ -3550,7 +3671,7 @@
     </div>
     <div class="modal-foot" style="display:flex;gap:10px;padding:12px 16px;">
       <button class="btn" data-close-modal="printSlipModal" style="flex:1;">Close</button>
-      <button class="btn btn-primary" id="doPrintSlipBtn" style="flex:1.2;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+      <button class="btn btn-primary" id="doPrintQuickSlipBtn" style="flex:1.2;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
         <i data-lucide="printer" style="width:14px;height:14px;"></i> Print Slip
       </button>
     </div>
@@ -3668,6 +3789,7 @@
     {
       id: 1, foodType: "veg", itemName: "Paneer Tikka", shortcode: "PT1", categoryId: 1, price: 240,
       pricePerKg: 650, portionWeightGrams: 300, pricingType: "both",
+      taxType: "exclusive", gstRate: 5,
       itemDescription: "Smoky char-grilled cottage cheese · Plate or KG batch", station: "Kitchen", status: "active",
       optionGroups: [
         {
@@ -3693,11 +3815,12 @@
         }
       ]
     },
-    { id: 2, foodType: "veg", itemName: "Hara Bhara Kebab", shortcode: "HBK", categoryId: 1, price: 190, pricePerKg: 520, portionWeightGrams: 300, pricingType: "both", itemDescription: "Crispy spinach, peas and potato patties", station: "Kitchen", status: "active", optionGroups: [] },
-    { id: 3, foodType: "nonveg", itemName: "Chicken Seekh Kebab", shortcode: "CSK", categoryId: 1, price: 280, pricePerKg: 780, portionWeightGrams: 350, pricingType: "both", itemDescription: "Spiced skewered minced chicken", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 2, foodType: "veg", itemName: "Hara Bhara Kebab", shortcode: "HBK", categoryId: 1, price: 190, pricePerKg: 520, portionWeightGrams: 300, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Crispy spinach, peas and potato patties", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 3, foodType: "nonveg", itemName: "Chicken Seekh Kebab", shortcode: "CSK", categoryId: 1, price: 280, pricePerKg: 780, portionWeightGrams: 350, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Spiced skewered minced chicken", station: "Kitchen", status: "active", optionGroups: [] },
     {
       id: 4, foodType: "veg", itemName: "Paneer Butter Masala", shortcode: "PBM", categoryId: 2, price: 280,
       pricePerKg: 750, portionWeightGrams: 350, pricingType: "both",
+      taxType: "exclusive", gstRate: 5,
       itemDescription: "Rich tomato-butter gravy with tender cottage cheese · Available by plate or by KG", station: "Kitchen", status: "active",
       optionGroups: [
         {
@@ -3734,10 +3857,11 @@
         }
       ]
     },
-    { id: 5, foodType: "veg", itemName: "Dal Makhani", shortcode: "DMK", categoryId: 2, price: 220, pricePerKg: 550, portionWeightGrams: 400, pricingType: "both", itemDescription: "Slow-cooked black lentils with white butter · Plate or KG", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 5, foodType: "veg", itemName: "Dal Makhani", shortcode: "DMK", categoryId: 2, price: 220, pricePerKg: 550, portionWeightGrams: 400, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Slow-cooked black lentils with white butter · Plate or KG", station: "Kitchen", status: "active", optionGroups: [] },
     {
       id: 6, foodType: "nonveg", itemName: "Butter Chicken", shortcode: "BCK", categoryId: 2, price: 320,
       pricePerKg: 850, portionWeightGrams: 400, pricingType: "both",
+      taxType: "exclusive", gstRate: 5,
       itemDescription: "Tender chicken in silky makhani gravy", station: "Kitchen", status: "active",
       optionGroups: [
         {
@@ -3762,15 +3886,16 @@
         }
       ]
     },
-    { id: 7, foodType: "nonveg", itemName: "Hyderabadi Chicken Biryani", shortcode: "HCB", categoryId: 3, price: 290, pricePerKg: 820, portionWeightGrams: 500, pricingType: "both", itemDescription: "Layered dum basmati rice with spiced chicken", station: "Kitchen", status: "active", optionGroups: [] },
-    { id: 8, foodType: "veg", itemName: "Veg Dum Biryani", shortcode: "VDB", categoryId: 3, price: 230, pricePerKg: 580, portionWeightGrams: 500, pricingType: "both", itemDescription: "Saffron infused basmati with seasonal vegetables", station: "Kitchen", status: "active", optionGroups: [] },
-    { id: 9, foodType: "veg", itemName: "Butter Naan", shortcode: "BN", categoryId: 4, price: 55, pricePerKg: 280, portionWeightGrams: 100, pricingType: "both", itemDescription: "Tandoori refined flour flatbread with butter", station: "Kitchen", status: "active", optionGroups: [] },
-    { id: 10, foodType: "veg", itemName: "Garlic Naan", shortcode: "GN", categoryId: 4, price: 70, pricePerKg: 320, portionWeightGrams: 110, pricingType: "both", itemDescription: "Topped with roasted garlic and coriander", station: "Kitchen", status: "active", optionGroups: [] },
-    { id: 11, foodType: "veg", itemName: "Gulab Jamun", shortcode: "GJ", categoryId: 6, price: 90, pricePerKg: 480, portionWeightGrams: 150, pricingType: "both", itemDescription: "Warm reduced milk dumplings in rose syrup", station: "Kitchen", status: "active", optionGroups: [] },
-    { id: 12, foodType: "veg", itemName: "Virgin Mojito", shortcode: "VM", categoryId: 7, price: 130, pricePerKg: 350, portionWeightGrams: 300, pricingType: "both", itemDescription: "Fresh mint, lime wedges, sugar syrup, and soda", station: "Bar", status: "active", optionGroups: [] },
+    { id: 7, foodType: "nonveg", itemName: "Hyderabadi Chicken Biryani", shortcode: "HCB", categoryId: 3, price: 290, pricePerKg: 820, portionWeightGrams: 500, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Layered dum basmati rice with spiced chicken", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 8, foodType: "veg", itemName: "Veg Dum Biryani", shortcode: "VDB", categoryId: 3, price: 230, pricePerKg: 580, portionWeightGrams: 500, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Saffron infused basmati with seasonal vegetables", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 9, foodType: "veg", itemName: "Butter Naan", shortcode: "BN", categoryId: 4, price: 55, pricePerKg: 280, portionWeightGrams: 100, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Tandoori refined flour flatbread with butter", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 10, foodType: "veg", itemName: "Garlic Naan", shortcode: "GN", categoryId: 4, price: 70, pricePerKg: 320, portionWeightGrams: 110, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Topped with roasted garlic and coriander", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 11, foodType: "veg", itemName: "Gulab Jamun", shortcode: "GJ", categoryId: 6, price: 90, pricePerKg: 480, portionWeightGrams: 150, pricingType: "both", taxType: "inclusive", gstRate: 5, itemDescription: "Warm reduced milk dumplings in rose syrup · MRP Inclusive", station: "Kitchen", status: "active", optionGroups: [] },
+    { id: 12, foodType: "veg", itemName: "Virgin Mojito", shortcode: "VM", categoryId: 7, price: 130, pricePerKg: 350, portionWeightGrams: 300, pricingType: "both", taxType: "inclusive", gstRate: 18, itemDescription: "Fresh mint, lime wedges, sugar syrup, and soda · Incl. 18% GST", station: "Bar", status: "active", optionGroups: [] },
     {
       id: 13, foodType: "veg", itemName: "Farmhouse Gourmet Pizza", shortcode: "FHP", categoryId: 1, price: 340,
       pricePerKg: 720, portionWeightGrams: 450, pricingType: "both",
+      taxType: "exclusive", gstRate: 5,
       itemDescription: "Wood-fired crust with bell peppers, onions, corn and mozzarella", station: "Live Counter", status: "active",
       optionGroups: [
         {
@@ -3812,12 +3937,12 @@
     },
     {
       id: 14, foodType: "veg", itemName: "Kaju Katli (Pure Ghee)", shortcode: "KK-KG", categoryId: 6, price: 260,
-      pricePerKg: 950, portionWeightGrams: 250, pricingType: "both", itemDescription: "Handcrafted silver-leaf cashew fudge · Sold by Plate or KG",
+      pricePerKg: 950, portionWeightGrams: 250, pricingType: "both", taxType: "inclusive", gstRate: 5, itemDescription: "Handcrafted silver-leaf cashew fudge · Sold by Plate or KG · Incl. 5% GST",
       station: "Dessert Counter", status: "active", optionGroups: []
     },
     {
       id: 15, foodType: "veg", itemName: "Dal Makhani (Catering Bulk)", shortcode: "DMK-KG", categoryId: 2, price: 180,
-      pricePerKg: 420, portionWeightGrams: 400, pricingType: "both", itemDescription: "Slow-cooked bulk catering batch billed per KG for events & parties",
+      pricePerKg: 420, portionWeightGrams: 400, pricingType: "both", taxType: "exclusive", gstRate: 5, itemDescription: "Slow-cooked bulk catering batch billed per KG for events & parties",
       station: "Kitchen", status: "active", optionGroups: []
     }
   ];
@@ -3858,6 +3983,176 @@
     allowCashierTaxOverride: true,
     discountPresets: [5, 10, 15],
     flatDiscountPresets: [50, 100]
+  };
+
+  // Master Invoice & Print Customization Studio Configuration
+  const DEFAULT_INVOICE_CONFIG = {
+    templatePreset: "fine_dining",
+    paperFormat: "80mm", // "80mm", "58mm", "a4", "a5"
+    restaurantName: "JUST POS Fine Dine & Lounge",
+    tagline: "Authentic Flavours · Exceptional Hospitality",
+    address: "Shop 12-14, Heritage Plaza, MG Road, Panaji, Goa - 403001",
+    phone: "+91 88307 68469 / 0832 2420111",
+    email: "billing@justpos.com",
+    website: "www.justpos.com",
+    gstin: "30AABCI1234F1Z8",
+    fssai: "10019011000542",
+    pan: "AABCI1234F",
+    showLogo: true,
+    
+    // Header & Meta Toggles
+    showTokenNumber: true,
+    showServerName: true,
+    showTableAndFloor: true,
+    showCustomerDetails: true,
+    showPaymentMode: true,
+    showInvoiceSeries: true,
+    
+    // Items Table Customization
+    showSerialNo: true,
+    showHsnSac: false,
+    showItemTaxRate: true,
+    showTaxModeBadge: true,
+    showItemAddons: true,
+    
+    // Billing & Tax Summary
+    showTaxBreakdown: true, // true: CGST & SGST separate rows, false: Consolidated GST
+    showTaxableBase: true,
+    showTotalQuantity: true,
+    showRoundOff: true,
+    showAmountInWords: true,
+    showSavingsHighlight: true,
+    
+    // Footer & Extra Codes
+    thankYouMessage: "Thank you for dining with us! Please visit again.",
+    termsText: "Goods once sold cannot be returned. All disputes subject to local jurisdiction.",
+    enableUpiQr: true,
+    upiId: "justpos@icici",
+    enableReviewQr: true,
+    reviewUrl: "https://g.page/r/justpos/review"
+  };
+
+  let invoiceMasterConfig = (function() {
+    try {
+      const saved = localStorage.getItem("pos_invoice_master_config");
+      if (saved) return Object.assign({}, DEFAULT_INVOICE_CONFIG, JSON.parse(saved));
+    } catch(e) {}
+    return Object.assign({}, DEFAULT_INVOICE_CONFIG);
+  })();
+
+  const INVOICE_PRESETS = {
+    fine_dining: {
+      templatePreset: "fine_dining",
+      paperFormat: "80mm",
+      restaurantName: "JUST POS Fine Dine & Lounge",
+      tagline: "Authentic Flavours · Exceptional Hospitality",
+      showLogo: true,
+      showTokenNumber: true,
+      showServerName: true,
+      showTableAndFloor: true,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: true,
+      showHsnSac: false,
+      showItemTaxRate: true,
+      showTaxModeBadge: true,
+      showItemAddons: true,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: true,
+      showSavingsHighlight: true,
+      thankYouMessage: "Thank you for dining with us! Please visit again.",
+      termsText: "Goods once sold cannot be returned. All disputes subject to local jurisdiction.",
+      enableUpiQr: true,
+      enableReviewQr: true
+    },
+    qsr_counter: {
+      templatePreset: "qsr_counter",
+      paperFormat: "58mm",
+      restaurantName: "JUST POS Fast Food & QSR",
+      tagline: "Quick Bites · Instant Express Service",
+      showLogo: false,
+      showTokenNumber: true,
+      showServerName: false,
+      showTableAndFloor: false,
+      showCustomerDetails: false,
+      showPaymentMode: true,
+      showInvoiceSeries: false,
+      showSerialNo: false,
+      showHsnSac: false,
+      showItemTaxRate: false,
+      showTaxModeBadge: false,
+      showItemAddons: false,
+      showTaxBreakdown: false,
+      showTaxableBase: false,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: false,
+      showSavingsHighlight: false,
+      thankYouMessage: "Enjoy your meal! Please visit us again.",
+      termsText: "",
+      enableUpiQr: true,
+      enableReviewQr: false
+    },
+    sweets_bakery: {
+      templatePreset: "sweets_bakery",
+      paperFormat: "80mm",
+      restaurantName: "JUST POS Mithai & Confectionery",
+      tagline: "Pure Ghee Sweets · By-Weight Confectionery",
+      showLogo: true,
+      showTokenNumber: false,
+      showServerName: false,
+      showTableAndFloor: false,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: true,
+      showHsnSac: true,
+      showItemTaxRate: true,
+      showTaxModeBadge: true,
+      showItemAddons: false,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: true,
+      showSavingsHighlight: true,
+      thankYouMessage: "Freshly crafted pure delicacies. Have a sweet day!",
+      termsText: "Best consumed within 3 days. Store in a cool dry place.",
+      enableUpiQr: true,
+      enableReviewQr: true
+    },
+    banquet_a4: {
+      templatePreset: "banquet_a4",
+      paperFormat: "a4",
+      restaurantName: "JUST POS Luxury Banquets & Events",
+      tagline: "Corporate Celebrations · Luxury Catering & Banquets",
+      showLogo: true,
+      showTokenNumber: true,
+      showServerName: true,
+      showTableAndFloor: true,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: true,
+      showHsnSac: true,
+      showItemTaxRate: true,
+      showTaxModeBadge: true,
+      showItemAddons: true,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: true,
+      showSavingsHighlight: true,
+      thankYouMessage: "We thank you for celebrating your grand occasion with us!",
+      termsText: "Payment terms: 100% advance or per banquet contract. All disputes subject to local jurisdiction.",
+      enableUpiQr: true,
+      enableReviewQr: true
+    }
   };
 
   // =========================================================================
@@ -4830,6 +5125,16 @@
         }
       } else {
         showView(reqView);
+      }
+      if (reqView === "masters" && urlParams.get("mastertab")) {
+        const mTab = urlParams.get("mastertab");
+        const tabBtn = document.querySelector(`#masterNavTabs .cat-tab[data-master="${mTab}"]`);
+        if (tabBtn) tabBtn.click();
+      }
+      if (urlParams.get("openadditem") === "true") {
+        setTimeout(() => {
+          document.getElementById("openAddMasterModalBtn")?.click();
+        }, 300);
       }
       if (urlParams.get("openreceipt")) {
         const targetId = urlParams.get("openreceipt");
@@ -5936,6 +6241,8 @@
               variantLabel: '',
               addons: [],
               price: dish.price,
+              taxType: dish.taxType || 'exclusive',
+              gstRate: dish.gstRate !== undefined ? dish.gstRate : 5,
               qty: 1,
               sentQty: 0,
               kotId: null,
@@ -6502,6 +6809,8 @@
         variantLabel: variantLabel,
         addons: addonsList,
         price: unitPrice,
+        taxType: dish.taxType || "exclusive",
+        gstRate: dish.gstRate !== undefined ? dish.gstRate : 5,
         qty: customItemQty,
         sentQty: 0,
         kotId: null,
@@ -6514,6 +6823,86 @@
     renderCart();
     showToast(`✓ Added ${customItemQty} × ${dish.itemName}${variantLabel ? ' (' + variantLabel + ')' : ''} to order!`);
   });
+
+  // Unified Bill Calculation Engine (Handles per-item Inclusive vs Exclusive GST + Slabs)
+  function calculateOrderBill(session, itemsList) {
+    const rawSubtotal = (itemsList || []).reduce((s, i) => s + (Number(i.price) * Number(i.qty)), 0);
+
+    // Calculate overall discount ratio
+    let discountAmount = 0;
+    const discVal = Number(session?.discountVal) || 0;
+    if (discVal > 0) {
+      if (session?.discountType === 'pct') {
+        discountAmount = Math.round(rawSubtotal * (discVal / 100) * 100) / 100;
+      } else {
+        discountAmount = Math.min(rawSubtotal, discVal);
+      }
+    }
+    const discountFactor = rawSubtotal > 0 ? (1 - (discountAmount / rawSubtotal)) : 1;
+
+    const isGlobalTaxOn = session?.taxEnabled !== false && (session?.taxRate === undefined || session?.taxRate > 0);
+
+    let totalTaxable = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalInclusiveGst = 0;
+    let totalExclusiveGst = 0;
+
+    (itemsList || []).forEach(it => {
+      const lineTotal = Number(it.price) * Number(it.qty);
+      const discountedLine = lineTotal * discountFactor;
+      
+      const itRate = (it.gstRate !== undefined) ? Number(it.gstRate) : (session?.taxRate !== undefined ? Number(session.taxRate) : (masterTaxConfig.defaultTaxRate || 5));
+      const itTaxType = it.taxType || "exclusive";
+
+      if (!isGlobalTaxOn || itRate === 0) {
+        totalTaxable += discountedLine;
+      } else if (itTaxType === "inclusive") {
+        // Price already INCLUDES GST: Back-calculate base taxable & tax
+        const lineTaxable = discountedLine / (1 + (itRate / 100));
+        const lineTax = discountedLine - lineTaxable;
+        totalTaxable += lineTaxable;
+        totalCgst += (lineTax / 2);
+        totalSgst += (lineTax / 2);
+        totalInclusiveGst += lineTax;
+      } else {
+        // Price is EXCLUSIVE of GST: GST is added EXTRA on top
+        const lineTaxable = discountedLine;
+        const lineTax = lineTaxable * (itRate / 100);
+        totalTaxable += lineTaxable;
+        totalCgst += (lineTax / 2);
+        totalSgst += (lineTax / 2);
+        totalExclusiveGst += lineTax;
+      }
+    });
+
+    totalTaxable = Math.round(totalTaxable * 100) / 100;
+    totalCgst = Math.round(totalCgst * 100) / 100;
+    totalSgst = Math.round(totalSgst * 100) / 100;
+    const totalGst = totalCgst + totalSgst;
+
+    // Service Charge (applied on total taxable)
+    const isScOn = !!session?.serviceChargeEnabled;
+    const scRateVal = session?.serviceChargeRate || masterTaxConfig.serviceChargeRate || 5;
+    const serviceChargeVal = isScOn ? Math.round(totalTaxable * (scRateVal / 100) * 100) / 100 : 0;
+
+    // Grand total
+    const grandTotal = Math.round((totalTaxable + totalCgst + totalSgst + serviceChargeVal) * 100) / 100;
+
+    return {
+      subtotal: rawSubtotal,
+      discountAmount,
+      taxable: totalTaxable,
+      cgst: totalCgst,
+      sgst: totalSgst,
+      totalGst,
+      totalInclusiveGst: Math.round(totalInclusiveGst * 100) / 100,
+      totalExclusiveGst: Math.round(totalExclusiveGst * 100) / 100,
+      serviceCharge: serviceChargeVal,
+      total: grandTotal,
+      isTaxOn: isGlobalTaxOn
+    };
+  }
 
   // Render Cart Slip (Shows Previous KOT items + Newly added items)
   function renderCart() {
@@ -6565,8 +6954,11 @@
                   <b>Extras:</b> ${it.addons.map(a => `${a.name} (+${money(a.price)}${a.billingMode === 'kg' ? ` [scaled @ ${money(a.basePrice)}/Kg × ${it.weightKg}Kg]` : ' flat'})`).join(', ')}
                 </div>
               ` : ''}
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">
-                ${money(it.price)} × ${it.qty} ${it.unitMode === 'kg' ? (it.qty > 1 ? 'packs' : 'pack') : ''} = <b>${money(it.price * it.qty)}</b>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+                <span>${money(it.price)} × ${it.qty} ${it.unitMode === 'kg' ? (it.qty > 1 ? 'packs' : 'pack') : ''} = <b>${money(it.price * it.qty)}</b></span>
+                <span class="cog-badge" style="font-size:9px;padding:1px 5px;font-weight:700;background:${it.taxType === 'inclusive' ? 'rgba(16, 185, 129, 0.12);color:#059669;border-color:rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.1);color:#4f46e5;border-color:rgba(99, 102, 241, 0.25)'};">
+                  ${it.taxType === 'inclusive' ? '🟢 Incl. ' : '➕ Plus '}${it.gstRate !== undefined ? it.gstRate : 5}% GST
+                </span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
                 <span class="cart-item-badge ${isSent ? 'badge-sent' : 'badge-new'}">
@@ -6686,35 +7078,19 @@
       });
     }
 
-    // Totals Calculation
-    const sub = itemsList.reduce((s, i) => s + (i.price * i.qty), 0);
-
-    // Discount Calculation
-    let discountAmount = 0;
-    const discVal = Number(currentOrderSession.discountVal) || 0;
-    if (discVal > 0) {
-      if (currentOrderSession.discountType === 'pct') {
-        discountAmount = Math.round(sub * (discVal / 100) * 100) / 100;
-      } else {
-        discountAmount = Math.min(sub, discVal);
-      }
-    }
-    const taxable = Math.max(0, sub - discountAmount);
-
-    // Tax Calculation (CGST + SGST)
+    // Totals Calculation via unified engine
+    const bill = calculateOrderBill(currentOrderSession, itemsList);
+    const sub = bill.subtotal;
+    const discountAmount = bill.discountAmount;
+    const taxable = bill.taxable;
+    const isTaxOn = bill.isTaxOn;
+    const cgstVal = bill.cgst;
+    const sgstVal = bill.sgst;
+    const serviceChargeVal = bill.serviceCharge;
+    const totalVal = bill.total;
+    const isScOn = !!currentOrderSession.serviceChargeEnabled;
     const taxRate = Number(currentOrderSession.taxRate !== undefined ? currentOrderSession.taxRate : masterTaxConfig.defaultTaxRate);
     const halfTaxRate = taxRate / 2;
-    const isTaxOn = currentOrderSession.taxEnabled !== false && taxRate > 0;
-    const cgstVal = isTaxOn ? Math.round(taxable * (halfTaxRate / 100) * 100) / 100 : 0;
-    const sgstVal = isTaxOn ? Math.round(taxable * (halfTaxRate / 100) * 100) / 100 : 0;
-
-    // Service Charge (from Master)
-    const isScOn = !!currentOrderSession.serviceChargeEnabled;
-    const scRateVal = currentOrderSession.serviceChargeRate || masterTaxConfig.serviceChargeRate || 5;
-    const serviceChargeVal = isScOn ? Math.round(taxable * (scRateVal / 100) * 100) / 100 : 0;
-
-    // Total Payable
-    const totalVal = taxable + cgstVal + sgstVal + serviceChargeVal;
 
     // Update Subtotal & Total
     const subEl = document.getElementById("cartSubtotal");
@@ -7228,8 +7604,13 @@
   });
 
   // Print Slip Action
-  document.getElementById("doPrintSlipBtn")?.addEventListener("click", () => {
-    window.print();
+  document.getElementById("doPrintQuickSlipBtn")?.addEventListener("click", () => {
+    const slipEl = document.getElementById("slipReceiptContent");
+    if (slipEl) {
+      executeThermalPrint(slipEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
+    } else {
+      window.print();
+    }
   });
 
   let currentInvoiceTab = "tax_invoice"; // "tax_invoice", "gate_pass", "digital"
@@ -7243,25 +7624,19 @@
     const companyKey = currentOrderSession.companySeries || activeCompanySeries || "amoncar";
     const invId = peekNextInvoiceNumber(companyKey);
 
-    const sub = currentOrderSession.items.reduce((s, i) => s + (i.price * i.qty), 0);
+    const bill = calculateOrderBill(currentOrderSession, currentOrderSession.items);
+    const sub = bill.subtotal;
     const discType = currentOrderSession.discountType || 'pct';
     const discVal = Number(currentOrderSession.discountVal) || 0;
-    let discountAmount = 0;
-    if (discVal > 0) {
-      if (discType === 'pct') {
-        discountAmount = Math.round(sub * (discVal / 100) * 100) / 100;
-      } else {
-        discountAmount = Math.min(sub, discVal);
-      }
-    }
-    const taxableAmount = Math.max(0, sub - discountAmount);
-    const taxEnabled = currentOrderSession.taxEnabled !== false;
+    const discountAmount = bill.discountAmount;
+    const taxableAmount = bill.taxable;
+    const taxEnabled = bill.isTaxOn;
     const taxRate = currentOrderSession.taxRate !== undefined ? Number(currentOrderSession.taxRate) : 5;
-    const halfTaxRate = taxRate / 2;
-    const cgst = (taxEnabled && taxRate > 0) ? Math.round(taxableAmount * (halfTaxRate / 100) * 100) / 100 : 0;
-    const sgst = (taxEnabled && taxRate > 0) ? Math.round(taxableAmount * (halfTaxRate / 100) * 100) / 100 : 0;
-    const serviceCharge = currentOrderSession.serviceChargeEnabled ? Math.round(taxableAmount * 0.05 * 100) / 100 : 0;
-    const total = taxableAmount + cgst + sgst + serviceCharge;
+    const cgst = bill.cgst;
+    const sgst = bill.sgst;
+    const totalGst = bill.totalGst;
+    const serviceCharge = bill.serviceCharge;
+    const total = bill.total;
     const totalQty = currentOrderSession.items.reduce((s, i) => s + (i.unitMode === 'kg' ? (i.weightKg * i.qty) : i.qty), 0);
 
     const now = new Date();
@@ -7288,6 +7663,7 @@
       taxRate,
       cgst,
       sgst,
+      totalGst,
       serviceCharge,
       total,
       totalQty,
@@ -7380,132 +7756,10 @@
           </div>
         `;
       } else {
-        // Tax Invoice
+        // Tax Invoice rendered via Invoice & Print Master Builder Config
         slipHtml = `
-          <div id="thermalPrintReceipt" class="amoncar-invoice-box">
-            <div class="amoncar-header">
-              <div class="comp-name">${compConf.name}</div>
-              <div class="comp-sub">${compConf.address}</div>
-              <div class="comp-sub">Phone No: ${compConf.phone} | GST No: ${compConf.gstin}</div>
-              <div class="comp-sub">PAN : ${compConf.pan}</div>
-              <div class="invoice-title">TAX INVOICE</div>
-            </div>
-
-            <table class="amoncar-meta-table">
-              <tr>
-                <td class="label-cell">Invoice No</td>
-                <td class="val-cell"><b>${inv.id}</b></td>
-              </tr>
-              <tr>
-                <td class="label-cell">Series :</td>
-                <td class="val-cell"><span style="font-family:monospace;font-weight:700;">${compConf.code} (${compConf.seriesFormat})</span></td>
-              </tr>
-              <tr>
-                <td class="label-cell">Dt</td>
-                <td class="val-cell">${inv.dateFormatted || '07/09/2026'}</td>
-              </tr>
-              <tr>
-                <td class="label-cell">Customer Name</td>
-                <td class="val-cell">${nameDisplay}</td>
-              </tr>
-              <tr>
-                <td class="label-cell">Phone :</td>
-                <td class="val-cell">${phoneDisplay}</td>
-              </tr>
-              <tr>
-                <td class="label-cell">Bill Type :</td>
-                <td class="val-cell">${billTypeDisplay}</td>
-              </tr>
-            </table>
-
-            <table class="amoncar-items-table">
-              <thead>
-                <tr>
-                  <th style="text-align:left;">Description</th>
-                  <th style="text-align:right;">Qty</th>
-                  <th style="text-align:right;">Item Rate</th>
-                  <th style="text-align:right;">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(inv.items || []).map(it => {
-                  const itQty = it.unitMode === 'kg' ? (it.weightKg * it.qty) : it.qty;
-                  const itRate = it.unitMode === 'kg' ? (it.pricePerKg || it.price) : it.price;
-                  const itAmt = it.price * it.qty;
-                  const itName = (it.unitMode === 'kg' && !it.name.toLowerCase().startsWith('kg')) ? `KG-${it.name}` : it.name;
-                  return `
-                    <tr>
-                      <td>
-                        <b>${itName}</b>
-                        ${it.addons && it.addons.length ? `<div style="font-size:9.5px;color:#475569;margin-top:1px;">+ ${it.addons.map(a => `${a.name}${a.price ? ` (+₹${a.price})` : ''}`).join(', ')}</div>` : ''}
-                      </td>
-                      <td style="text-align:right;font-family:monospace;">${Number(itQty).toFixed(2)}</td>
-                      <td style="text-align:right;font-family:monospace;">${Number(itRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td style="text-align:right;font-family:monospace;font-weight:700;">${Number(itAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    </tr>
-                  `;
-                }).join('')}
-                <tr class="total-row">
-                  <td><b>Total</b></td>
-                  <td style="text-align:right;font-family:monospace;"><b>${totalQtyVal}</b></td>
-                  <td></td>
-                  <td style="text-align:right;font-family:monospace;"><b>${Number(inv.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></td>
-                </tr>
-              </tbody>
-            </table>
-
-            <table class="amoncar-summary-table">
-              <tr>
-                <td style="font-weight:700;">Sub Total</td>
-                <td style="text-align:right;font-family:monospace;font-weight:700;">${Number(inv.subtotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ${inv.discountAmount > 0 ? `
-              <tr style="color:#059669;">
-                <td style="font-weight:700;">Discount (${inv.discountType === 'pct' ? `${inv.discountVal}%` : `₹${inv.discountVal}`})</td>
-                <td style="text-align:right;font-family:monospace;font-weight:700;">-₹${Number(inv.discountAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ` : ''}
-              <tr>
-                <td style="font-weight:700;">Taxable Amount</td>
-                <td style="text-align:right;font-family:monospace;">${Number(inv.taxableAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ${masterTaxConfig.showTaxBreakdownOnInvoice ? `
-                ${(inv.taxEnabled && inv.taxRate > 0) ? `
-                <tr>
-                  <td style="font-weight:700;">CGST (${(inv.taxRate / 2).toFixed(1)}%)</td>
-                  <td style="text-align:right;font-family:monospace;">${Number(inv.cgst).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:700;">SGST/UTGST (${(inv.taxRate / 2).toFixed(1)}%)</td>
-                  <td style="text-align:right;font-family:monospace;">${Number(inv.sgst).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>
-                ` : `
-                <tr>
-                  <td style="font-weight:700;color:#dc2626;">GST (${inv.taxRate === 0 ? '0% Exempt' : 'Removed / Exempt'})</td>
-                  <td style="text-align:right;font-family:monospace;color:#dc2626;">₹0.00</td>
-                </tr>
-                `}
-              ` : `
-                <tr>
-                  <td style="font-weight:700;">Total Tax (GST)</td>
-                  <td style="text-align:right;font-family:monospace;">${Number((inv.cgst || 0) + (inv.sgst || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>
-              `}
-              ${inv.serviceCharge > 0 ? `
-              <tr>
-                <td style="font-weight:700;">Service Charge (${inv.serviceChargeRate || 5}%)</td>
-                <td style="text-align:right;font-family:monospace;">${Number(inv.serviceCharge).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-              ` : ''}
-              <tr class="bill-total-row">
-                <td style="font-weight:900;">Bill Total</td>
-                <td style="text-align:right;font-family:monospace;font-weight:900;">${Number(inv.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-            </table>
-
-            <div class="amoncar-words-card">
-              <b>${inv.amountInWords || numberToWordsINR(inv.total)}</b>
-            </div>
+          <div id="thermalPrintReceipt">
+            ${generateInvoiceSlipHtml(inv, invoiceMasterConfig)}
           </div>
         `;
       }
@@ -7714,22 +7968,28 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     renderActiveInvoiceTab();
 
     const foot = document.getElementById("invoiceModalFoot");
+    const printFormatLabel = (invoiceMasterConfig.paperFormat || "80mm").toUpperCase();
     if (isPaid) {
       foot.innerHTML = `
         <button type="button" class="btn" data-close-modal style="flex:1;">Close</button>
         <button type="button" class="btn btn-primary" id="printReceiptBtn" style="flex:1.4;">
-          🖨️ Print (80mm POS-80C)
+          🖨️ Print (${printFormatLabel})
         </button>
       `;
       foot.querySelector("#printReceiptBtn").onclick = () => {
-        window.print();
+        const receiptEl = document.getElementById("thermalPrintReceipt");
+        if (receiptEl) {
+          executeThermalPrint(receiptEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
+        } else {
+          window.print();
+        }
       };
       foot.querySelector("[data-close-modal]").onclick = closeAllModals;
     } else {
       foot.innerHTML = `
         <button type="button" class="btn" data-close-modal style="flex:0.8;">Cancel</button>
         <button type="button" class="btn" id="printReceiptBtn" style="flex:1;background:var(--line-soft);border-color:var(--line);">
-          🖨️ Print 80mm Slip
+          🖨️ Print ${printFormatLabel} Slip
         </button>
         <button type="button" class="btn btn-primary" id="payInvoiceBtn" style="flex:1.5;background:#059669;border-color:#059669;">
           ✓ Collect Payment &amp; Free Table
@@ -7737,7 +7997,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       `;
       foot.querySelector("[data-close-modal]").onclick = closeAllModals;
       foot.querySelector("#printReceiptBtn").onclick = () => {
-        window.print();
+        const receiptEl = document.getElementById("thermalPrintReceipt");
+        if (receiptEl) {
+          executeThermalPrint(receiptEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
+        } else {
+          window.print();
+        }
       };
 
       const payBtn = foot.querySelector("#payInvoiceBtn");
@@ -8130,7 +8395,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
   }
 
   document.getElementById("doPrintSlipBtn").addEventListener("click", () => {
-    window.print();
+    const kotEl = document.getElementById("kotThermalSlip");
+    if (kotEl) {
+      executeThermalPrint(kotEl.outerHTML, "80mm");
+    } else {
+      window.print();
+    }
   });
 
   document.getElementById("kotStationFilter").addEventListener("change", renderKot);
@@ -8510,7 +8780,14 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
         const inv = invoices.find(x => x.id === btn.dataset.invid);
         if (inv) {
           showInvoiceModal(inv);
-          setTimeout(() => { window.print(); }, 250);
+          setTimeout(() => {
+            const receiptEl = document.getElementById("thermalPrintReceipt");
+            if (receiptEl) {
+              executeThermalPrint(receiptEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
+            } else {
+              window.print();
+            }
+          }, 250);
         }
       };
     });
@@ -9036,6 +9313,7 @@ For any queries or updates, reply to this message.`;
     floors: { title: "Floor Master", addBtnLabel: "+ Add Floor", searchPlaceholder: "Search floors..." },
     tables: { title: "Table Master", addBtnLabel: "+ Add Table", searchPlaceholder: "Search tables..." },
     taxes: { title: "Tax Master", addBtnLabel: "+ Add Tax", searchPlaceholder: "Search tax types..." },
+    invoices: { title: "Invoice & Print Master", addBtnLabel: "💾 Save Template", searchPlaceholder: "Search templates or settings..." },
     roles: { title: "Roles & Rights Master", addBtnLabel: "+ Add Role", searchPlaceholder: "Search roles (Admin, Kitchen, Cashier...)" },
     users: { title: "Staff / User Master", addBtnLabel: "+ Add Staff Member", searchPlaceholder: "Search staff members..." }
   };
@@ -9054,10 +9332,25 @@ For any queries or updates, reply to this message.`;
   });
 
   function renderMasters() {
+    const isInvoiceTab = (activeMasterTab === "invoices");
+
+    const addBtn = document.getElementById("openAddMasterModalBtn");
+    const filterBar = document.querySelector(".master-filter-bar");
+    const statsContainer = document.getElementById("masterStatsContainer");
+    const tableWrapper = document.getElementById("masterTableWrapper");
+
+    if (addBtn) addBtn.style.display = isInvoiceTab ? "none" : "inline-flex";
+    if (filterBar) filterBar.style.display = isInvoiceTab ? "none" : "flex";
+    if (statsContainer) statsContainer.style.display = isInvoiceTab ? "none" : "grid";
+    if (tableWrapper) tableWrapper.style.display = isInvoiceTab ? "none" : "block";
+
     renderMasterStats();
     renderMasterCustomFilters();
     renderMasterTaxConfigPanel();
-    renderMasterTable();
+    renderMasterInvoicePrintPanel();
+    if (!isInvoiceTab) {
+      renderMasterTable();
+    }
   }
 
   function renderMasterTaxConfigPanel() {
@@ -9179,6 +9472,775 @@ For any queries or updates, reply to this message.`;
       showToast("✓ Master Tax, Series & Invoice rules updated across all POS terminals!");
       renderMasterStats();
     });
+  }
+
+  // =========================================================================
+  // INVOICE MASTER & THERMAL PRINT ENGINE (80mm, 58mm, A4, A5)
+  // =========================================================================
+  const SAMPLE_INVOICE_PREVIEW_DATA = {
+    id: "ACCS/26-27/0042",
+    companySeries: "amoncar",
+    dateFormatted: new Date().toLocaleDateString('en-GB'),
+    timeFormatted: "07:45 PM",
+    customerName: "Rahul Sharma",
+    customerPhone: "98201 54321",
+    paymentMode: "UPI / QR",
+    status: "paid",
+    tokenNo: "T-18",
+    serverName: "Vikram (Staff)",
+    tableLabel: "T-04 (Dine-In)",
+    floorLabel: "Main AC Hall",
+    totalQty: "4.50",
+    items: [
+      { name: "Paneer Tikka Charcoal", qty: 2, price: 280, taxType: "exclusive", gstRate: 5, hsn: "996331", addons: [{ name: "Extra Mint Chutney", price: 0 }] },
+      { name: "Fresh Mint Mojito", qty: 2, price: 150, taxType: "inclusive", gstRate: 18, hsn: "220210" },
+      { name: "Gulab Jamun (2 Pcs)", qty: 1, price: 90, taxType: "inclusive", gstRate: 5, hsn: "210690" },
+      { name: "Kaju Katli Special", qty: 1, unitMode: "kg", weightKg: 0.5, pricePerKg: 1000, price: 500, taxType: "inclusive", gstRate: 5, hsn: "210690" }
+    ],
+    subtotal: 1450.00,
+    discountType: "pct",
+    discountVal: 10,
+    discountAmount: 145.00,
+    taxableAmount: 1268.57,
+    cgst: 40.59,
+    sgst: 40.59,
+    totalGst: 81.18,
+    serviceCharge: 0,
+    total: 1386.00,
+    amountInWords: "One Thousand Three Hundred Eighty-Six Rupees Only"
+  };
+
+  // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe
+  function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm")) {
+    let iframe = document.getElementById("posThermalPrintIframe");
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "posThermalPrintIframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.style.zIndex = "-9999";
+      document.body.appendChild(iframe);
+    }
+
+    const is58 = paperFormat === "58mm";
+    const isA4 = paperFormat === "a4";
+    const isA5 = paperFormat === "a5";
+    const pageSize = isA4 ? "A4 portrait" : (isA5 ? "A5 portrait" : (is58 ? "58mm auto" : "80mm auto"));
+    const bodyWidth = isA4 ? "185mm" : (isA5 ? "135mm" : (is58 ? "48mm" : "72mm"));
+    const bodyPadding = isA4 ? "12mm" : (isA5 ? "8mm" : "2mm");
+
+    const printCss = `
+      @page {
+        size: ${pageSize};
+        margin: 0mm !important;
+      }
+      * {
+        box-sizing: border-box !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body {
+        margin: 0 !important;
+        padding: ${bodyPadding} !important;
+        background: #fff !important;
+        color: #000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
+        font-size: ${is58 ? "8.5px" : (isA4 ? "11.5px" : (isA5 ? "10px" : "9.5px"))} !important;
+        line-height: 1.35 !important;
+        width: ${bodyWidth} !important;
+        max-width: ${bodyWidth} !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        padding: ${is58 ? "1.5px 2px" : (isA4 ? "5px 6px" : "2.5px 3px")} !important;
+        font-size: inherit !important;
+      }
+      .no-print { display: none !important; }
+      img { max-width: 100% !important; }
+    `;
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>POS Receipt - ${invoiceMasterConfig.restaurantName || 'JUST POS'}</title>
+          <style>${printCss}</style>
+        </head>
+        <body>
+          ${contentHtml}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 250);
+  }
+  window.executeThermalPrint = executeThermalPrint;
+
+  // Render Custom Customer Receipt / Invoice Slip HTML based on Config
+  function generateInvoiceSlipHtml(inv, cfg = invoiceMasterConfig) {
+    const compConf = companySeriesConfig[inv.companySeries] || companySeriesConfig.amoncar;
+    const isPaid = (inv.status === "paid");
+    const phoneDisplay = inv.customerPhone && inv.customerPhone !== "undefined" ? inv.customerPhone : (cfg.showCustomerDetails ? "8830768469" : "");
+    const nameDisplay = inv.customerName && inv.customerName !== "undefined" ? inv.customerName : (cfg.showCustomerDetails ? "Walk-in Guest" : "");
+    const billTypeDisplay = inv.paymentMode || "Cash";
+    const totalQtyVal = Number(inv.totalQty || (inv.items || []).reduce((s,i) => s + (i.unitMode === 'kg' ? (i.weightKg * i.qty) : i.qty), 0)).toFixed(2);
+    
+    const restName = cfg.restaurantName || compConf.name;
+    const restTagline = cfg.tagline || compConf.tagline || "";
+    const restAddress = cfg.address || compConf.address;
+    const restPhone = cfg.phone || compConf.phone;
+    const restGstin = cfg.gstin || compConf.gstin;
+    const restFssai = cfg.fssai || "";
+    const restEmail = cfg.email || "";
+
+    const is58 = cfg.paperFormat === "58mm";
+    const isA4 = cfg.paperFormat === "a4";
+    const isA5 = cfg.paperFormat === "a5";
+
+    // QR Code URL helper
+    const upiId = cfg.upiId || "justpos@icici";
+    const upiPayUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(restName)}&am=${Number(inv.total).toFixed(2)}&cu=INR&tn=${encodeURIComponent(inv.id || 'POS Bill')}`;
+    const upiQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=2&data=${encodeURIComponent(upiPayUrl)}`;
+    const reviewQrImg = cfg.reviewUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=2&data=${encodeURIComponent(cfg.reviewUrl)}` : "";
+
+    return `
+      <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace, sans-serif; background:#fff; color:#000; line-height:1.35; padding:${is58 ? '6px 4px' : (isA4 ? '16px 20px' : '10px 8px')};">
+        
+        <!-- Restaurant Header -->
+        <div style="text-align:center; padding-bottom:8px; border-bottom:1.5px dashed #334155; margin-bottom:8px;">
+          ${cfg.showLogo ? `
+            <div style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:#0f172a; color:#fff; font-size:17px; margin-bottom:4px; box-shadow:0 2px 5px rgba(0,0,0,0.15);">
+              🍽️
+            </div>
+          ` : ''}
+          <div style="font-size:${is58 ? '12px' : (isA4 ? '18px' : '15px')}; font-weight:900; letter-spacing:-0.02em; color:#0f172a; text-transform:uppercase;">
+            ${restName}
+          </div>
+          ${restTagline ? `<div style="font-size:${is58 ? '8px' : '9.5px'}; font-weight:600; color:#475569; margin-top:1px;">${restTagline}</div>` : ''}
+          <div style="font-size:${is58 ? '8px' : '9px'}; color:#334155; margin-top:2px;">${restAddress}</div>
+          <div style="font-size:${is58 ? '8px' : '9px'}; color:#334155; margin-top:1px;">
+            ${restPhone ? `📞 ${restPhone}` : ''} ${restEmail ? `· ✉️ ${restEmail}` : ''}
+          </div>
+          ${(restGstin || restFssai) ? `
+            <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin-top:3px; font-size:${is58 ? '7.5px' : '8.5px'}; font-weight:700; color:#1e293b;">
+              ${restGstin ? `<span style="background:#f1f5f9; padding:1px 5px; border-radius:3px; border:1px solid #cbd5e1;">GSTIN: ${restGstin}</span>` : ''}
+              ${restFssai ? `<span style="background:#f1f5f9; padding:1px 5px; border-radius:3px; border:1px solid #cbd5e1;">FSSAI: ${restFssai}</span>` : ''}
+            </div>
+          ` : ''}
+          <div style="display:inline-block; margin-top:5px; padding:2px 10px; background:#0f172a; color:#fff; font-size:${is58 ? '8.5px' : '10.5px'}; font-weight:800; letter-spacing:0.08em; border-radius:3px; text-transform:uppercase;">
+            TAX INVOICE
+          </div>
+        </div>
+
+        <!-- Metadata Key-Value Rows -->
+        <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8px' : (isA4 ? '11px' : '9.5px')};">
+          ${cfg.showInvoiceSeries ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600; width:38%;">Invoice No:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800; font-family:monospace; color:#0f172a;">${inv.id}</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Date &amp; Time:</td>
+              <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#0f172a;">${inv.dateFormatted || '22/09/2026'} ${inv.timeFormatted || '05:30 PM'}</td>
+            </tr>
+          ` : ''}
+          ${(cfg.showTokenNumber && inv.tokenNo) ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Order Token #:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800; color:#0f172a;"><span style="background:#e0f2fe; color:#0284c7; padding:0 4px; border-radius:3px;">${inv.tokenNo}</span></td>
+            </tr>
+          ` : ''}
+          ${(cfg.showTableAndFloor && (inv.tableLabel || inv.floorLabel)) ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Table / Section:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:700; color:#0f172a;">${inv.tableLabel || 'Counter'} ${inv.floorLabel ? `(${inv.floorLabel})` : ''}</td>
+            </tr>
+          ` : ''}
+          ${(cfg.showServerName && inv.serverName) ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Server / Steward:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:600; color:#0f172a;">${inv.serverName}</td>
+            </tr>
+          ` : ''}
+          ${cfg.showCustomerDetails && (nameDisplay || phoneDisplay) ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Guest Name:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:700; color:#0f172a;">${nameDisplay}</td>
+            </tr>
+            ${phoneDisplay ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Guest Phone:</td>
+              <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#0f172a;">${phoneDisplay}</td>
+            </tr>
+            ` : ''}
+          ` : ''}
+          ${cfg.showPaymentMode ? `
+            <tr>
+              <td style="padding:1.5px 0; color:#475569; font-weight:600;">Bill Tender Mode:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800; color:#059669;">${billTypeDisplay} ${isPaid ? '✓ (Paid)' : ''}</td>
+            </tr>
+          ` : ''}
+        </table>
+
+        <!-- Items Table -->
+        <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8px' : (isA4 ? '11px' : '9.5px')};">
+          <thead>
+            <tr style="border-top:1.5px dashed #334155; border-bottom:1.5px dashed #334155; background:#f8fafc;">
+              ${cfg.showSerialNo ? `<th style="padding:4px 2px; text-align:left; width:20px;">#</th>` : ''}
+              <th style="padding:4px 2px; text-align:left;">Item Name</th>
+              ${cfg.showHsnSac ? `<th style="padding:4px 2px; text-align:left; width:45px;">HSN</th>` : ''}
+              ${cfg.showItemTaxRate ? `<th style="padding:4px 2px; text-align:center; width:34px;">GST%</th>` : ''}
+              <th style="padding:4px 2px; text-align:right; width:36px;">Qty</th>
+              <th style="padding:4px 2px; text-align:right; width:48px;">Rate</th>
+              <th style="padding:4px 2px; text-align:right; width:52px;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(inv.items || []).map((it, idx) => {
+              const itQty = it.unitMode === 'kg' ? (it.weightKg * it.qty) : it.qty;
+              const itRate = it.unitMode === 'kg' ? (it.pricePerKg || it.price) : it.price;
+              const itAmt = it.price * it.qty;
+              const itName = (it.unitMode === 'kg' && !it.name.toLowerCase().startsWith('kg')) ? `KG-${it.name}` : it.name;
+              const isIncl = (it.taxType === 'inclusive');
+              const rateStr = it.gstRate !== undefined ? `${it.gstRate}%` : '5%';
+
+              return `
+                <tr style="border-bottom:1px dashed #e2e8f0;">
+                  ${cfg.showSerialNo ? `<td style="padding:3px 2px; font-family:monospace; color:#64748b;">${idx + 1}</td>` : ''}
+                  <td style="padding:3px 2px;">
+                    <div style="font-weight:700; color:#0f172a;">${itName}</div>
+                    ${cfg.showTaxModeBadge ? `
+                      <span style="font-size:${is58 ? '6.5px' : '7.5px'}; font-weight:700; padding:0 3px; border-radius:2px; ${isIncl ? 'background:#ecfdf5;color:#047857;' : 'background:#eff6ff;color:#1d4ed8;'}">
+                        ${isIncl ? `MRP Incl. ${rateStr}` : `+${rateStr} GST`}
+                      </span>
+                    ` : ''}
+                    ${(cfg.showItemAddons && it.addons && it.addons.length) ? `
+                      <div style="font-size:7.5px; color:#64748b; margin-top:1px;">+ ${it.addons.map(a => `${a.name}${a.price ? ` (+₹${a.price})` : ''}`).join(', ')}</div>
+                    ` : ''}
+                  </td>
+                  ${cfg.showHsnSac ? `<td style="padding:3px 2px; font-family:monospace; font-size:7.5px; color:#475569;">${it.hsn || '9963'}</td>` : ''}
+                  ${cfg.showItemTaxRate ? `<td style="padding:3px 2px; text-align:center; font-family:monospace; font-size:8px; color:#475569;">${rateStr}</td>` : ''}
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:700;">${Number(itQty).toFixed(2)}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace;">${Number(itRate).toFixed(2)}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:800; color:#0f172a;">${Number(itAmt).toFixed(2)}</td>
+                </tr>
+              `;
+            }).join('')}
+            ${cfg.showTotalQuantity ? `
+              <tr style="border-top:1px solid #000; font-weight:700;">
+                ${cfg.showSerialNo ? `<td></td>` : ''}
+                <td colspan="${(cfg.showHsnSac ? 1 : 0) + (cfg.showItemTaxRate ? 1 : 0) + 1}" style="padding:3px 2px; text-transform:uppercase; font-size:${is58 ? '7.5px' : '8.5px'};">Total Items / Qty</td>
+                <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:800;">${totalQtyVal}</td>
+                <td colspan="2"></td>
+              </tr>
+            ` : ''}
+          </tbody>
+        </table>
+
+        <!-- Summary & Tax Breakdown Box -->
+        <div style="border-top:1.5px dashed #334155; padding-top:5px; margin-bottom:8px;">
+          <table style="width:100%; border-collapse:collapse; font-size:${is58 ? '8px' : (isA4 ? '11px' : '9.5px')};">
+            <tr>
+              <td style="padding:1.5px 0; color:#334155; font-weight:600;">Sub Total:</td>
+              <td style="padding:1.5px 0; text-align:right; font-family:monospace; font-weight:700;">₹${Number(inv.subtotal).toFixed(2)}</td>
+            </tr>
+            ${inv.discountAmount > 0 ? `
+              <tr style="color:#059669;">
+                <td style="padding:1.5px 0; font-weight:700;">Discount (${inv.discountType === 'pct' ? `${inv.discountVal}%` : `₹${inv.discountVal}`}):</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; font-weight:800;">-₹${Number(inv.discountAmount).toFixed(2)}</td>
+              </tr>
+            ` : ''}
+            ${cfg.showTaxableBase ? `
+              <tr>
+                <td style="padding:1.5px 0; color:#475569; font-weight:600;">Taxable Amount:</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.taxableAmount).toFixed(2)}</td>
+              </tr>
+            ` : ''}
+            ${cfg.showTaxBreakdown ? `
+              <tr>
+                <td style="padding:1.5px 0; color:#475569; font-weight:600;">CGST:</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.cgst).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding:1.5px 0; color:#475569; font-weight:600;">SGST / UTGST:</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number(inv.sgst).toFixed(2)}</td>
+              </tr>
+            ` : `
+              <tr>
+                <td style="padding:1.5px 0; color:#475569; font-weight:600;">Total Tax (GST):</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; color:#334155;">₹${Number((inv.cgst || 0) + (inv.sgst || 0)).toFixed(2)}</td>
+              </tr>
+            `}
+            ${inv.serviceCharge > 0 ? `
+              <tr>
+                <td style="padding:1.5px 0; color:#475569; font-weight:600;">Service Charge (${inv.serviceChargeRate || 5}%):</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace;">₹${Number(inv.serviceCharge).toFixed(2)}</td>
+              </tr>
+            ` : ''}
+            ${cfg.showRoundOff ? `
+              <tr>
+                <td style="padding:1.5px 0; color:#64748b; font-size:8px;">Round Off:</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; font-size:8px; color:#64748b;">
+                  ${(Math.round(inv.total) - inv.total) >= 0 ? `+₹${(Math.round(inv.total) - inv.total).toFixed(2)}` : `-₹${Math.abs(Math.round(inv.total) - inv.total).toFixed(2)}`}
+                </td>
+              </tr>
+            ` : ''}
+            <tr style="border-top:1.5px solid #0f172a; border-bottom:2px solid #0f172a; font-size:${is58 ? '9.5px' : (isA4 ? '13px' : '12px')}; font-weight:900; background:#f8fafc;">
+              <td style="padding:4px 2px; text-transform:uppercase; letter-spacing:0.04em;">GRAND TOTAL:</td>
+              <td style="padding:4px 2px; text-align:right; font-family:monospace; font-size:${is58 ? '11px' : (isA4 ? '16px' : '14px')}; color:#0f172a;">₹${Math.round(inv.total).toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${(cfg.showSavingsHighlight && inv.discountAmount > 0) ? `
+          <div style="background:#ecfdf5; border:1px dashed #059669; border-radius:4px; padding:3px 6px; text-align:center; font-size:${is58 ? '7px' : '8.5px'}; font-weight:800; color:#065f46; margin-bottom:8px;">
+            🎉 YOU SAVED ₹${Number(inv.discountAmount).toFixed(2)} ON THIS MEAL!
+          </div>
+        ` : ''}
+
+        ${cfg.showAmountInWords ? `
+          <div style="font-size:${is58 ? '7px' : '8px'}; color:#475569; font-style:italic; text-align:center; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:5px;">
+            Amount in words: <b>${inv.amountInWords || numberToWordsINR(inv.total)}</b>
+          </div>
+        ` : ''}
+
+        <!-- Dynamic UPI QR & Feedback QR Codes -->
+        ${(cfg.enableUpiQr || cfg.enableReviewQr) ? `
+          <div style="display:flex; justify-content:center; align-items:flex-start; gap:16px; margin:8px 0 10px; padding:8px 0; border-top:1px dashed #cbd5e1; border-bottom:1px dashed #cbd5e1;">
+            ${cfg.enableUpiQr ? `
+              <div style="text-align:center;">
+                <img src="${upiQrImg}" alt="UPI QR" style="width:${is58 ? '65px' : '80px'}; height:${is58 ? '65px' : '80px'}; border:1px solid #cbd5e1; border-radius:4px; padding:2px; background:#fff;">
+                <div style="font-size:7px; font-weight:800; color:#0f172a; margin-top:2px;">SCAN TO PAY VIA UPI</div>
+                <div style="font-size:6.5px; color:#64748b; font-family:monospace;">${upiId}</div>
+              </div>
+            ` : ''}
+            ${(cfg.enableReviewQr && reviewQrImg) ? `
+              <div style="text-align:center;">
+                <img src="${reviewQrImg}" alt="Review QR" style="width:${is58 ? '65px' : '80px'}; height:${is58 ? '65px' : '80px'}; border:1px solid #cbd5e1; border-radius:4px; padding:2px; background:#fff;">
+                <div style="font-size:7px; font-weight:800; color:#0f172a; margin-top:2px;">RATE OUR FOOD</div>
+                <div style="font-size:6.5px; color:#64748b;">⭐ 5-Star on Google</div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        <!-- Footer Policy / Greetings -->
+        <div style="text-align:center; font-size:${is58 ? '7.5px' : '8.5px'}; color:#475569; margin-top:6px;">
+          ${cfg.thankYouMessage ? `<div style="font-weight:700; color:#0f172a; margin-bottom:2px;">🙏 ${cfg.thankYouMessage}</div>` : ''}
+          ${cfg.termsText ? `<div style="font-size:7px; color:#64748b; line-height:1.25;">${cfg.termsText}</div>` : ''}
+          <div style="font-size:6.5px; color:#94a3b8; margin-top:4px;">Powered by JUST POS · Multi-Client Restaurant Engine</div>
+        </div>
+      </div>
+    `;
+  }
+  window.generateInvoiceSlipHtml = generateInvoiceSlipHtml;
+
+  // Render Invoice & Print Customization Studio Panel in Masters
+  function renderMasterInvoicePrintPanel() {
+    const cont = document.getElementById("masterInvoiceConfigContainer");
+    if (!cont) return;
+
+    if (activeMasterTab !== "invoices") {
+      cont.style.display = "none";
+      cont.innerHTML = "";
+      return;
+    }
+
+    cont.style.display = "block";
+    const cfg = invoiceMasterConfig;
+
+    cont.innerHTML = `
+      <!-- Studio Header Ribbon -->
+      <div style="background:var(--panel); border:1.5px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:16px; box-shadow:var(--shadow-sm);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">🖨️</span>
+              <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--ink);">
+                Invoice &amp; Thermal Print Master Studio
+              </h3>
+              <span class="badge" style="background:#e0f2fe; color:#0284c7; font-weight:700; font-size:11px;">Multi-Client Engine</span>
+            </div>
+            <p style="margin:4px 0 0; font-size:12px; color:var(--ink-soft); max-width:760px;">
+              Design &amp; configure tailored invoice layouts for any restaurant, QSR counter, bakery, or banquet client. Select paper sizes (80mm/58mm/A4/A5), customize branding, and preview in real-time.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" id="resetInvoiceMasterConfigBtn" class="btn" style="font-size:11.5px; font-weight:700; padding:7px 12px; background:var(--surface-subtle); border-color:var(--line);">
+              ↺ Reset Defaults
+            </button>
+            <button type="button" id="testPrintInvoiceBtn" class="btn" style="font-size:11.5px; font-weight:700; padding:7px 14px; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;">
+              🖨️ Test Print (${cfg.paperFormat})
+            </button>
+            <button type="button" id="saveInvoiceMasterConfigBtn" class="btn btn-primary" style="font-size:11.5px; font-weight:700; padding:7px 16px;">
+              💾 Save Invoice Template
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Industry Presets Ribbon -->
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line-soft); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span style="font-size:11px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em;">
+            ⚡ Quick Industry Presets:
+          </span>
+          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'fine_dining' ? 'btn-primary' : ''}" data-preset="fine_dining" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
+            🍽️ Fine Dining (80mm Thermal)
+          </button>
+          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'qsr_counter' ? 'btn-primary' : ''}" data-preset="qsr_counter" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
+            ⚡ Fast Food / QSR (58mm Compact)
+          </button>
+          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'sweets_bakery' ? 'btn-primary' : ''}" data-preset="sweets_bakery" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
+            🍰 Sweets &amp; Bakery (By-Weight 80mm)
+          </button>
+          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'banquet_a4' ? 'btn-primary' : ''}" data-preset="banquet_a4" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
+            🏢 Banquets &amp; Catering (A4 Sheet)
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio Two-Column Builder: Left Config Controls, Right Live Preview -->
+      <div class="invoice-builder-layout">
+        
+        <!-- LEFT COLUMN: CONTROLS & TOGGLES -->
+        <div class="invoice-builder-controls">
+          
+          <!-- Section 1: Paper Format & Roll Size -->
+          <div class="invoice-control-section">
+            <div class="invoice-control-header">
+              <span>📏 1. Paper Size &amp; Thermal Roll Format</span>
+              <span style="font-size:11px; font-weight:700; color:var(--primary);">${cfg.paperFormat.toUpperCase()} ACTIVE</span>
+            </div>
+            <div class="paper-format-grid">
+              <div class="paper-format-btn ${cfg.paperFormat === '80mm' ? 'active' : ''}" data-format="80mm">
+                <span>🖨️ 80mm Thermal</span>
+                <span class="format-sub">POS-80 / Epson / TVS (72mm print area)</span>
+              </div>
+              <div class="paper-format-btn ${cfg.paperFormat === '58mm' ? 'active' : ''}" data-format="58mm">
+                <span>🧾 58mm Compact</span>
+                <span class="format-sub">POS-58 / Mobile Bluetooth (48mm print)</span>
+              </div>
+              <div class="paper-format-btn ${cfg.paperFormat === 'a4' ? 'active' : ''}" data-format="a4">
+                <span>📄 A4 Full Sheet</span>
+                <span class="format-sub">Laser / Deskjet Corporate Letterhead</span>
+              </div>
+              <div class="paper-format-btn ${cfg.paperFormat === 'a5' ? 'active' : ''}" data-format="a5">
+                <span>📑 A5 Half Sheet</span>
+                <span class="format-sub">Pre-printed invoice duplicate slip</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Restaurant Branding & Header Details -->
+          <div class="invoice-control-section">
+            <div class="invoice-control-header">
+              <span>🏢 2. Restaurant Branding &amp; Header Info</span>
+              <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showLogo" ${cfg.showLogo ? 'checked' : ''} style="accent-color:var(--primary);">
+                Show Brand Icon / Logo
+              </label>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">Restaurant / Outlet Name *</label>
+                <input type="text" id="cfg_restaurantName" value="${cfg.restaurantName || ''}" placeholder="Outlet Name" style="font-size:12px; font-weight:700;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">Tagline / Cuisine Subtitle</label>
+                <input type="text" id="cfg_tagline" value="${cfg.tagline || ''}" placeholder="Tagline" style="font-size:12px;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label style="font-size:11px; font-weight:600;">Complete Address</label>
+              <input type="text" id="cfg_address" value="${cfg.address || ''}" placeholder="Full Address" style="font-size:12px;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">Phone / Mobile</label>
+                <input type="text" id="cfg_phone" value="${cfg.phone || ''}" placeholder="+91 ...">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">GSTIN Number</label>
+                <input type="text" id="cfg_gstin" value="${cfg.gstin || ''}" placeholder="30XXXXX0000X0XX">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">FSSAI License No.</label>
+                <input type="text" id="cfg_fssai" value="${cfg.fssai || ''}" placeholder="100XXXXXXXXXXX">
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">Billing Email</label>
+                <input type="email" id="cfg_email" value="${cfg.email || ''}" placeholder="billing@restaurant.com">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">Website / Domain</label>
+                <input type="text" id="cfg_website" value="${cfg.website || ''}" placeholder="www.restaurant.com">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Header Meta Fields & Order Info -->
+          <div class="invoice-control-section">
+            <div class="invoice-control-header">
+              <span>📋 3. Order Metadata &amp; Header Toggles</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showInvoiceSeries" ${cfg.showInvoiceSeries ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Invoice No. &amp; Date / Time</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showTokenNumber" ${cfg.showTokenNumber ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Order Token # / KOT #</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showTableAndFloor" ${cfg.showTableAndFloor ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Table &amp; Dining Floor</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showServerName" ${cfg.showServerName ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Server / Steward Name</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showCustomerDetails" ${cfg.showCustomerDetails ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Guest Name &amp; Phone No.</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showPaymentMode" ${cfg.showPaymentMode ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Payment Mode (Cash/UPI/Card)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section 4: Items Table Formatting -->
+          <div class="invoice-control-section">
+            <div class="invoice-control-header">
+              <span>🍛 4. Items Table Columns &amp; Badges</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showSerialNo" ${cfg.showSerialNo ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Serial Number (#) Column</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showHsnSac" ${cfg.showHsnSac ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>HSN / SAC Code Column</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showItemTaxRate" ${cfg.showItemTaxRate ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Item Tax Slab (GST %) Column</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showTaxModeBadge" ${cfg.showTaxModeBadge ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Tax Badge (Incl. MRP vs +GST)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showItemAddons" ${cfg.showItemAddons ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Item Addons &amp; Customizations</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showTotalQuantity" ${cfg.showTotalQuantity ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Total Items / Qty Summary Row</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section 5: Billing & Tax Calculation Summary -->
+          <div class="invoice-control-section">
+            <div class="invoice-control-header">
+              <span>💰 5. Tax Breakdown &amp; Math Layout</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showTaxBreakdown" ${cfg.showTaxBreakdown ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Split CGST &amp; SGST Rows (vs Consolidated)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showTaxableBase" ${cfg.showTaxableBase ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Show Taxable Amount Base</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showRoundOff" ${cfg.showRoundOff ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Show Round Off Row</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showAmountInWords" ${cfg.showAmountInWords ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Amount in Words (INR Currency)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                <input type="checkbox" id="cfg_showSavingsHighlight" ${cfg.showSavingsHighlight ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>Show "You Saved ₹XX" Discount Badge</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section 6: Footer, Terms & QR Codes -->
+          <div class="invoice-control-section">
+            <div class="invoice-control-header">
+              <span>📱 6. Footer Notes &amp; QR Codes</span>
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label style="font-size:11px; font-weight:600;">Thank You Greeting Note</label>
+              <input type="text" id="cfg_thankYouMessage" value="${cfg.thankYouMessage || ''}" placeholder="Thank you message">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label style="font-size:11px; font-weight:600;">Terms &amp; Conditions / Disclaimer</label>
+              <input type="text" id="cfg_termsText" value="${cfg.termsText || ''}" placeholder="Terms and conditions">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div style="background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
+                <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; cursor:pointer; margin-bottom:6px;">
+                  <input type="checkbox" id="cfg_enableUpiQr" ${cfg.enableUpiQr ? 'checked' : ''} style="accent-color:var(--primary);">
+                  Enable UPI Payment QR Code
+                </label>
+                <input type="text" id="cfg_upiId" value="${cfg.upiId || ''}" placeholder="merchant@upi" style="font-size:11.5px;">
+              </div>
+              <div style="background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
+                <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; cursor:pointer; margin-bottom:6px;">
+                  <input type="checkbox" id="cfg_enableReviewQr" ${cfg.enableReviewQr ? 'checked' : ''} style="accent-color:var(--primary);">
+                  Enable Google Review QR Code
+                </label>
+                <input type="text" id="cfg_reviewUrl" value="${cfg.reviewUrl || ''}" placeholder="https://g.page/r/..." style="font-size:11.5px;">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: INTERACTIVE LIVE WYSIWYG RECEIPT PREVIEW -->
+        <div class="receipt-preview-stage">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:12px; padding:0 4px;">
+            <div style="font-size:12px; font-weight:800; color:#334155; display:flex; align-items:center; gap:6px;">
+              <span>👀 Live Interactive Preview</span>
+              <span class="badge" id="previewPaperBadge" style="background:#0f172a; color:#fff; font-size:10px;">${cfg.paperFormat.toUpperCase()} ROLL</span>
+            </div>
+            <span style="font-size:11px; color:#64748b; font-weight:600;">Updates in real-time</span>
+          </div>
+
+          <!-- Paper Roll Container -->
+          <div id="liveInvoiceBuilderPreview" class="receipt-paper-roll size-${cfg.paperFormat}">
+            <!-- Dynamic Receipt Injected Here -->
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    // Helper to update the right preview
+    function updateLivePreview() {
+      const previewEl = document.getElementById("liveInvoiceBuilderPreview");
+      const badgeEl = document.getElementById("previewPaperBadge");
+      const testBtn = document.getElementById("testPrintInvoiceBtn");
+
+      if (previewEl) {
+        previewEl.className = `receipt-paper-roll size-${invoiceMasterConfig.paperFormat}`;
+        previewEl.innerHTML = generateInvoiceSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, invoiceMasterConfig);
+      }
+      if (badgeEl) {
+        badgeEl.textContent = `${invoiceMasterConfig.paperFormat.toUpperCase()} ${invoiceMasterConfig.paperFormat.startsWith('a') ? 'SHEET' : 'ROLL'}`;
+      }
+      if (testBtn) {
+        testBtn.textContent = `🖨️ Test Print (${invoiceMasterConfig.paperFormat})`;
+      }
+    }
+
+    // Connect Paper Format buttons
+    cont.querySelectorAll(".paper-format-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        cont.querySelectorAll(".paper-format-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        invoiceMasterConfig.paperFormat = btn.dataset.format;
+        updateLivePreview();
+      });
+    });
+
+    // Connect Preset buttons
+    cont.querySelectorAll(".invoice-preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pKey = btn.dataset.preset;
+        if (INVOICE_PRESETS[pKey]) {
+          Object.assign(invoiceMasterConfig, INVOICE_PRESETS[pKey]);
+          showToast(`✓ Applied '${btn.textContent.trim()}' preset!`);
+          renderMasterInvoicePrintPanel();
+        }
+      });
+    });
+
+    // Connect Live Input Listeners
+    const textFields = [
+      "restaurantName", "tagline", "address", "phone", "gstin", "fssai",
+      "email", "website", "thankYouMessage", "termsText", "upiId", "reviewUrl"
+    ];
+    textFields.forEach(field => {
+      const input = document.getElementById(`cfg_${field}`);
+      if (input) {
+        input.addEventListener("input", (e) => {
+          invoiceMasterConfig[field] = e.target.value.trim();
+          updateLivePreview();
+        });
+      }
+    });
+
+    const checkboxFields = [
+      "showLogo", "showInvoiceSeries", "showTokenNumber", "showTableAndFloor",
+      "showServerName", "showCustomerDetails", "showPaymentMode", "showSerialNo",
+      "showHsnSac", "showItemTaxRate", "showTaxModeBadge", "showItemAddons",
+      "showTotalQuantity", "showTaxBreakdown", "showTaxableBase", "showRoundOff",
+      "showAmountInWords", "showSavingsHighlight", "enableUpiQr", "enableReviewQr"
+    ];
+    checkboxFields.forEach(field => {
+      const chk = document.getElementById(`cfg_${field}`);
+      if (chk) {
+        chk.addEventListener("change", (e) => {
+          invoiceMasterConfig[field] = e.target.checked;
+          updateLivePreview();
+        });
+      }
+    });
+
+    // Save Template Button
+    document.getElementById("saveInvoiceMasterConfigBtn")?.addEventListener("click", () => {
+      try {
+        localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+        showToast("✓ Invoice & Print Template saved! All POS bills now use this custom design.");
+      } catch(e) {
+        showToast("Error saving template to storage", "error");
+      }
+    });
+
+    // Reset Defaults Button
+    document.getElementById("resetInvoiceMasterConfigBtn")?.addEventListener("click", () => {
+      if (confirm("Reset invoice template back to default factory settings?")) {
+        invoiceMasterConfig = Object.assign({}, DEFAULT_INVOICE_CONFIG);
+        localStorage.removeItem("pos_invoice_master_config");
+        showToast("↺ Template reset to factory defaults");
+        renderMasterInvoicePrintPanel();
+      }
+    });
+
+    // Test Print Button
+    document.getElementById("testPrintInvoiceBtn")?.addEventListener("click", () => {
+      const slipHtml = generateInvoiceSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, invoiceMasterConfig);
+      executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat);
+      showToast(`🖨️ Test print dispatched in ${invoiceMasterConfig.paperFormat} format!`);
+    });
+
+    // Initial render of preview
+    updateLivePreview();
   }
 
   function renderMasterStats() {
@@ -9386,6 +10448,11 @@ For any queries or updates, reply to this message.`;
                 ` : `
                   <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ Plate</span>
                 `}
+                <div style="margin-top:3px;">
+                  <span class="cog-badge" style="font-size:9.5px;padding:1px 6px;font-weight:700;background:${it.taxType === 'inclusive' ? 'rgba(16, 185, 129, 0.12);color:#059669;border-color:rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.1);color:#4f46e5;border-color:rgba(99, 102, 241, 0.25)'};">
+                    ${it.taxType === 'inclusive' ? '🟢 Incl. ' : '➕ Plus '}${it.gstRate !== undefined ? it.gstRate : 5}% GST
+                  </span>
+                </div>
               </td>
               <td>
                 <label class="switch-row" data-action="toggle-status" data-type="items" data-id="${it.id}">
@@ -10117,6 +11184,36 @@ For any queries or updates, reply to this message.`;
           </div>
         </div>
 
+        <!-- GST Tax Treatment & Slabs (Inclusive vs Exclusive) -->
+        <div style="background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <label style="font-weight:700;font-size:12.5px;color:var(--ink);margin:0;">🏷️ GST Tax Treatment &amp; Pricing Mode *</label>
+            <span style="font-size:10.5px;color:var(--ink-soft);">Inclusive (MRP) or Exclusive (+ GST)</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;">
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:11px;font-weight:600;">Price Inclusion Type</label>
+              <select id="m_itTaxType" style="font-weight:600;">
+                <option value="exclusive" ${(rec.taxType === 'exclusive' || !rec.taxType) ? 'selected' : ''}>➕ Tax Exclusive (+ GST Added Extra)</option>
+                <option value="inclusive" ${rec.taxType === 'inclusive' ? 'selected' : ''}>🟢 Tax Inclusive (MRP - Price Includes GST)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:11px;font-weight:600;">Applicable GST Slab</label>
+              <select id="m_itGstRate" style="font-weight:600;">
+                <option value="5" ${(rec.gstRate === 5 || rec.gstRate === undefined) ? 'selected' : ''}>5% GST (2.5% CGST + 2.5% SGST)</option>
+                <option value="12" ${rec.gstRate === 12 ? 'selected' : ''}>12% GST (6% CGST + 6% SGST)</option>
+                <option value="18" ${rec.gstRate === 18 ? 'selected' : ''}>18% GST (9% CGST + 9% SGST)</option>
+                <option value="0" ${rec.gstRate === 0 ? 'selected' : ''}>0% (Tax Exempt / Nil Rated)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Live Tax Math Breakdown Preview Box -->
+          <div id="itemTaxMathPreviewBox" style="margin-top:10px;background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:8px 12px;font-size:11.5px;"></div>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group">
             <label>Kitchen Station</label>
@@ -10197,6 +11294,53 @@ For any queries or updates, reply to this message.`;
       }
       pTypeSelect?.addEventListener("change", updatePricingFieldsVisibility);
       updatePricingFieldsVisibility();
+
+      // Wire Live Tax Math Breakdown Preview
+      function updateItemTaxMathPreview() {
+        const p = Number(document.getElementById("m_itPrice")?.value) || 0;
+        const t = document.getElementById("m_itTaxType")?.value || "exclusive";
+        const r = Number(document.getElementById("m_itGstRate")?.value) || 0;
+        const box = document.getElementById("itemTaxMathPreviewBox");
+        if (!box) return;
+        if (t === "inclusive") {
+          const taxable = r > 0 ? (p / (1 + r / 100)) : p;
+          const tax = p - taxable;
+          const half = tax / 2;
+          box.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;color:#059669;font-weight:700;margin-bottom:4px;">
+              <span>🟢 Tax Inclusive (MRP Mode): Customer pays exactly ₹${p.toFixed(2)}</span>
+              <span style="font-size:10px;background:rgba(16,185,129,0.15);padding:1px 6px;border-radius:4px;">Tax Included</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:6px;font-family:monospace;font-size:11px;color:var(--ink);">
+              <div>Taxable: <b>₹${taxable.toFixed(2)}</b></div>
+              <div>CGST (${(r/2).toFixed(1)}%): <b>₹${half.toFixed(2)}</b></div>
+              <div>SGST (${(r/2).toFixed(1)}%): <b>₹${half.toFixed(2)}</b></div>
+              <div>Total GST: <b>₹${tax.toFixed(2)}</b></div>
+            </div>
+          `;
+        } else {
+          const taxable = p;
+          const tax = p * (r / 100);
+          const half = tax / 2;
+          const total = p + tax;
+          box.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;color:#4f46e5;font-weight:700;margin-bottom:4px;">
+              <span>➕ Tax Exclusive (+ GST Mode): Tax is added on top of ₹${p.toFixed(2)}</span>
+              <span style="font-size:10px;background:rgba(99,102,241,0.15);padding:1px 6px;border-radius:4px;">Tax Extra</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:6px;font-family:monospace;font-size:11px;color:var(--ink);">
+              <div>Taxable: <b>₹${taxable.toFixed(2)}</b></div>
+              <div>CGST (${(r/2).toFixed(1)}%): <b>₹${half.toFixed(2)}</b></div>
+              <div>SGST (${(r/2).toFixed(1)}%): <b>₹${half.toFixed(2)}</b></div>
+              <div>Total With GST: <b style="color:#4f46e5;">₹${total.toFixed(2)}</b></div>
+            </div>
+          `;
+        }
+      }
+      document.getElementById("m_itPrice")?.addEventListener("input", updateItemTaxMathPreview);
+      document.getElementById("m_itTaxType")?.addEventListener("change", updateItemTaxMathPreview);
+      document.getElementById("m_itGstRate")?.addEventListener("change", updateItemTaxMathPreview);
+      updateItemTaxMathPreview();
 
       document.getElementById("presetPortionBtn")?.addEventListener("click", () => {
         const baseP = Number(document.getElementById("m_itPrice").value) || 200;
@@ -10555,6 +11699,8 @@ For any queries or updates, reply to this message.`;
       const price = Number(document.getElementById("m_itPrice").value) || 0;
       const pricePerKg = document.getElementById("m_itPricePerKg") ? (Number(document.getElementById("m_itPricePerKg").value) || 0) : 0;
       const portionWeightGrams = document.getElementById("m_itPortionGrams") ? (Number(document.getElementById("m_itPortionGrams").value) || 350) : 350;
+      const taxType = document.getElementById("m_itTaxType") ? document.getElementById("m_itTaxType").value : "exclusive";
+      const gstRate = document.getElementById("m_itGstRate") ? (Number(document.getElementById("m_itGstRate").value) || 0) : 5;
       const station = document.getElementById("m_itStation").value;
       const desc = document.getElementById("m_itDesc").value.trim();
       const status = document.getElementById("m_itStatus").value;
@@ -10583,13 +11729,15 @@ For any queries or updates, reply to this message.`;
           price, 
           pricePerKg,
           portionWeightGrams,
+          taxType,
+          gstRate,
           station, 
           itemDescription: desc, 
           status, 
           optionGroups: cleanOptionGroups 
         });
         apiClient.saveItem(it);
-        showToast(`Item '${name}' updated (${pricingType.toUpperCase()} mode)!`);
+        showToast(`Item '${name}' updated (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()})!`);
       } else {
         const newItem = { 
           id: Date.now(), 
@@ -10601,6 +11749,8 @@ For any queries or updates, reply to this message.`;
           price, 
           pricePerKg,
           portionWeightGrams,
+          taxType,
+          gstRate,
           station, 
           itemDescription: desc, 
           status, 
@@ -10608,7 +11758,7 @@ For any queries or updates, reply to this message.`;
         };
         items.push(newItem);
         apiClient.saveItem(newItem);
-        showToast(`Item '${name}' added with ${pricingType.toUpperCase()} selling unit!`);
+        showToast(`Item '${name}' added (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()})!`);
       }
       renderPosMenu();
     } else if (type === "floors") {
