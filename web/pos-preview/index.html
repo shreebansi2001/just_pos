@@ -3540,6 +3540,106 @@
   </div>
 </div>
 
+<!-- Quick Print Resizer & Live Preview Modal -->
+<div class="modal-backdrop" id="printerResizeModal">
+  <div class="modal wide" style="max-width:760px;">
+    <div class="modal-head">
+      <div>
+        <h3 id="resizeModalTitle" style="margin:0; font-size:16px;">📐 Quick Print Size Adjuster &amp; Preview</h3>
+        <span id="resizeModalSubtitle" style="font-size:11px; color:var(--ink-soft);">Adjust paper roll width, print scale, and preview exact slip dimensions</span>
+      </div>
+      <button class="modal-close" data-close-modal>✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh; overflow-y:auto; padding:16px 20px;">
+      <div style="display:grid; grid-template-columns:1.15fr 1fr; gap:16px;">
+        
+        <!-- Controls Column -->
+        <div>
+          <!-- Standard Preset Buttons -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px;">
+              ⚡ Standard Roll Presets:
+            </label>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(70px, 1fr)); gap:6px;">
+              <button type="button" class="btn btn-sm resizer-preset-btn" data-width="58" data-format="58mm" style="font-size:11px; font-weight:700;">58mm</button>
+              <button type="button" class="btn btn-sm resizer-preset-btn" data-width="76" data-format="76mm" style="font-size:11px; font-weight:700;">76mm</button>
+              <button type="button" class="btn btn-sm resizer-preset-btn btn-primary" data-width="80" data-format="80mm" style="font-size:11px; font-weight:700;">80mm (Std)</button>
+              <button type="button" class="btn btn-sm resizer-preset-btn" data-width="100" data-format="100mm" style="font-size:11px; font-weight:700;">100mm</button>
+              <button type="button" class="btn btn-sm resizer-preset-btn" data-width="210" data-format="a4" style="font-size:11px; font-weight:700;">A4 Sheet</button>
+            </div>
+          </div>
+
+          <!-- Exact Width Slider & Input -->
+          <div style="background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label style="font-size:11.5px; font-weight:700;">Roll / Sheet Width (mm):</label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="number" id="resizerWidthInput" min="40" max="250" step="1" value="80" style="width:65px; font-weight:800; font-size:13px; text-align:center; padding:3px 6px;">
+                <span style="font-size:11px; font-weight:700; color:var(--ink-soft);">mm</span>
+              </div>
+            </div>
+            <input type="range" id="resizerWidthSlider" min="40" max="220" step="1" value="80" style="width:100%; accent-color:var(--primary);">
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--ink-soft); margin-top:2px;">
+              <span>40mm (Pocket)</span>
+              <span>58mm</span>
+              <span>80mm (Standard POS)</span>
+              <span>100mm</span>
+              <span>210mm (A4)</span>
+            </div>
+          </div>
+
+          <!-- Print Scaling / Zoom -->
+          <div style="background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label style="font-size:11.5px; font-weight:700;">Print Scaling &amp; Density:</label>
+              <span id="resizerScaleLabel" style="font-weight:800; font-size:12px; color:var(--primary);">100%</span>
+            </div>
+            <input type="range" id="resizerScaleSlider" min="70" max="130" step="5" value="100" style="width:100%; accent-color:var(--primary);">
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--ink-soft); margin-top:2px;">
+              <span>70% (Compact)</span>
+              <span>100% (Normal)</span>
+              <span>130% (Large)</span>
+            </div>
+          </div>
+
+          <!-- Computed Metrics Box -->
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; font-size:11.5px; color:#166534;">
+            <div style="font-weight:700; display:flex; align-items:center; gap:6px;">
+              <span>📏</span> <span id="resizerCalculatedDim">Paper Output: 80mm × ~85mm (Slip Fitted)</span>
+            </div>
+            <div style="font-size:10.5px; color:#15803d; margin-top:3px;">
+              ✓ Content-adaptive height: prints only the slip without excess A4 page height or blank margins.
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Visual Preview Column -->
+        <div>
+          <label style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px;">
+            👁️ Live Scaled Slip Preview:
+          </label>
+          <div id="resizerPreviewContainer" style="background:#f1f5f9; border:1.5px solid var(--line); border-radius:8px; padding:12px; min-height:260px; max-height:360px; overflow-y:auto; display:flex; justify-content:center; align-items:flex-start;">
+            <div id="resizerSlipBox" style="background:#fff; border:1px solid #000; box-shadow:0 2px 8px rgba(0,0,0,0.1); width:280px; padding:8px; font-family:monospace; font-size:9.5px; transition:width 0.15s ease, transform 0.15s ease;">
+              <!-- Dynamic slip content -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <button type="button" class="btn" data-close-modal>Cancel</button>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn" id="resizerSaveDefaultBtn" style="font-weight:700;">
+          💾 Save Size to Station
+        </button>
+        <button type="button" class="btn btn-primary" id="resizerDoPrintBtn" style="font-weight:800; padding:8px 18px;">
+          🖨️ Print Slip Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Invoice Receipt & Payment Settlement Modal -->
 <div class="modal-backdrop" id="invoiceModal">
   <div class="modal">
@@ -5716,6 +5816,12 @@
       if (urlParams.get("openprintermodal") === "true") {
         setTimeout(() => {
           openPrinterProfileModal(null);
+        }, 250);
+      }
+      if (urlParams.get("open_printer_resizer")) {
+        const prId = urlParams.get("open_printer_resizer") === "true" ? "pr_cashier_80" : urlParams.get("open_printer_resizer");
+        setTimeout(() => {
+          openPrinterResizeModal(prId);
         }, 250);
       }
       if (urlParams.get("openadditem") === "true") {
@@ -10184,8 +10290,8 @@ For any queries or updates, reply to this message.`;
     inv.amountInWords = numberToWordsINR(inv.total);
   }
 
-  // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe
-  function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm"), customWidthMm = null, margins = null) {
+  // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe with Dynamic Content-Adaptive Height
+  function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm"), customWidthMm = null, margins = null, scalePct = 100, customHeightMm = null) {
     let iframe = document.getElementById("posThermalPrintIframe");
     if (!iframe) {
       iframe = document.createElement("iframe");
@@ -10193,90 +10299,66 @@ For any queries or updates, reply to this message.`;
       iframe.style.position = "fixed";
       iframe.style.right = "0";
       iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
+      iframe.style.width = "500px";
+      iframe.style.height = "900px";
       iframe.style.border = "none";
+      iframe.style.opacity = "0.01";
+      iframe.style.pointerEvents = "none";
       iframe.style.zIndex = "-9999";
       document.body.appendChild(iframe);
     }
 
-    const is58 = paperFormat === "58mm";
-    const is76 = paperFormat === "76mm";
-    const is100 = paperFormat === "100mm";
-    const isA4 = paperFormat === "a4";
-    const isA5 = paperFormat === "a5";
-    const isCustom = paperFormat === "custom" || Boolean(customWidthMm);
+    const fmt = String(paperFormat || "80mm").toLowerCase();
+    const is58 = fmt === "58mm";
+    const is76 = fmt === "76mm";
+    const is100 = fmt === "100mm";
+    const isA4 = fmt === "a4";
+    const isA5 = fmt === "a5";
+    const isCustom = fmt === "custom" || Boolean(customWidthMm);
 
-    let pageSize = "80mm auto";
-    let bodyWidth = "72mm";
-    let bodyPadding = "2mm";
+    let rollWidthMm = 80;
+    let printableAreaMm = 72;
+    let bodyPaddingMm = 2;
     let fontSize = "9.5px";
 
     if (is58) {
-      pageSize = "58mm auto";
-      bodyWidth = "48mm";
-      bodyPadding = "1.5mm";
+      rollWidthMm = 58;
+      printableAreaMm = 48;
+      bodyPaddingMm = 1.5;
       fontSize = "8.5px";
     } else if (is76) {
-      pageSize = "76mm auto";
-      bodyWidth = "68mm";
-      bodyPadding = "2mm";
+      rollWidthMm = 76;
+      printableAreaMm = 68;
+      bodyPaddingMm = 2;
       fontSize = "9.5px";
     } else if (is100) {
-      pageSize = "100mm auto";
-      bodyWidth = "90mm";
-      bodyPadding = "3mm";
+      rollWidthMm = 100;
+      printableAreaMm = 90;
+      bodyPaddingMm = 3;
       fontSize = "10.5px";
     } else if (isA4) {
-      pageSize = "A4 portrait";
-      bodyWidth = "185mm";
-      bodyPadding = "12mm";
+      rollWidthMm = 210;
+      printableAreaMm = 185;
+      bodyPaddingMm = 8;
       fontSize = "11.5px";
     } else if (isA5) {
-      pageSize = "A5 portrait";
-      bodyWidth = "135mm";
-      bodyPadding = "8mm";
+      rollWidthMm = 148;
+      printableAreaMm = 135;
+      bodyPaddingMm = 6;
       fontSize = "10px";
     } else if (isCustom) {
-      const w = customWidthMm || 80;
-      pageSize = `${w}mm auto`;
-      bodyWidth = `${Math.max(w - 8, 30)}mm`;
-      bodyPadding = `${margins || 2}mm`;
+      rollWidthMm = Number(customWidthMm) || 80;
+      printableAreaMm = Math.max(rollWidthMm - (Number(margins || 2) * 2), 25);
+      bodyPaddingMm = Number(margins || 2);
       fontSize = "9.5px";
     }
 
-    const printCss = `
-      @page {
-        size: ${pageSize};
-        margin: 0mm !important;
-      }
-      * {
-        box-sizing: border-box !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      body {
-        margin: 0 !important;
-        padding: ${bodyPadding} !important;
-        background: #fff !important;
-        color: #000 !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
-        font-size: ${fontSize} !important;
-        line-height: 1.35 !important;
-        width: ${bodyWidth} !important;
-        max-width: ${bodyWidth} !important;
-      }
-      table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-      }
-      th, td {
-        padding: ${is58 ? "1.5px 2px" : (isA4 ? "5px 6px" : "2.5px 3px")} !important;
-        font-size: inherit !important;
-      }
-      .no-print { display: none !important; }
-      img { max-width: 100% !important; }
-    `;
+    if (margins !== null && margins !== undefined && margins !== "") {
+      bodyPaddingMm = Number(margins);
+      printableAreaMm = Math.max(rollWidthMm - (bodyPaddingMm * 2), 20);
+    }
+
+    const zoomScale = Number(scalePct) ? (Number(scalePct) / 100) : 1;
 
     const doc = iframe.contentWindow.document;
     doc.open();
@@ -10286,19 +10368,117 @@ For any queries or updates, reply to this message.`;
         <head>
           <meta charset="utf-8">
           <title>POS Receipt - ${invoiceMasterConfig.restaurantName || 'JUST POS'}</title>
-          <style>${printCss}</style>
+          <style id="thermalSlipStyle">
+            * {
+              box-sizing: border-box !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #fff !important;
+              color: #000 !important;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
+              font-size: ${fontSize} !important;
+              line-height: 1.35 !important;
+            }
+            #thermalSlipWrapper {
+              width: ${printableAreaMm}mm !important;
+              max-width: ${printableAreaMm}mm !important;
+              margin: 0 auto !important;
+              padding: ${bodyPaddingMm}mm !important;
+              box-sizing: border-box !important;
+              ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
+            }
+            table {
+              width: 100% !important;
+              border-collapse: collapse !important;
+            }
+            th, td {
+              padding: ${is58 ? "1.5px 2px" : (isA4 ? "5px 6px" : "2.5px 3px")} !important;
+              font-size: inherit !important;
+            }
+            .no-print { display: none !important; }
+            img { max-width: 100% !important; }
+          </style>
         </head>
         <body>
-          ${contentHtml}
+          <div id="thermalSlipWrapper">
+            ${contentHtml}
+          </div>
         </body>
       </html>
     `);
     doc.close();
 
+    // Dynamically calculate exact content height from rendered DOM and inject valid @page size
     setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    }, 250);
+      try {
+        const wrap = doc.getElementById("thermalSlipWrapper") || doc.body;
+        const scrollHPx = Math.max(wrap.scrollHeight, wrap.offsetHeight, doc.body.scrollHeight, 60);
+        const measuredHeightMm = Math.ceil((scrollHPx * (zoomScale || 1) * 25.4) / 96);
+        const calculatedHeightMm = customHeightMm ? Number(customHeightMm) : Math.max(measuredHeightMm + 5, 25);
+
+        let pageRule = "";
+        if (isA4) {
+          pageRule = "@page { size: A4 portrait !important; margin: 8mm !important; }";
+        } else if (isA5) {
+          pageRule = "@page { size: A5 portrait !important; margin: 6mm !important; }";
+        } else {
+          // Setting explicit width & height produces exact slip cut size without excess A4 margins
+          pageRule = `@page { size: ${rollWidthMm}mm ${calculatedHeightMm}mm !important; margin: 0mm !important; }`;
+        }
+
+        const finalPrintCss = `
+          ${pageRule}
+          * {
+            box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            color: #000 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
+            font-size: ${fontSize} !important;
+            line-height: 1.35 !important;
+            ${!isA4 && !isA5 ? `width: ${rollWidthMm}mm !important; min-height: ${calculatedHeightMm}mm !important; max-width: ${rollWidthMm}mm !important; overflow: hidden !important;` : ''}
+          }
+          #thermalSlipWrapper {
+            width: ${printableAreaMm}mm !important;
+            max-width: ${printableAreaMm}mm !important;
+            margin: 0 auto !important;
+            padding: ${bodyPaddingMm}mm !important;
+            box-sizing: border-box !important;
+            ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          th, td {
+            padding: ${is58 ? "1.5px 2px" : (isA4 ? "5px 6px" : "2.5px 3px")} !important;
+            font-size: inherit !important;
+          }
+          .no-print { display: none !important; }
+          img { max-width: 100% !important; }
+        `;
+
+        const styleTag = doc.getElementById("thermalSlipStyle") || doc.createElement("style");
+        styleTag.innerHTML = finalPrintCss;
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (err) {
+        console.error("Thermal print failed:", err);
+        iframe.contentWindow.print();
+      }
+    }, 120);
   }
   window.executeThermalPrint = executeThermalPrint;
 
@@ -11237,6 +11417,7 @@ For any queries or updates, reply to this message.`;
           const isAct = p.status === "active";
           const isCustom = p.paperSize === "custom";
           const displayWidth = isCustom ? `${p.customWidthMm || 76}mm Custom` : p.paperSize.toUpperCase();
+          const curWidth = p.customWidthMm || (p.paperSize === '58mm' ? 58 : (p.paperSize === '76mm' ? 76 : (p.paperSize === '100mm' ? 100 : (p.paperSize === 'a4' ? 210 : 80))));
           const docBadges = (p.assignedDocs || []).map(dId => {
             const dt = DOCUMENT_TYPES.find(x => x.id === dId);
             return `<span style="background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:12px; font-size:10px; font-weight:700;">${dt ? `${dt.icon} ${dt.shortLabel}` : dId}</span>`;
@@ -11257,9 +11438,27 @@ For any queries or updates, reply to this message.`;
                   </span>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--surface-subtle); padding:10px; border-radius:8px; margin:10px 0; font-size:11px;">
+                <!-- Quick Size Switcher Bar on the card -->
+                <div style="background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:8px 0 10px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:10.5px; font-weight:700; color:var(--ink);">📏 Quick Roll Width:</span>
+                    <div style="display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:4px; overflow:hidden; background:var(--panel);">
+                      <button type="button" class="card-step-width-btn" data-pid="${p.id}" data-delta="-5" style="border:none; background:var(--surface-subtle); padding:2px 7px; font-size:11px; font-weight:800; cursor:pointer;" title="Decrease width 5mm">−</button>
+                      <span style="padding:2px 8px; font-size:11px; font-weight:800; color:var(--primary); min-width:44px; text-align:center;">${curWidth}mm</span>
+                      <button type="button" class="card-step-width-btn" data-pid="${p.id}" data-delta="5" style="border:none; background:var(--surface-subtle); padding:2px 7px; font-size:11px; font-weight:800; cursor:pointer;" title="Increase width 5mm">+</button>
+                    </div>
+                  </div>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                    ${['58mm', '76mm', '80mm', '100mm', 'a4'].map(sz => {
+                      const isCur = (p.paperSize === sz);
+                      return `<button type="button" class="btn btn-sm card-quick-size-btn ${isCur ? 'btn-primary' : ''}" data-pid="${p.id}" data-size="${sz}" style="font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; flex:1; text-align:center; ${isCur ? 'box-shadow:0 0 0 2px rgba(14,165,233,0.35);' : 'background:var(--panel); border:1px solid var(--line);'}">${sz.toUpperCase()}</button>`;
+                    }).join("")}
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--surface-subtle); padding:8px 10px; border-radius:8px; margin-bottom:10px; font-size:11px;">
                   <div>
-                    <span style="color:var(--ink-soft); display:block; font-size:10px;">Paper Size:</span>
+                    <span style="color:var(--ink-soft); display:block; font-size:10px;">Format Mode:</span>
                     <b style="color:var(--primary);">${displayWidth}</b>
                   </div>
                   <div>
@@ -11286,16 +11485,19 @@ For any queries or updates, reply to this message.`;
                 </div>
               </div>
 
-              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line-soft); padding-top:10px; margin-top:6px;">
-                <button type="button" class="btn btn-sm test-print-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:4px 10px; background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line-soft); padding-top:10px; margin-top:6px; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm test-print-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:5px 10px; background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">
                   🖨️ Test Print Slip
                 </button>
-                <div style="display:flex; gap:6px;">
-                  <button type="button" class="btn btn-sm edit-printer-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:4px 10px;">
-                    ✏️ Edit / Customize Size
+                <div style="display:flex; gap:5px;">
+                  <button type="button" class="btn btn-sm open-resizer-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:5px 9px; background:#f0fdf4; color:#15803d; border-color:#bbf7d0;">
+                    📐 Resize &amp; Print
+                  </button>
+                  <button type="button" class="btn btn-sm edit-printer-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:5px 9px;">
+                    ✏️ Customize Size
                   </button>
                   ${p.id.startsWith('pr_custom_') ? `
-                    <button type="button" class="btn btn-sm delete-printer-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:4px 8px; color:#dc2626;">
+                    <button type="button" class="btn btn-sm delete-printer-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:5px 8px; color:#dc2626;">
                       🗑️
                     </button>
                   ` : ''}
@@ -11322,6 +11524,56 @@ For any queries or updates, reply to this message.`;
       }
     });
 
+    // Quick size switcher buttons on cards
+    cont.querySelectorAll(".card-quick-size-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pid = btn.dataset.pid;
+        const sz = btn.dataset.size;
+        const p = printerProfiles.find(x => x.id === pid);
+        if (!p) return;
+        p.paperSize = sz;
+        if (sz === "58mm") { p.customWidthMm = 58; p.printableWidthMm = 48; }
+        else if (sz === "76mm") { p.customWidthMm = 76; p.printableWidthMm = 68; }
+        else if (sz === "80mm") { p.customWidthMm = 80; p.printableWidthMm = 72; }
+        else if (sz === "100mm") { p.customWidthMm = 100; p.printableWidthMm = 90; }
+        else if (sz === "a4") { p.customWidthMm = 210; p.printableWidthMm = 185; }
+        localStorage.setItem("pos_printer_profiles", JSON.stringify(printerProfiles));
+        showToast(`✓ Switched '${p.name}' paper size to ${sz.toUpperCase()}`);
+        renderMasterPrintPanel();
+        renderMasterStats();
+      });
+    });
+
+    // Roll width stepper buttons on cards (+/- 5mm)
+    cont.querySelectorAll(".card-step-width-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const pid = btn.dataset.pid;
+        const delta = Number(btn.dataset.delta) || 0;
+        const p = printerProfiles.find(x => x.id === pid);
+        if (!p) return;
+        let cur = p.customWidthMm || (p.paperSize === '58mm' ? 58 : (p.paperSize === '76mm' ? 76 : (p.paperSize === '100mm' ? 100 : (p.paperSize === 'a4' ? 210 : 80))));
+        cur = Math.max(Math.min(cur + delta, 250), 40);
+        p.customWidthMm = cur;
+        p.printableWidthMm = Math.max(cur - (p.leftRightMarginMm || 2) * 2, 25);
+        if (cur === 58) p.paperSize = "58mm";
+        else if (cur === 76) p.paperSize = "76mm";
+        else if (cur === 80) p.paperSize = "80mm";
+        else if (cur === 100) p.paperSize = "100mm";
+        else if (cur === 210) p.paperSize = "a4";
+        else p.paperSize = "custom";
+        localStorage.setItem("pos_printer_profiles", JSON.stringify(printerProfiles));
+        showToast(`✓ Updated '${p.name}' roll width to ${cur}mm`);
+        renderMasterPrintPanel();
+      });
+    });
+
+    // Open dedicated Resizer Modal
+    cont.querySelectorAll(".open-resizer-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        openPrinterResizeModal(btn.dataset.pid);
+      });
+    });
+
     cont.querySelectorAll(".edit-printer-profile-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         openPrinterProfileModal(btn.dataset.pid);
@@ -11346,27 +11598,207 @@ For any queries or updates, reply to this message.`;
         const p = printerProfiles.find(x => x.id === btn.dataset.pid);
         if (!p) return;
 
+        const w = p.customWidthMm || (p.paperSize === '58mm' ? 58 : (p.paperSize === '76mm' ? 76 : (p.paperSize === '100mm' ? 100 : (p.paperSize === 'a4' ? 210 : 80))));
+        const printableArea = p.printableWidthMm || Math.max(w - 8, 20);
+
         const testContent = `
-          <div style="text-align:center; padding:10px 4px; border:1.5px solid #000; font-family:monospace;">
+          <div style="text-align:center; padding:8px 4px; border:1.5px solid #000; font-family:monospace; box-sizing:border-box;">
             <div style="font-size:14px; font-weight:900;">*** PRINTER TEST SLIP ***</div>
             <div style="font-size:11px; font-weight:700; margin:4px 0;">JUST POS HARDWARE DRIVER</div>
-            <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:6px 0; margin:6px 0; text-align:left; font-size:9.5px;">
+            <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:6px 0; margin:6px 0; text-align:left; font-size:9.5px; line-height:1.4;">
               <div>PROFILE: <b>${p.name}</b></div>
               <div>STATION: <b>${p.station}</b></div>
               <div>INTERFACE: <b>${p.interface}</b></div>
-              <div>PAPER SIZE: <b>${p.paperSize.toUpperCase()} (${p.customWidthMm || 80}mm)</b></div>
-              <div>PRINT AREA: <b>${p.printableWidthMm || 72}mm</b></div>
+              <div>PAPER SIZE: <b>${p.paperSize.toUpperCase()} (${w}mm)</b></div>
+              <div>PRINT AREA: <b>${printableArea}mm</b></div>
               <div>DATE: <b>${new Date().toLocaleString()}</b></div>
             </div>
             <div style="font-size:9px;">[==============================]</div>
             <div style="font-size:10px; font-weight:800; margin-top:4px;">ALIGNMENT &amp; CUT TEST PASSED ✓</div>
           </div>
         `;
-        executeThermalPrint(testContent, p.paperSize, p.customWidthMm, p.leftRightMarginMm);
-        showToast(`🖨️ Dispatched test print to '${p.name}' (${p.paperSize})!`);
+        executeThermalPrint(testContent, p.paperSize, w, p.leftRightMarginMm, p.scalePct || 100);
+        showToast(`🖨️ Dispatched test print to '${p.name}' (${w}mm slip)!`);
       });
     });
   }
+
+  // =========================================================================
+  // DEDICATED QUICK PRINT RESIZER & LIVE PREVIEW MODAL CONTROLLER
+  // =========================================================================
+  let activeResizingProfileId = null;
+  let activeResizingPaperFormat = "80mm";
+  let activeResizingWidthMm = 80;
+  let activeResizingScalePct = 100;
+
+  function openPrinterResizeModal(profileId) {
+    const p = printerProfiles.find(x => x.id === profileId) || printerProfiles[0];
+    if (!p) return;
+    activeResizingProfileId = p.id;
+    activeResizingPaperFormat = p.paperSize || "80mm";
+    activeResizingWidthMm = p.customWidthMm || (p.paperSize === '58mm' ? 58 : (p.paperSize === '76mm' ? 76 : (p.paperSize === '100mm' ? 100 : (p.paperSize === 'a4' ? 210 : 80))));
+    activeResizingScalePct = p.scalePct || 100;
+
+    const titleEl = document.getElementById("resizeModalTitle");
+    const subEl = document.getElementById("resizeModalSubtitle");
+    if (titleEl) titleEl.innerHTML = `📐 Print Size Adjuster — <b>${p.name}</b>`;
+    if (subEl) subEl.textContent = `Station: ${p.station} · Interface: ${p.interface}`;
+
+    const widthInput = document.getElementById("resizerWidthInput");
+    const widthSlider = document.getElementById("resizerWidthSlider");
+    const scaleSlider = document.getElementById("resizerScaleSlider");
+    const scaleLabel = document.getElementById("resizerScaleLabel");
+
+    if (widthInput) widthInput.value = activeResizingWidthMm;
+    if (widthSlider) widthSlider.value = activeResizingWidthMm;
+    if (scaleSlider) scaleSlider.value = activeResizingScalePct;
+    if (scaleLabel) scaleLabel.textContent = `${activeResizingScalePct}%`;
+
+    updateResizerPreview();
+    openModal("printerResizeModal");
+  }
+
+  function updateResizerPreview() {
+    const p = printerProfiles.find(x => x.id === activeResizingProfileId);
+    const box = document.getElementById("resizerSlipBox");
+    const calcDim = document.getElementById("resizerCalculatedDim");
+    if (!box) return;
+
+    const wMm = activeResizingWidthMm;
+    const scale = activeResizingScalePct;
+    const fmt = activeResizingPaperFormat;
+    const isA4 = (fmt === "a4" || wMm >= 180);
+
+    // Update preset button active states
+    document.querySelectorAll(".resizer-preset-btn").forEach(btn => {
+      const bWidth = Number(btn.dataset.width);
+      if (bWidth === wMm || (btn.dataset.format === fmt && !btn.dataset.width)) {
+        btn.classList.add("btn-primary");
+      } else {
+        btn.classList.remove("btn-primary");
+      }
+    });
+
+    // Box display width in CSS px (proportional preview scaling clamped between 200px and 380px)
+    const previewPx = Math.min(Math.max(wMm * 3.3, 190), 380);
+    box.style.width = `${previewPx}px`;
+    box.style.transform = `scale(${scale / 100})`;
+    box.style.transformOrigin = "top center";
+
+    const testContent = `
+      <div style="text-align:center; padding:6px 2px; font-family:monospace; line-height:1.35;">
+        <div style="font-size:13px; font-weight:900;">*** PRINTER TEST SLIP ***</div>
+        <div style="font-size:10px; font-weight:700; margin:3px 0;">JUST POS HARDWARE DRIVER</div>
+        <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:6px 0; margin:6px 0; text-align:left; font-size:9.5px;">
+          <div>PROFILE: <b>${p ? p.name : 'Active Printer'}</b></div>
+          <div>STATION: <b>${p ? p.station : 'Counter'}</b></div>
+          <div>PAPER SIZE: <b>${fmt.toUpperCase()} (${wMm}mm)</b></div>
+          <div>PRINT AREA: <b>${Math.max(wMm - 8, 20)}mm</b></div>
+          <div>PRINT SCALE: <b>${scale}%</b></div>
+          <div>DATE: <b>${new Date().toLocaleString()}</b></div>
+        </div>
+        <div style="font-size:9px;">[==============================]</div>
+        <div style="font-size:9.5px; font-weight:800; margin-top:3px;">ALIGNMENT &amp; CUT TEST PASSED ✓</div>
+      </div>
+    `;
+    box.innerHTML = testContent;
+
+    // Estimate height
+    setTimeout(() => {
+      const scrollH = box.scrollHeight || 130;
+      const estHeightMm = Math.round((scrollH * 25.4) / 96) + 4;
+      if (calcDim) {
+        calcDim.textContent = isA4 ? `Paper Output: A4 Full Sheet (210mm × 297mm)` : `Paper Output: ${wMm}mm × ~${estHeightMm}mm (Content-fitted)`;
+      }
+    }, 40);
+  }
+
+  // Resizer preset buttons
+  document.querySelectorAll(".resizer-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const w = Number(btn.dataset.width);
+      const fmt = btn.dataset.format || `${w}mm`;
+      activeResizingWidthMm = w;
+      activeResizingPaperFormat = fmt;
+      const wInput = document.getElementById("resizerWidthInput");
+      const wSlider = document.getElementById("resizerWidthSlider");
+      if (wInput) wInput.value = w;
+      if (wSlider) wSlider.value = w;
+      updateResizerPreview();
+    });
+  });
+
+  // Width slider & input listeners
+  document.getElementById("resizerWidthSlider")?.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    activeResizingWidthMm = val;
+    activeResizingPaperFormat = (val === 58 ? "58mm" : (val === 76 ? "76mm" : (val === 80 ? "80mm" : (val === 100 ? "100mm" : (val >= 180 ? "a4" : "custom")))));
+    const wInput = document.getElementById("resizerWidthInput");
+    if (wInput) wInput.value = val;
+    updateResizerPreview();
+  });
+
+  document.getElementById("resizerWidthInput")?.addEventListener("input", (e) => {
+    const val = Number(e.target.value) || 80;
+    activeResizingWidthMm = Math.max(Math.min(val, 250), 40);
+    activeResizingPaperFormat = (val === 58 ? "58mm" : (val === 76 ? "76mm" : (val === 80 ? "80mm" : (val === 100 ? "100mm" : (val >= 180 ? "a4" : "custom")))));
+    const wSlider = document.getElementById("resizerWidthSlider");
+    if (wSlider) wSlider.value = activeResizingWidthMm;
+    updateResizerPreview();
+  });
+
+  // Scale slider listener
+  document.getElementById("resizerScaleSlider")?.addEventListener("input", (e) => {
+    const val = Number(e.target.value);
+    activeResizingScalePct = val;
+    const scaleLabel = document.getElementById("resizerScaleLabel");
+    if (scaleLabel) scaleLabel.textContent = `${val}%`;
+    updateResizerPreview();
+  });
+
+  // Print slip now button
+  document.getElementById("resizerDoPrintBtn")?.addEventListener("click", () => {
+    const p = printerProfiles.find(x => x.id === activeResizingProfileId);
+    const w = activeResizingWidthMm;
+    const fmt = activeResizingPaperFormat;
+    const scale = activeResizingScalePct;
+    const testContent = `
+      <div style="text-align:center; padding:8px 4px; border:1.5px solid #000; font-family:monospace; box-sizing:border-box;">
+        <div style="font-size:14px; font-weight:900;">*** PRINTER TEST SLIP ***</div>
+        <div style="font-size:11px; font-weight:700; margin:4px 0;">JUST POS HARDWARE DRIVER</div>
+        <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:6px 0; margin:6px 0; text-align:left; font-size:9.5px; line-height:1.4;">
+          <div>PROFILE: <b>${p ? p.name : 'POS Printer'}</b></div>
+          <div>STATION: <b>${p ? p.station : 'Cashier Desk'}</b></div>
+          <div>INTERFACE: <b>${p ? p.interface : 'USB'}</b></div>
+          <div>PAPER SIZE: <b>${fmt.toUpperCase()} (${w}mm)</b></div>
+          <div>PRINT AREA: <b>${Math.max(w - 8, 20)}mm</b></div>
+          <div>PRINT SCALE: <b>${scale}%</b></div>
+          <div>DATE: <b>${new Date().toLocaleString()}</b></div>
+        </div>
+        <div style="font-size:9px;">[==============================]</div>
+        <div style="font-size:10px; font-weight:800; margin-top:4px;">ALIGNMENT &amp; CUT TEST PASSED ✓</div>
+      </div>
+    `;
+    executeThermalPrint(testContent, fmt, w, 2, scale);
+    showToast(`🖨️ Printing test slip at ${w}mm (${scale}%)!`);
+  });
+
+  // Save default button
+  document.getElementById("resizerSaveDefaultBtn")?.addEventListener("click", () => {
+    const p = printerProfiles.find(x => x.id === activeResizingProfileId);
+    if (!p) return;
+    const w = activeResizingWidthMm;
+    const fmt = activeResizingPaperFormat;
+    const scale = activeResizingScalePct;
+    p.paperSize = fmt;
+    p.customWidthMm = w;
+    p.printableWidthMm = Math.max(w - (p.leftRightMarginMm || 2) * 2, 20);
+    p.scalePct = scale;
+    localStorage.setItem("pos_printer_profiles", JSON.stringify(printerProfiles));
+    showToast(`💾 Default size set to ${w}mm (${scale}%) for '${p.name}'!`);
+    renderMasterPrintPanel();
+    closeAllModals();
+  });
 
   // Open Add/Edit Printer Profile Modal
   function openPrinterProfileModal(profileId = null) {
@@ -11455,6 +11887,22 @@ For any queries or updates, reply to this message.`;
         </div>
       </div>
 
+      <!-- Print Scaling & Quick Test -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:11.5px; font-weight:700;">Print Scaling &amp; Text Density (%)</label>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="number" id="pr_modal_scalePct" value="${p.scalePct || 100}" min="70" max="140" step="5" style="width:100%; font-weight:700;">
+            <span style="font-size:12px; font-weight:700; color:var(--ink-soft);">%</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin:0; display:flex; flex-direction:column; justify-content:flex-end;">
+          <button type="button" class="btn" id="pr_modal_quick_test_btn" style="font-size:11px; font-weight:700; padding:8px 10px; background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">
+            🖨️ Test Print Configured Size
+          </button>
+        </div>
+      </div>
+
       <!-- Auto Cut & Font Settings -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
         <div style="display:flex; align-items:center; gap:8px; background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
@@ -11497,6 +11945,32 @@ For any queries or updates, reply to this message.`;
       const isCust = (e.target.value === "custom");
       const box = document.getElementById("pr_custom_size_box");
       if (box) box.style.display = isCust ? "block" : "none";
+    });
+
+    // Quick test print button inside modal
+    document.getElementById("pr_modal_quick_test_btn")?.addEventListener("click", () => {
+      const pSize = document.getElementById("pr_modal_paperSize").value;
+      const cWidth = Number(document.getElementById("pr_modal_customWidth")?.value) || (pSize === '58mm' ? 58 : (pSize === '76mm' ? 76 : (pSize === '100mm' ? 100 : (pSize === 'a4' ? 210 : 80))));
+      const lrM = Number(document.getElementById("pr_modal_lrMargin")?.value) || 2;
+      const sPct = Number(document.getElementById("pr_modal_scalePct")?.value) || 100;
+      const pName = document.getElementById("pr_modal_name")?.value || p.name || "Printer Station";
+
+      const testContent = `
+        <div style="text-align:center; padding:8px 4px; border:1.5px solid #000; font-family:monospace; box-sizing:border-box;">
+          <div style="font-size:14px; font-weight:900;">*** PRINTER TEST SLIP ***</div>
+          <div style="font-size:11px; font-weight:700; margin:4px 0;">JUST POS HARDWARE DRIVER</div>
+          <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:6px 0; margin:6px 0; text-align:left; font-size:9.5px; line-height:1.4;">
+            <div>PROFILE: <b>${pName}</b></div>
+            <div>PAPER SIZE: <b>${pSize.toUpperCase()} (${cWidth}mm)</b></div>
+            <div>PRINT SCALE: <b>${sPct}%</b></div>
+            <div>DATE: <b>${new Date().toLocaleString()}</b></div>
+          </div>
+          <div style="font-size:9px;">[==============================]</div>
+          <div style="font-size:10px; font-weight:800; margin-top:4px;">ALIGNMENT &amp; CUT TEST PASSED ✓</div>
+        </div>
+      `;
+      executeThermalPrint(testContent, pSize, cWidth, lrM, sPct);
+      showToast(`🖨️ Printing test slip at ${cWidth}mm (${sPct}%)!`);
     });
 
     // Save profile handler
@@ -11638,10 +12112,12 @@ For any queries or updates, reply to this message.`;
               </div>
               <div>
                 <label style="font-size:11px; font-weight:600; display:block; margin-bottom:4px;">Quick Paper Size Override:</label>
-                <div style="display:flex; gap:6px;">
-                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '80mm' ? 'btn-primary' : ''}" data-format="80mm" style="flex:1; font-size:11px; font-weight:700;">80mm</button>
-                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '58mm' ? 'btn-primary' : ''}" data-format="58mm" style="flex:1; font-size:11px; font-weight:700;">58mm</button>
-                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === 'a4' ? 'btn-primary' : ''}" data-format="a4" style="flex:1; font-size:11px; font-weight:700;">A4</button>
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '80mm' ? 'btn-primary' : ''}" data-format="80mm" style="flex:1; font-size:10.5px; font-weight:700; padding:4px 6px;">80mm</button>
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '76mm' ? 'btn-primary' : ''}" data-format="76mm" style="flex:1; font-size:10.5px; font-weight:700; padding:4px 6px;">76mm</button>
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '58mm' ? 'btn-primary' : ''}" data-format="58mm" style="flex:1; font-size:10.5px; font-weight:700; padding:4px 6px;">58mm</button>
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '100mm' ? 'btn-primary' : ''}" data-format="100mm" style="flex:1; font-size:10.5px; font-weight:700; padding:4px 6px;">100mm</button>
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === 'a4' ? 'btn-primary' : ''}" data-format="a4" style="flex:1; font-size:10.5px; font-weight:700; padding:4px 6px;">A4</button>
                 </div>
               </div>
             </div>
@@ -14218,6 +14694,7 @@ For any queries or updates, reply to this message.`;
       const customWidthMm = Number(document.getElementById("pr_modal_customWidth")?.value) || 80;
       const printableWidthMm = Number(document.getElementById("pr_modal_printableWidth")?.value) || (paperSize === '58mm' ? 48 : (paperSize === '76mm' ? 68 : (paperSize === 'a4' ? 185 : 72)));
       const lrMargin = Number(document.getElementById("pr_modal_lrMargin")?.value) || 2;
+      const scalePct = Number(document.getElementById("pr_modal_scalePct")?.value) || 100;
       const autoCut = document.getElementById("pr_modal_autocut").checked;
       const status = document.getElementById("pr_modal_status").checked ? "active" : "inactive";
       const assignedDocs = Array.from(document.querySelectorAll("input[name='pr_doc_type']:checked")).map(cb => cb.value);
@@ -14233,12 +14710,13 @@ For any queries or updates, reply to this message.`;
             customWidthMm,
             printableWidthMm,
             leftRightMarginMm: lrMargin,
+            scalePct,
             autoCut,
             status,
             assignedDocs
           });
         }
-        showToast(`✓ Printer profile '${name}' updated!`);
+        showToast(`✓ Printer profile '${name}' updated (${paperSize.toUpperCase()}, ${customWidthMm}mm)!`);
       } else {
         const newP = {
           id: `pr_custom_${Date.now()}`,
@@ -14251,6 +14729,7 @@ For any queries or updates, reply to this message.`;
           printableWidthMm,
           topBottomMarginMm: 2,
           leftRightMarginMm: lrMargin,
+          scalePct,
           fontSize: "10px",
           autoCut,
           status,
