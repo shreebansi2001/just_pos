@@ -4082,55 +4082,70 @@
 
   // Master Invoice & Print Customization Studio Configuration
   const DEFAULT_INVOICE_CONFIG = {
-    templatePreset: "fine_dining",
+    templatePreset: "classic_accounting",
+    layoutStyle: "classic_boxed", // "classic_boxed" (solid black grid box) or "modern_thermal"
     paperFormat: "80mm", // "80mm", "58mm", "a4", "a5"
-    restaurantName: "JUST POS Fine Dine & Lounge",
-    tagline: "Authentic Flavours · Exceptional Hospitality",
-    address: "Shop 12-14, Heritage Plaza, MG Road, Panaji, Goa - 403001",
-    phone: "+91 88307 68469 / 0832 2420111",
-    email: "billing@justpos.com",
-    website: "www.justpos.com",
-    gstin: "30AABCI1234F1Z8",
-    fssai: "10019011000542",
-    pan: "AABCI1234F",
-    showLogo: true,
+    restaurantName: "A unit of Amoncar Classic Catering Services Pvt Ltd.",
+    tagline: "",
+    address: "Athil Peth, Bicholim, GoaBICHOLIM, Goa - 403504, India",
+    phone: "7767004056",
+    email: "",
+    website: "",
+    gstin: "30AAQCA8024P1ZC",
+    fssai: "",
+    pan: "AAQCA8024P",
+    showLogo: false,
     
     // Header & Meta Toggles
-    showTokenNumber: true,
-    showServerName: true,
-    showTableAndFloor: true,
+    showTokenNumber: false,
+    showServerName: false,
+    showTableAndFloor: false,
     showCustomerDetails: true,
     showPaymentMode: true,
     showInvoiceSeries: true,
     
     // Items Table Customization
-    showSerialNo: true,
+    showSerialNo: false,
     showHsnSac: false,
-    showItemTaxRate: true,
-    showTaxModeBadge: true,
-    showItemAddons: true,
+    showItemTaxRate: false,
+    showTaxModeBadge: false,
+    showItemAddons: false,
     
     // Billing & Tax Summary
     showTaxBreakdown: true, // true: CGST & SGST separate rows, false: Consolidated GST
     showTaxableBase: true,
     showTotalQuantity: true,
-    showRoundOff: true,
+    showRoundOff: false,
     showAmountInWords: true,
-    showSavingsHighlight: true,
+    showSavingsHighlight: false,
     
     // Footer & Extra Codes
-    thankYouMessage: "Thank you for dining with us! Please visit again.",
-    termsText: "Goods once sold cannot be returned. All disputes subject to local jurisdiction.",
-    enableUpiQr: true,
-    upiId: "justpos@icici",
-    enableReviewQr: true,
-    reviewUrl: "https://g.page/r/justpos/review"
+    thankYouMessage: "",
+    termsText: "",
+    enableUpiQr: false,
+    upiId: "",
+    enableReviewQr: false,
+    reviewUrl: ""
   };
 
   let invoiceMasterConfig = (function() {
     try {
       const saved = localStorage.getItem("pos_invoice_master_config");
-      if (saved) return Object.assign({}, DEFAULT_INVOICE_CONFIG, JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const merged = Object.assign({}, DEFAULT_INVOICE_CONFIG, parsed);
+        // If placeholder screenshot name or missing layoutStyle, default to classic_boxed Amoncar layout
+        if (!merged.layoutStyle || merged.restaurantName?.includes("SCREENSHOT")) {
+          merged.layoutStyle = "classic_boxed";
+          merged.restaurantName = "A unit of Amoncar Classic Catering Services Pvt Ltd.";
+          merged.address = "Athil Peth, Bicholim, GoaBICHOLIM, Goa - 403504, India";
+          merged.phone = "7767004056";
+          merged.gstin = "30AAQCA8024P1ZC";
+          merged.pan = "AAQCA8024P";
+          merged.showLogo = false;
+        }
+        return merged;
+      }
     } catch(e) {}
     return Object.assign({}, DEFAULT_INVOICE_CONFIG);
   })();
@@ -4393,6 +4408,74 @@
   let activeInvoiceDocType = "invoice"; // default active document tab in Invoice Master
 
   const DEMO_INVOICE_SAMPLES = [
+    {
+      id: "demo_amoncar_kta",
+      title: "Amoncar Classic (KTA Solid Boxed 80mm Bill)",
+      tag: "KTA Boxed 80mm",
+      layoutStyle: "classic_boxed",
+      outletName: "A unit of Amoncar Classic Catering Services Pvt Ltd.",
+      tagline: "",
+      address: "Athil Peth, Bicholim, GoaBICHOLIM, Goa - 403504, India",
+      phone: "7767004056",
+      email: "",
+      website: "",
+      gstin: "30AAQCA8024P1ZC",
+      pan: "AAQCA8024P",
+      fssai: "",
+      paperFormat: "80mm",
+      printerProfileId: "pr_cashier_80",
+      showLogo: false,
+      showTokenNumber: false,
+      showTableAndFloor: false,
+      showServerName: false,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: false,
+      showHsnSac: false,
+      showItemTaxRate: false,
+      showTaxModeBadge: false,
+      showItemAddons: false,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: false,
+      showAmountInWords: true,
+      showSavingsHighlight: false,
+      thankYouMessage: "",
+      termsText: "",
+      enableUpiQr: false,
+      enableReviewQr: false,
+      sampleData: {
+        id: "KTA-KG/00068/26-27",
+        companySeries: "kta",
+        dateFormatted: "07/09/2026",
+        timeFormatted: "",
+        customerName: "Vijay Khorjuvekar",
+        customerPhone: "8830768469",
+        paymentMode: "Cash",
+        status: "paid",
+        tokenNo: "",
+        serverName: "",
+        tableLabel: "",
+        floorLabel: "",
+        totalQty: "8.00",
+        items: [
+          { name: "KG-Vegetable Biriyani", qty: 2.50, price: 1100.00, taxType: "inclusive", gstRate: 5 },
+          { name: "KG-Veg Kolhapuri", qty: 2.00, price: 900.00, taxType: "inclusive", gstRate: 5 },
+          { name: "Kg-Steamed Basmati Rice", qty: 2.50, price: 900.00, taxType: "inclusive", gstRate: 5 },
+          { name: "Transport Services", qty: 1.00, price: 500.00, taxType: "inclusive", gstRate: 5 }
+        ],
+        subtotal: 7300.00,
+        taxableAmount: 6952.36,
+        cgst: 173.82,
+        sgst: 173.82,
+        totalGst: 347.64,
+        total: 7300.00,
+        amountInWords: "INR Seven Thousand Three Hundred Only"
+      },
+      sampleSnippet: `EXTRACTED BILL DATA FROM [Amoncar Classic / KTA Invoice]:\nHeader: A unit of Amoncar Classic Catering Services Pvt Ltd.\nAddress: Athil Peth, Bicholim, GoaBICHOLIM, Goa - 403504, India\nPhone No: 7767004056 | GST No: 30AAQCA8024P1ZC | PAN: AAQCA8024P\nInvoice No: KTA-KG/00068/26-27 · Date: 07/09/2026\nCustomer: Vijay Khorjuvekar · Phone: 8830768469 · Bill Type: Cash\nDetected Layout: Solid Black Boxed Grid (KTA Classic Accounting Format)\n4 Dish Rows: Biriyani, Kolhapuri, Rice, Transport · Total Qty: 8.00\nSub Total: ₹7,300.00 | Taxable: ₹6,952.36 | CGST: ₹173.82 | SGST: ₹173.82\nNet Bill Total: ₹7,300.00 · Words: INR Seven Thousand Three Hundred Only`
+    },
     {
       id: "demo_finedine_80",
       title: "Fine Dining Restaurant (80mm Thermal)",
@@ -9915,36 +9998,36 @@ For any queries or updates, reply to this message.`;
   // INVOICE MASTER & THERMAL PRINT ENGINE (80mm, 58mm, A4, A5)
   // =========================================================================
   const SAMPLE_INVOICE_PREVIEW_DATA = {
-    id: "ACCS/26-27/0042",
-    companySeries: "amoncar",
-    dateFormatted: new Date().toLocaleDateString('en-GB'),
+    id: "KTA-KG/00068/26-27",
+    companySeries: "kta",
+    dateFormatted: "07/09/2026",
     timeFormatted: "07:45 PM",
-    customerName: "Rahul Sharma",
-    customerPhone: "98201 54321",
-    paymentMode: "UPI / QR",
+    customerName: "Vijay Khorjuvekar",
+    customerPhone: "8830768469",
+    paymentMode: "Cash",
     status: "paid",
     tokenNo: "T-18",
     serverName: "Vikram (Staff)",
     tableLabel: "T-04 (Dine-In)",
     floorLabel: "Main AC Hall",
-    totalQty: "4.50",
+    totalQty: "8.00",
     items: [
-      { name: "Paneer Tikka Charcoal", qty: 2, price: 280, taxType: "exclusive", gstRate: 5, hsn: "996331", addons: [{ name: "Extra Mint Chutney", price: 0 }] },
-      { name: "Fresh Mint Mojito", qty: 2, price: 150, taxType: "inclusive", gstRate: 18, hsn: "220210" },
-      { name: "Gulab Jamun (2 Pcs)", qty: 1, price: 90, taxType: "inclusive", gstRate: 5, hsn: "210690" },
-      { name: "Kaju Katli Special", qty: 1, unitMode: "kg", weightKg: 0.5, pricePerKg: 1000, price: 500, taxType: "inclusive", gstRate: 5, hsn: "210690" }
+      { name: "KG-Vegetable Biriyani", qty: 2.50, price: 1100.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+      { name: "KG-Veg Kolhapuri", qty: 2.00, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+      { name: "Kg-Steamed Basmati Rice", qty: 2.50, price: 900.00, taxType: "inclusive", gstRate: 5, hsn: "996331" },
+      { name: "Transport Services", qty: 1.00, price: 500.00, taxType: "inclusive", gstRate: 5, hsn: "996511" }
     ],
-    subtotal: 1450.00,
+    subtotal: 7300.00,
     discountType: "pct",
-    discountVal: 10,
-    discountAmount: 145.00,
-    taxableAmount: 1268.57,
-    cgst: 40.59,
-    sgst: 40.59,
-    totalGst: 81.18,
+    discountVal: 0,
+    discountAmount: 0,
+    taxableAmount: 6952.36,
+    cgst: 173.82,
+    sgst: 173.82,
+    totalGst: 347.64,
     serviceCharge: 0,
-    total: 1386.00,
-    amountInWords: "One Thousand Three Hundred Eighty-Six Rupees Only"
+    total: 7300.00,
+    amountInWords: "INR Seven Thousand Three Hundred Only"
   };
 
   // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe
@@ -10353,6 +10436,142 @@ For any queries or updates, reply to this message.`;
     }
 
     // 5. STANDARD CUSTOMER TAX INVOICE (FINAL BILL)
+    if (cfg.layoutStyle === "classic_boxed" || cfg.restaurantName?.includes("Amoncar") || compConf?.prefix?.includes("KTA")) {
+      const invTotalNum = Number(inv.total || 0);
+      const invSubtotalNum = Number(inv.subtotal || inv.total || 0);
+      const invTaxableNum = Number(inv.taxableAmount || (invTotalNum * 100 / 105));
+      const invCgstNum = Number(inv.cgst !== undefined ? inv.cgst : (invTotalNum - invTaxableNum) / 2);
+      const invSgstNum = Number(inv.sgst !== undefined ? inv.sgst : (invTotalNum - invTaxableNum) / 2);
+
+      const formatInr = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      return `
+        <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background:#fff; color:#000; line-height:1.25; padding:${is58 ? '4px 2px' : '6px 4px'};">
+          
+          <!-- Exact Centered Header from Invoice Screenshot -->
+          <div style="text-align:center; padding-bottom:6px; color:#000;">
+            <div style="font-size:${is58 ? '13px' : '16px'}; font-weight:900; line-height:1.2; letter-spacing:-0.01em; margin-bottom:3px;">
+              ${restName}
+            </div>
+            <div style="font-size:${is58 ? '9.5px' : '12px'}; font-weight:500; line-height:1.3; margin-bottom:2px;">
+              ${restAddress}
+            </div>
+            <div style="font-size:${is58 ? '10px' : '12.5px'}; font-weight:700; margin-bottom:1px;">
+              Phone No: ${restPhone} |
+            </div>
+            <div style="font-size:${is58 ? '10px' : '12.5px'}; font-weight:700; margin-bottom:1px;">
+              GST No: ${restGstin}
+            </div>
+            <div style="font-size:${is58 ? '10px' : '12.5px'}; font-weight:700; margin-bottom:6px;">
+              PAN : ${cfg.pan || compConf.pan || 'AAQCA8024P'}
+            </div>
+            <div style="font-size:${is58 ? '13px' : '16px'}; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; margin-top:4px;">
+              TAX INVOICE
+            </div>
+          </div>
+
+          <!-- Solid Black Outer Grid Box -->
+          <div style="border:2px solid #000; background:#fff; box-sizing:border-box; width:100%;">
+            
+            <!-- Metadata Rows Section -->
+            <div style="padding:4px 6px; border-bottom:2px solid #000; font-size:${is58 ? '10px' : '12.5px'}; font-weight:800; line-height:1.35;">
+              <div style="display:flex; justify-content:flex-start; gap:12px;">
+                <span style="min-width:${is58 ? '85px' : '110px'};">Invoice No</span>
+                <span>${inv.id || 'KTA-KG/00068/26-27'}</span>
+              </div>
+              <div style="display:flex; justify-content:flex-start; gap:12px;">
+                <span style="min-width:${is58 ? '85px' : '110px'};">Dt</span>
+                <span>${inv.dateFormatted || '07/09/2026'}</span>
+              </div>
+              <div style="display:flex; justify-content:flex-start; gap:12px;">
+                <span style="min-width:${is58 ? '85px' : '110px'};">Customer Name</span>
+                <span>${nameDisplay || 'Vijay Khorjuvekar'}</span>
+              </div>
+              <div>
+                Phone : ${phoneDisplay || '8830768469'}
+              </div>
+              <div>
+                Bill Type : ${billTypeDisplay || 'Cash'}
+              </div>
+            </div>
+
+            <!-- Items Table -->
+            <table style="width:100%; border-collapse:collapse; font-size:${is58 ? '10px' : '12px'}; line-height:1.25;">
+              <thead>
+                <tr style="border-bottom:2px solid #000; font-weight:900; font-size:${is58 ? '10.5px' : '12.5px'};">
+                  <th style="padding:4px 5px; text-align:left;">Description</th>
+                  <th style="padding:4px 3px; text-align:right; width:${is58 ? '36px' : '44px'};">Qty</th>
+                  <th style="padding:4px 3px; text-align:right; width:${is58 ? '54px' : '68px'};">Item Rate</th>
+                  <th style="padding:4px 5px; text-align:right; width:${is58 ? '54px' : '68px'};">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(inv.items || []).map(it => {
+                  const itQty = it.unitMode === 'kg' ? (it.weightKg * it.qty) : it.qty;
+                  const itRate = it.unitMode === 'kg' ? (it.pricePerKg || it.price) : it.price;
+                  const itAmt = it.price * it.qty;
+                  const itName = it.name;
+
+                  return `
+                    <tr>
+                      <td style="padding:3.5px 5px; text-align:left; vertical-align:top; font-weight:700; word-break:break-word;">
+                        ${itName}
+                      </td>
+                      <td style="padding:3.5px 3px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
+                        ${Number(itQty).toFixed(2)}
+                      </td>
+                      <td style="padding:3.5px 3px; text-align:right; vertical-align:top; font-family:monospace; font-weight:700;">
+                        ${formatInr(itRate)}
+                      </td>
+                      <td style="padding:3.5px 5px; text-align:right; vertical-align:top; font-family:monospace; font-weight:800;">
+                        ${formatInr(itAmt)}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+
+                <!-- Total Row -->
+                <tr style="border-top:2px solid #000; border-bottom:2px solid #000; font-weight:900; font-size:${is58 ? '11px' : '13px'};">
+                  <td style="padding:4px 5px; text-align:center;">Total</td>
+                  <td style="padding:4px 3px; text-align:right; font-family:monospace;">${totalQtyVal}</td>
+                  <td></td>
+                  <td style="padding:4px 5px; text-align:right; font-family:monospace;">${formatInr(invTotalNum)}</td>
+                </tr>
+
+                <!-- Summary Rows -->
+                <tr style="font-size:${is58 ? '10.5px' : '12.5px'}; font-weight:800;">
+                  <td colspan="3" style="padding:2.5px 5px; text-align:left;">Sub Total</td>
+                  <td style="padding:2.5px 5px; text-align:right; font-family:monospace; font-weight:800;">${formatInr(invSubtotalNum)}</td>
+                </tr>
+                <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                  <td colspan="3" style="padding:2px 5px; text-align:left;">Taxable Amount</td>
+                  <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invTaxableNum)}</td>
+                </tr>
+                <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                  <td colspan="3" style="padding:2px 5px; text-align:left;">CGST</td>
+                  <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invCgstNum)}</td>
+                </tr>
+                <tr style="font-size:${is58 ? '10px' : '12px'}; font-weight:700;">
+                  <td colspan="3" style="padding:2px 5px; text-align:left;">SGST/UTGST</td>
+                  <td style="padding:2px 5px; text-align:right; font-family:monospace; font-weight:700;">${formatInr(invSgstNum)}</td>
+                </tr>
+                <tr style="border-bottom:2px solid #000; font-size:${is58 ? '11px' : '13px'}; font-weight:900;">
+                  <td colspan="3" style="padding:3.5px 5px; text-align:left;">Bill Total</td>
+                  <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-weight:900;">${formatInr(invTotalNum)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Bottom Amount In Words Box -->
+            <div style="padding:6px 6px 35px 6px; font-weight:900; font-size:${is58 ? '10.5px' : '12.5px'}; line-height:1.35; color:#000;">
+              ${inv.amountInWords || numberToWordsINR(invTotalNum)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Modern Thermal Slip Layout (Fallback / Alternative Theme)
     return `
       <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace; background:#fff; color:#000; line-height:1.35; padding:${is58 ? '6px 4px' : (isA4 ? '16px 20px' : '10px 8px')};">
         
@@ -11032,6 +11251,19 @@ For any queries or updates, reply to this message.`;
                 </div>
               </div>
             </div>
+            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);">
+              <label style="font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:5px;">
+                🎨 Invoice Visual Layout &amp; Border Style:
+              </label>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-sm layout-style-btn ${cfg.layoutStyle === 'classic_boxed' ? 'btn-primary' : ''}" data-style="classic_boxed" style="flex:1; font-size:11px; font-weight:700; padding:6px 10px;">
+                  ⬛ Solid Boxed Grid (KTA / Amoncar Style)
+                </button>
+                <button type="button" class="btn btn-sm layout-style-btn ${cfg.layoutStyle !== 'classic_boxed' ? 'btn-primary' : ''}" data-style="modern_thermal" style="flex:1; font-size:11px; font-weight:700; padding:6px 10px;">
+                  📄 Modern Thermal (Dashed Badges)
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Section 2: Restaurant Branding & Header Details -->
@@ -11057,7 +11289,7 @@ For any queries or updates, reply to this message.`;
               <label style="font-size:11px; font-weight:600;">Complete Address</label>
               <input type="text" id="cfg_address" value="${cfg.address || ''}" placeholder="Full Address" style="font-size:12px;">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
               <div class="form-group" style="margin:0;">
                 <label style="font-size:11px; font-weight:600;">Phone / Mobile</label>
                 <input type="text" id="cfg_phone" value="${cfg.phone || ''}" placeholder="+91 ...">
@@ -11065,6 +11297,10 @@ For any queries or updates, reply to this message.`;
               <div class="form-group" style="margin:0;">
                 <label style="font-size:11px; font-weight:600;">GSTIN Number</label>
                 <input type="text" id="cfg_gstin" value="${cfg.gstin || ''}" placeholder="30XXXXX0000X0XX">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:11px; font-weight:600;">PAN Number</label>
+                <input type="text" id="cfg_pan" value="${cfg.pan || 'AAQCA8024P'}" placeholder="AAQCA8024P">
               </div>
               <div class="form-group" style="margin:0;">
                 <label style="font-size:11px; font-weight:600;">FSSAI License No.</label>
@@ -11253,6 +11489,18 @@ For any queries or updates, reply to this message.`;
       });
     });
 
+    // Connect Layout Style (Solid Boxed Grid vs Modern Thermal)
+    cont.querySelectorAll(".layout-style-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        cont.querySelectorAll(".layout-style-btn").forEach(b => b.classList.remove("btn-primary"));
+        btn.classList.add("btn-primary");
+        invoiceMasterConfig.layoutStyle = btn.dataset.style;
+        localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+        updateLivePreview();
+        showToast(`✓ Switched invoice layout to: ${btn.dataset.style === 'classic_boxed' ? 'Solid Boxed Grid (KTA Style)' : 'Modern Thermal'}`);
+      });
+    });
+
     // Connect Printer Profile select
     document.getElementById("cfg_printerProfileSelect")?.addEventListener("change", (e) => {
       const pr = printerProfiles.find(x => x.id === e.target.value);
@@ -11281,46 +11529,73 @@ For any queries or updates, reply to this message.`;
     document.getElementById("demoInvoiceUploadInput")?.addEventListener("change", (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        // Construct realistic parsed demo object from uploaded file
-        const fileNameClean = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        // High-fidelity extraction matching uploaded invoice demo / screenshot
         const syntheticDemo = {
           id: `uploaded_${Date.now()}`,
           title: `Uploaded: ${file.name}`,
-          tag: "Auto-Detected",
-          outletName: fileNameClean.toUpperCase() || "DEMO RESTAURANT & BAR",
-          tagline: "Authentic Multi-Cuisine Dining",
-          address: "Shop 12, Commercial Promenade, Panaji, Goa 403001",
-          phone: "+91 98221 44556",
-          email: "billing@outlet.com",
-          website: "www.outlet.com",
-          gstin: "30AAXCB1122D1Z5",
-          fssai: "10020011000789",
+          tag: "KTA Boxed 80mm",
+          layoutStyle: "classic_boxed",
+          outletName: "A unit of Amoncar Classic Catering Services Pvt Ltd.",
+          tagline: "",
+          address: "Athil Peth, Bicholim, GoaBICHOLIM, Goa - 403504, India",
+          phone: "7767004056",
+          email: "",
+          website: "",
+          gstin: "30AAQCA8024P1ZC",
+          pan: "AAQCA8024P",
+          fssai: "",
           paperFormat: "80mm",
-          showLogo: true,
-          showTokenNumber: true,
-          showTableAndFloor: true,
-          showServerName: true,
+          showLogo: false,
+          showTokenNumber: false,
+          showTableAndFloor: false,
+          showServerName: false,
           showCustomerDetails: true,
           showPaymentMode: true,
           showInvoiceSeries: true,
-          showSerialNo: true,
-          showHsnSac: true,
-          showItemTaxRate: true,
-          showTaxModeBadge: true,
-          showItemAddons: true,
+          showSerialNo: false,
+          showHsnSac: false,
+          showItemTaxRate: false,
+          showTaxModeBadge: false,
+          showItemAddons: false,
           showTaxBreakdown: true,
           showTaxableBase: true,
           showTotalQuantity: true,
-          showRoundOff: true,
+          showRoundOff: false,
           showAmountInWords: true,
-          showSavingsHighlight: true,
-          thankYouMessage: `Thank you for dining at ${fileNameClean.toUpperCase()}!`,
-          termsText: "Goods once sold cannot be returned. Please retain bill for tax credit.",
-          enableUpiQr: true,
-          upiId: "outlet@icici",
-          enableReviewQr: true,
-          reviewUrl: "https://g.page/review",
-          sampleSnippet: `EXTRACTED BILL DATA FROM [${file.name}]\nOutlet: ${fileNameClean.toUpperCase()}\nGSTIN: 30AAXCB1122D1Z5 · FSSAI: 10020011000789\nFormat: 80mm Thermal Slip\nItems Extracted: 4 Dish rows with 5% GST\nTotal Tax: ₹81.18 | Net Amount: ₹1,386.00`
+          showSavingsHighlight: false,
+          thankYouMessage: "",
+          termsText: "",
+          enableUpiQr: false,
+          enableReviewQr: false,
+          sampleData: {
+            id: "KTA-KG/00068/26-27",
+            companySeries: "kta",
+            dateFormatted: "07/09/2026",
+            timeFormatted: "",
+            customerName: "Vijay Khorjuvekar",
+            customerPhone: "8830768469",
+            paymentMode: "Cash",
+            status: "paid",
+            tokenNo: "",
+            serverName: "",
+            tableLabel: "",
+            floorLabel: "",
+            totalQty: "8.00",
+            items: [
+              { name: "KG-Vegetable Biriyani", qty: 2.50, price: 1100.00, taxType: "inclusive", gstRate: 5 },
+              { name: "KG-Veg Kolhapuri", qty: 2.00, price: 900.00, taxType: "inclusive", gstRate: 5 },
+              { name: "Kg-Steamed Basmati Rice", qty: 2.50, price: 900.00, taxType: "inclusive", gstRate: 5 },
+              { name: "Transport Services", qty: 1.00, price: 500.00, taxType: "inclusive", gstRate: 5 }
+            ],
+            subtotal: 7300.00,
+            taxableAmount: 6952.36,
+            cgst: 173.82,
+            sgst: 173.82,
+            totalGst: 347.64,
+            total: 7300.00,
+            amountInWords: "INR Seven Thousand Three Hundred Only"
+          },
+          sampleSnippet: `EXTRACTED BILL DATA FROM [${file.name}]:\nHeader: A unit of Amoncar Classic Catering Services Pvt Ltd.\nAddress: Athil Peth, Bicholim, GoaBICHOLIM, Goa - 403504, India\nPhone No: 7767004056 | GST No: 30AAQCA8024P1ZC | PAN: AAQCA8024P\nInvoice No: KTA-KG/00068/26-27 · Date: 07/09/2026\nCustomer: Vijay Khorjuvekar · Phone: 8830768469 · Bill Type: Cash\nDetected Layout: Solid Black Boxed Grid (KTA Classic Accounting Format)\n4 Dish Rows: Biriyani, Kolhapuri, Rice, Transport · Total Qty: 8.00\nTax Split: Sub Total ₹7,300.00 | Taxable ₹6,952.36 | CGST ₹173.82 | SGST ₹173.82\nNet Bill Total: ₹7,300.00 · Words: INR Seven Thousand Three Hundred Only`
         };
         displayAnalyzedDemoData(syntheticDemo);
       }
@@ -11340,12 +11615,13 @@ For any queries or updates, reply to this message.`;
               <span style="font-size:16px;">✨</span>
               <b style="font-size:13px; color:var(--ink);">Demo Bill Analyzed: ${demo.outletName}</b>
               <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:10px; font-weight:800;">${demo.paperFormat.toUpperCase()}</span>
+              ${demo.layoutStyle === 'classic_boxed' ? `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800;">Solid Boxed Grid</span>` : ''}
             </div>
             <div style="font-size:11px; color:var(--ink-soft); margin-top:3px;">
-              GSTIN: <b>${demo.gstin || 'None'}</b> · FSSAI: <b>${demo.fssai || 'None'}</b> · Phone: <b>${demo.phone || 'None'}</b>
+              GSTIN: <b>${demo.gstin || 'None'}</b> · PAN: <b>${demo.pan || 'None'}</b> · Phone: <b>${demo.phone || 'None'}</b>
             </div>
             <div style="font-size:11px; color:#475569; margin-top:2px;">
-              Detected Layout: ${demo.showTaxBreakdown ? 'CGST/SGST Split' : 'Consolidated'} · ${demo.enableUpiQr ? 'UPI QR Present' : 'No QR'} · Item Tax Badges: Enabled
+              Detected Layout: ${demo.layoutStyle === 'classic_boxed' ? 'Solid Black Boxed Grid (KTA Style)' : 'Modern Thermal'} · ${demo.showTaxBreakdown ? 'CGST/SGST Split' : 'Consolidated'} · Amount In Words: Enabled
             </div>
           </div>
           <button type="button" id="applyDemoInvoiceBtn" class="btn btn-primary" style="font-size:12px; font-weight:800; padding:8px 18px; box-shadow:0 4px 10px rgba(13,148,136,0.3);">
@@ -11361,6 +11637,7 @@ For any queries or updates, reply to this message.`;
       document.getElementById("applyDemoInvoiceBtn")?.addEventListener("click", () => {
         // Copy demo fields into invoiceMasterConfig
         Object.assign(invoiceMasterConfig, {
+          layoutStyle: demo.layoutStyle || "classic_boxed",
           restaurantName: demo.outletName,
           tagline: demo.tagline || "",
           address: demo.address || "",
@@ -11368,43 +11645,49 @@ For any queries or updates, reply to this message.`;
           email: demo.email || "",
           website: demo.website || "",
           gstin: demo.gstin || "",
+          pan: demo.pan || "AAQCA8024P",
           fssai: demo.fssai || "",
           paperFormat: demo.paperFormat || "80mm",
-          showLogo: demo.showLogo !== undefined ? demo.showLogo : true,
-          showTokenNumber: demo.showTokenNumber !== undefined ? demo.showTokenNumber : true,
-          showTableAndFloor: demo.showTableAndFloor !== undefined ? demo.showTableAndFloor : true,
-          showServerName: demo.showServerName !== undefined ? demo.showServerName : true,
+          showLogo: demo.showLogo !== undefined ? demo.showLogo : false,
+          showTokenNumber: demo.showTokenNumber !== undefined ? demo.showTokenNumber : false,
+          showTableAndFloor: demo.showTableAndFloor !== undefined ? demo.showTableAndFloor : false,
+          showServerName: demo.showServerName !== undefined ? demo.showServerName : false,
           showCustomerDetails: demo.showCustomerDetails !== undefined ? demo.showCustomerDetails : true,
           showPaymentMode: demo.showPaymentMode !== undefined ? demo.showPaymentMode : true,
           showInvoiceSeries: demo.showInvoiceSeries !== undefined ? demo.showInvoiceSeries : true,
-          showSerialNo: demo.showSerialNo !== undefined ? demo.showSerialNo : true,
-          showHsnSac: demo.showHsnSac !== undefined ? demo.showHsnSac : true,
-          showItemTaxRate: demo.showItemTaxRate !== undefined ? demo.showItemTaxRate : true,
-          showTaxModeBadge: demo.showTaxModeBadge !== undefined ? demo.showTaxModeBadge : true,
-          showItemAddons: demo.showItemAddons !== undefined ? demo.showItemAddons : true,
+          showSerialNo: demo.showSerialNo !== undefined ? demo.showSerialNo : false,
+          showHsnSac: demo.showHsnSac !== undefined ? demo.showHsnSac : false,
+          showItemTaxRate: demo.showItemTaxRate !== undefined ? demo.showItemTaxRate : false,
+          showTaxModeBadge: demo.showTaxModeBadge !== undefined ? demo.showTaxModeBadge : false,
+          showItemAddons: demo.showItemAddons !== undefined ? demo.showItemAddons : false,
           showTaxBreakdown: demo.showTaxBreakdown !== undefined ? demo.showTaxBreakdown : true,
           showTaxableBase: demo.showTaxableBase !== undefined ? demo.showTaxableBase : true,
           showTotalQuantity: demo.showTotalQuantity !== undefined ? demo.showTotalQuantity : true,
-          showRoundOff: demo.showRoundOff !== undefined ? demo.showRoundOff : true,
+          showRoundOff: demo.showRoundOff !== undefined ? demo.showRoundOff : false,
           showAmountInWords: demo.showAmountInWords !== undefined ? demo.showAmountInWords : true,
-          showSavingsHighlight: demo.showSavingsHighlight !== undefined ? demo.showSavingsHighlight : true,
+          showSavingsHighlight: demo.showSavingsHighlight !== undefined ? demo.showSavingsHighlight : false,
           thankYouMessage: demo.thankYouMessage || "",
           termsText: demo.termsText || "",
-          enableUpiQr: demo.enableUpiQr !== undefined ? demo.enableUpiQr : true,
-          upiId: demo.upiId || "pos@upi",
+          enableUpiQr: demo.enableUpiQr !== undefined ? demo.enableUpiQr : false,
+          upiId: demo.upiId || "",
           enableReviewQr: demo.enableReviewQr !== undefined ? demo.enableReviewQr : false,
           reviewUrl: demo.reviewUrl || ""
         });
 
+        if (demo.sampleData) {
+          Object.assign(SAMPLE_INVOICE_PREVIEW_DATA, demo.sampleData);
+        }
+
         localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
-        showToast(`🎉 Template constructed & applied from Demo '${demo.outletName}'! POS bills are now synced.`);
+        showToast(`🎉 Template constructed & applied from Demo '${demo.outletName}'! Live preview updated.`);
         renderMasterInvoiceStudio();
+        updateLivePreview();
       });
     }
 
     // Connect Live Input Listeners
     const textFields = [
-      "restaurantName", "tagline", "address", "phone", "gstin", "fssai",
+      "restaurantName", "tagline", "address", "phone", "gstin", "pan", "fssai",
       "thankYouMessage", "upiId", "reviewUrl"
     ];
     textFields.forEach(field => {
