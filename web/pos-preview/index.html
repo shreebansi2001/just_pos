@@ -52,15 +52,750 @@
   }
 
   [data-theme="dark"] {
-    --paper: #0F172A;
-    --panel: #1E293B;
-    --line: #334155;
-    --line-soft: #1E293B;
-    --ink: #F8FAFC;
-    --ink-soft: #94A3B8;
-    --primary-tint: #0e3745;
-    --shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 16px 36px -4px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+    --paper: #090e17;
+    --panel: #111a2e;
+    --line: #1e2c47;
+    --line-soft: #162238;
+    --surface-subtle: #142036;
+    --ink: #f1f5f9;
+    --ink-soft: #94a3b8;
+    --primary: #0284c7;
+    --primary-deep: #0369a1;
+    --primary-tint: rgba(2, 132, 199, 0.16);
+    --primary-rgb: 2, 132, 199;
+    --accent: #f97316;
+    --accent-tint: rgba(249, 115, 22, 0.16);
+    --veg: #22c55e;
+    --veg-tint: rgba(34, 197, 94, 0.16);
+    --nonveg: #ef4444;
+    --nonveg-tint: rgba(239, 68, 68, 0.16);
+    --available: #10b981;
+    --available-tint: rgba(16, 185, 129, 0.16);
+    --occupied: #f59e0b;
+    --occupied-tint: rgba(245, 158, 11, 0.16);
+    --billed: #818cf8;
+    --billed-tint: rgba(129, 140, 248, 0.16);
+    --cleaning: #94a3b8;
+    --cleaning-tint: rgba(148, 163, 184, 0.16);
+    --danger: #f87171;
+    --shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 36px -4px rgba(0, 0, 0, 0.75);
+  }
+
+  /* Utility badges in base & dark */
+  .btn-shift-table {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #b45309;
+  }
+  .btn-clear-discount {
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #dc2626;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-tax-toggle.remove-tax {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+  }
+  .btn-tax-toggle.add-tax {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #059669;
+  }
+  .cog-badge.dual-mode {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+  }
+  .cog-badge.kg-badge {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+  .pending-order-banner {
+    background: #fef3c7;
+    border: 1.5px solid #f59e0b;
+    color: #b45309;
+  }
+  .pending-order-banner span:last-child {
+    background: #fde68a;
+    color: #92400e;
+  }
+  .kg-breakdown-card {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+  }
+  .danger-alert-box {
+    background: #fef2f2;
+    border: 1px dashed #f87171;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 11.5px;
+    color: #991b1b;
+  }
+  .status-pending {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+
+  /* Preset buttons in base */
+  .preset-btn.preset-kitchen { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .preset-btn.preset-cashier { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+  .preset-btn.preset-waiter { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .preset-btn.preset-admin { background: #fae8ff; color: #86198f; border: 1px solid #f5d0fe; }
+
+  /* -------------------------------------------------------------------------
+     DARK THEME ELEVATION & COMPONENT COLOR RULES
+     ------------------------------------------------------------------------- */
+  [data-theme="dark"] body {
+    background-color: var(--paper);
+    color: var(--ink);
+  }
+
+  /* Form inputs, select dropdowns, textareas in dark mode */
+  [data-theme="dark"] input,
+  [data-theme="dark"] select,
+  [data-theme="dark"] textarea {
+    background: #0b1220 !important;
+    color: #f1f5f9 !important;
+    border-color: #22324d !important;
+    color-scheme: dark;
+  }
+  [data-theme="dark"] input::placeholder,
+  [data-theme="dark"] textarea::placeholder {
+    color: #64748b !important;
+  }
+  [data-theme="dark"] select option {
+    background: #111a2e;
+    color: #f1f5f9;
+  }
+
+  /* Topbar & Stat Pills */
+  [data-theme="dark"] .stat-chip {
+    background: #162238;
+    border-color: #22324d;
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .stat-chip b {
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .stat-chip.primary {
+    background: rgba(2, 132, 199, 0.15);
+    border-color: rgba(2, 132, 199, 0.35);
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .stat-chip.primary b {
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .stat-chip.api-pill {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+    color: #34d399 !important;
+  }
+  [data-theme="dark"] .stat-chip.api-pill.error {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    color: #fca5a5 !important;
+  }
+  [data-theme="dark"] .operator-chip {
+    background: #162238 !important;
+    border-color: #22324d !important;
+    color: #f1f5f9 !important;
+  }
+
+  /* Category tabs in floor & pos */
+  [data-theme="dark"] .cat-tab {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .cat-tab:hover {
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  [data-theme="dark"] .cat-tab.active {
+    background: var(--primary);
+    color: #ffffff;
+  }
+
+  /* Order Desk Context Bar */
+  [data-theme="dark"] .order-context {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .ctx-badge {
+    background: rgba(2, 132, 199, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+  }
+  [data-theme="dark"] .btn-shift-table {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+  }
+  [data-theme="dark"] .btn-shift-table:hover {
+    background: rgba(245, 158, 11, 0.25) !important;
+  }
+  [data-theme="dark"] #backToOrdersBtn,
+  [data-theme="dark"] #backToFloorBtn {
+    background: #162238 !important;
+    border-color: #22324d !important;
+    color: #f1f5f9 !important;
+  }
+  [data-theme="dark"] #backToOrdersBtn:hover,
+  [data-theme="dark"] #backToFloorBtn:hover {
+    background: #1e2c47 !important;
+  }
+
+  /* Selling Mode Switch */
+  [data-theme="dark"] .selling-mode-bar {
+    background: #111a2e !important;
+    border-color: #1e2c47 !important;
+  }
+  [data-theme="dark"] .pos-mode-switch {
+    background: #090e17 !important;
+    border-color: #1e2c47 !important;
+  }
+  [data-theme="dark"] .pos-mode-btn {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .pos-mode-btn.active {
+    background: #0284c7;
+    color: #ffffff;
+  }
+
+  /* Dish Cards */
+  [data-theme="dark"] .pos-menu {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .menu-search {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .menu-search input {
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .dish-card {
+    background: #0e1626;
+    border: 1.5px solid #1c2a42;
+  }
+  [data-theme="dark"] .dish-card:hover {
+    background: #142036;
+    border-color: #0284c7;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+  }
+  [data-theme="dark"] .dish-name {
+    color: #f8fafc;
+  }
+  [data-theme="dark"] .shortcode-badge {
+    background: rgba(2, 132, 199, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+  }
+  [data-theme="dark"] .dish-cat-chip {
+    background: #162238;
+    color: #94a3b8;
+    border: 1px solid #22324d;
+  }
+  [data-theme="dark"] .dish-price {
+    color: #38bdf8;
+  }
+
+  /* Badges on cards */
+  [data-theme="dark"] .cog-badge.single {
+    background: rgba(2, 132, 199, 0.16) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  }
+  [data-theme="dark"] .cog-badge.multiple {
+    background: rgba(245, 158, 11, 0.16) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  }
+  [data-theme="dark"] .cog-badge.dual-mode {
+    background: rgba(2, 132, 199, 0.16) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  }
+  [data-theme="dark"] .cog-badge.kg-badge {
+    background: rgba(245, 158, 11, 0.16) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  }
+
+  /* Direct Add Buttons on cards */
+  [data-theme="dark"] .btn-direct-plate {
+    background: #162238 !important;
+    border-color: #22324d !important;
+    color: #f1f5f9 !important;
+  }
+  [data-theme="dark"] .btn-direct-plate:hover {
+    background: #1e2c47 !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+  }
+  [data-theme="dark"] .btn-direct-kg {
+    background: #059669 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+  }
+  [data-theme="dark"] .btn-direct-kg:hover {
+    background: #047857 !important;
+  }
+
+  /* Cart Panel */
+  [data-theme="dark"] .pos-cart {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .cart-head {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .customer-details-box {
+    background: #0b1220;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .customer-details-box input {
+    background: #111a2e !important;
+    border-color: #1e2c47 !important;
+    color: #f1f5f9 !important;
+  }
+  [data-theme="dark"] .cart-items {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .cart-item-row {
+    background: #0e1626;
+  }
+  [data-theme="dark"] .cart-item-row.is-sent {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: #10b981;
+  }
+  [data-theme="dark"] .cart-item-row.is-new {
+    border-left-color: #f59e0b;
+  }
+  [data-theme="dark"] .badge-sent {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+  }
+  [data-theme="dark"] .badge-new {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+  [data-theme="dark"] .cart-item-qty button {
+    background: #162238;
+    border-color: #22324d;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .cart-item-qty button:hover {
+    background: #1e2c47;
+  }
+  [data-theme="dark"] .btn-item-note {
+    background: #162238;
+    border-color: #22324d;
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .cart-item-instruction {
+    background: rgba(2, 132, 199, 0.12);
+    border-color: rgba(56, 189, 248, 0.25);
+    color: #bae6fd;
+  }
+
+  /* Kitchen Instructions Box */
+  [data-theme="dark"] #orderKitchenNote {
+    background: #0b1220 !important;
+    border-color: #1e2c47 !important;
+    color: #f1f5f9 !important;
+  }
+  [data-theme="dark"] .btn-quick-tag {
+    background: #0e1626;
+    border-color: #1e2c47;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .btn-quick-tag:hover,
+  [data-theme="dark"] .btn-quick-tag.active {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+  }
+
+  /* Cart Discount & Tax Boxes */
+  [data-theme="dark"] .cart-discount-box,
+  [data-theme="dark"] .cart-tax-box {
+    background: #0e1626 !important;
+    border-color: #1e2c47 !important;
+  }
+  [data-theme="dark"] #cartDiscountType,
+  [data-theme="dark"] #cartDiscountVal,
+  [data-theme="dark"] #cartTaxSlabSelect {
+    background: #0b1220 !important;
+    border-color: #1e2c47 !important;
+    color: #f1f5f9 !important;
+  }
+  [data-theme="dark"] .btn-disc-chip {
+    background: #162238;
+    border-color: #1e2c47;
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .btn-disc-chip:hover {
+    background: rgba(2, 132, 199, 0.2);
+    border-color: #0284c7;
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .btn-disc-chip.active {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .btn-clear-discount,
+  [data-theme="dark"] #cartClearDiscountBtn,
+  [data-theme="dark"] .btn-tax-toggle.remove-tax,
+  [data-theme="dark"] #cartToggleTaxBtn {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    color: #f87171 !important;
+  }
+  [data-theme="dark"] .btn-tax-toggle.add-tax,
+  [data-theme="dark"] #cartToggleTaxBtn.add-tax {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    color: #34d399 !important;
+  }
+
+  /* Cart Summary */
+  [data-theme="dark"] .cart-summary {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .sum-row {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .sum-row.total {
+    color: #f1f5f9;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] #cartTotal {
+    color: #38bdf8 !important;
+  }
+
+  /* Cart Actions */
+  [data-theme="dark"] .cart-actions {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] #holdOrderBtn {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border: 1.5px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fbbf24 !important;
+  }
+  [data-theme="dark"] #holdOrderBtn:hover {
+    background: rgba(245, 158, 11, 0.22) !important;
+  }
+  [data-theme="dark"] #checkoutBtn {
+    background: #059669 !important;
+    border-color: #10b981 !important;
+  }
+  [data-theme="dark"] #checkoutBtn:hover {
+    background: #047857 !important;
+  }
+
+  /* Tables Floor Desk */
+  [data-theme="dark"] .table-card {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .table-card:hover {
+    border-color: #0284c7;
+    background: #142036;
+  }
+  [data-theme="dark"] .table-card.occupied {
+    border-color: #f59e0b;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, #111a2e 45%);
+  }
+  [data-theme="dark"] .table-card .tname {
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .table-card .tsub {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .table-kot-progress {
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.16) !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  }
+  [data-theme="dark"] .status-available {
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  [data-theme="dark"] .status-occupied {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  [data-theme="dark"] .status-billed {
+    background: rgba(129, 140, 248, 0.16);
+    color: #a5b4fc;
+    border: 1px solid rgba(129, 140, 248, 0.3);
+  }
+  [data-theme="dark"] .status-cleaning {
+    background: rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+  [data-theme="dark"] .status-pending {
+    background: rgba(245, 158, 11, 0.16) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  }
+  .res-table-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  [data-theme="dark"] .res-table-badge {
+    background: rgba(2, 132, 199, 0.16) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  }
+  .waitlist-table-badge {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+  [data-theme="dark"] .waitlist-table-badge {
+    background: rgba(245, 158, 11, 0.16) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  }
+  [data-theme="dark"] .takeaway-card {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .takeaway-card:hover {
+    border-color: #0284c7;
+    background: #142036;
+  }
+
+  /* KOT Kanban View */
+  [data-theme="dark"] .kanban-col {
+    background: #0c1424;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kanban-col-head {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kot-card {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kot-card-top {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kot-stat-grid {
+    background: #090e17;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kot-stat-cell:not(:last-child) {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kot-items-list {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kot-type-pill.delivery {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+  }
+  [data-theme="dark"] .kot-type-pill.dineIn {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+  }
+  [data-theme="dark"] .kot-type-pill.pickup {
+    background: rgba(2, 132, 199, 0.15);
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .kot-notes-box {
+    background: rgba(249, 115, 22, 0.12) !important;
+    border: 1px solid rgba(249, 115, 22, 0.3) !important;
+  }
+  [data-theme="dark"] .kot-notes-tag {
+    color: #fb923c !important;
+  }
+  [data-theme="dark"] .kot-notes-text {
+    color: #fdba74 !important;
+  }
+  [data-theme="dark"] .kot-item-note {
+    background: rgba(249, 115, 22, 0.12) !important;
+    color: #fdba74 !important;
+    border: 1px solid rgba(249, 115, 22, 0.3) !important;
+  }
+  [data-theme="dark"] .kot-round-divider {
+    background: rgba(2, 132, 199, 0.16);
+    color: #38bdf8;
+    border-left-color: #0284c7;
+  }
+  [data-theme="dark"] .btn-kot-back,
+  [data-theme="dark"] .btn-kot-print {
+    background: #162238;
+    border-color: #22324d;
+    color: #cbd5e1;
+  }
+  [data-theme="dark"] .btn-kot-back:hover,
+  [data-theme="dark"] .btn-kot-print:hover {
+    background: #1e2c47;
+    color: #38bdf8;
+  }
+
+  /* Orders Desk (All Orders List) */
+  [data-theme="dark"] .order-card {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .order-items-box {
+    background: #090e17;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .order-card-foot {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .order-type-tag.dineIn {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
+  }
+  [data-theme="dark"] .order-type-tag.pickup {
+    background: rgba(2, 132, 199, 0.16);
+    color: #38bdf8;
+  }
+  [data-theme="dark"] .order-type-tag.delivery {
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+  }
+  [data-theme="dark"] .order-type-tag.settled {
+    background: #162238;
+    color: #94a3b8;
+  }
+
+  /* Modals & Dialogs */
+  [data-theme="dark"] .modal-backdrop {
+    background: rgba(3, 7, 18, 0.75);
+  }
+  [data-theme="dark"] .modal {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .modal-head {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .modal-foot {
+    background: #0e1626;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .modal-close {
+    background: #162238;
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .modal-close:hover {
+    background: #1e2c47;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .cog-choice-item {
+    background: #0e1626;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .cog-choice-item:hover {
+    border-color: #0284c7;
+    background: #142036;
+  }
+  [data-theme="dark"] .cog-choice-item.selected {
+    border-color: #0284c7;
+    background: rgba(2, 132, 199, 0.12);
+  }
+  [data-theme="dark"] .cog-builder-card {
+    background: #0e1626;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .kg-breakdown-card {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+  }
+  [data-theme="dark"] .kg-breakdown-card span {
+    color: #34d399 !important;
+  }
+  [data-theme="dark"] .danger-alert-box {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    color: #fca5a5 !important;
+  }
+
+  /* Masters Tables */
+  [data-theme="dark"] .master-stat-card {
+    background: #111a2e;
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .master-table th {
+    background: #0e1626;
+    border-color: #1e2c47;
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .master-table td {
+    border-color: #1e2c47;
+  }
+  [data-theme="dark"] .master-table tr:hover td {
+    background: #162238;
+  }
+  [data-theme="dark"] .var-badge {
+    background: rgba(2, 132, 199, 0.16);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+  }
+  [data-theme="dark"] .action-icon-btn {
+    background: #162238;
+    border-color: #1e2c47;
+    color: #94a3b8;
+  }
+  [data-theme="dark"] .action-icon-btn:hover {
+    background: #1e2c47;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] .action-icon-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: #ef4444;
+    color: #fca5a5;
+  }
+  [data-theme="dark"] .preset-btn.preset-kitchen {
+    background: rgba(245, 158, 11, 0.16) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+  }
+  [data-theme="dark"] .preset-btn.preset-cashier {
+    background: rgba(2, 132, 199, 0.16) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(2, 132, 199, 0.35) !important;
+  }
+  [data-theme="dark"] .preset-btn.preset-waiter {
+    background: rgba(16, 185, 129, 0.16) !important;
+    color: #34d399 !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+  }
+  [data-theme="dark"] .preset-btn.preset-admin {
+    background: rgba(168, 85, 247, 0.16) !important;
+    color: #c084fc !important;
+    border-color: rgba(168, 85, 247, 0.35) !important;
+  }
+  [data-theme="dark"] .pending-order-banner {
+    background: rgba(245, 158, 11, 0.14) !important;
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    color: #fbbf24 !important;
+  }
+  [data-theme="dark"] .pending-order-banner span:last-child {
+    background: rgba(245, 158, 11, 0.25) !important;
+    color: #fef3c7 !important;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -1839,7 +2574,7 @@
           <span id="ctxDetail" style="font-size:12.5px;color:var(--ink-soft);">Select a table from floor desk to begin ordering.</span>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="btn" id="shiftTableBtn" style="display:none;background:#fef3c7;border-color:#fde68a;color:#b45309;">
+          <button class="btn btn-shift-table" id="shiftTableBtn" style="display:none;">
             🔄 Shift Table
           </button>
           <button class="btn btn-danger" id="posDeskCancelBtn" style="display:none;font-weight:700;align-items:center;gap:5px;" title="Cancel Current Order & Release Table">
@@ -1950,7 +2685,7 @@
                 <button type="button" class="btn-disc-chip" data-type="pct" data-val="15">15%</button>
                 <button type="button" class="btn-disc-chip" data-type="flat" data-val="50">₹50</button>
                 <button type="button" class="btn-disc-chip" data-type="flat" data-val="100">₹100</button>
-                <button type="button" id="cartClearDiscountBtn" title="Remove Discount" style="height:26px; padding:0 6px; border:1px solid #fecaca; background:#fef2f2; color:#dc2626; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:none;">✕ Remove</button>
+                <button type="button" id="cartClearDiscountBtn" class="btn-clear-discount" title="Remove Discount" style="display:none;">✕ Remove</button>
               </div>
             </div>
 
@@ -1974,7 +2709,7 @@
                     <option value="18">18% GST (9% + 9%)</option>
                     <option value="0">0% (Tax Exempt)</option>
                   </select>
-                  <button type="button" id="cartToggleTaxBtn" style="height:24px; padding:0 6px; font-size:10px; font-weight:700; border-radius:5px; cursor:pointer; border:1px solid #fecaca; background:#fef2f2; color:#dc2626;" title="Toggle / Remove Tax">✕ Remove Tax</button>
+                  <button type="button" id="cartToggleTaxBtn" class="btn-tax-toggle remove-tax" title="Toggle / Remove Tax" style="height:24px; padding:0 6px; font-size:10px; font-weight:700; border-radius:5px; cursor:pointer;">✕ Remove Tax</button>
                 </div>
               </div>
 
@@ -3466,10 +4201,78 @@
 
   document.getElementById("startReservations")?.addEventListener("click", () => showView("reservations"));
 
+  // URL or LocalStorage theme initialization
+  const urlParams = new URLSearchParams(window.location.search);
+  const themeParam = urlParams.get("theme");
+  const savedTheme = localStorage.getItem("pos_theme");
+  if (themeParam === "dark" || (!themeParam && savedTheme === "dark")) {
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else if (themeParam === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+
   document.getElementById("themeToggle").addEventListener("click", () => {
     const cur = document.documentElement.getAttribute("data-theme");
-    document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("pos_theme", next);
   });
+
+  // URL test helper for automated testing (autologin, target table, demo items)
+  if (urlParams.get("autologin") === "true") {
+    const loginEl = document.getElementById("loginScreen");
+    if (loginEl) {
+      loginEl.classList.add("hidden");
+      loginEl.style.display = "none";
+    }
+    const reqView = urlParams.get("view") || "pos";
+    const tableId = urlParams.get("table") ? Number(urlParams.get("table")) : 4;
+    setTimeout(() => {
+      if (reqView === "pos") {
+        const tableObj = tables.find(t => t.id === tableId) || tables[3];
+        if (tableObj) {
+          if (!tableOrders[tableObj.id]) {
+            tableOrders[tableObj.id] = {
+              orderId: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+              tableId: tableObj.id,
+              tableName: tableObj.tableName,
+              shortcode: tableObj.shortcode,
+              orderType: "dineIn",
+              customerName: "",
+              customerPhone: "",
+              items: []
+            };
+          }
+          currentOrderSession = tableOrders[tableObj.id];
+          if (urlParams.get("additems") === "true" && currentOrderSession.items.length === 0) {
+            currentOrderSession.items.push({
+              id: items[0].id,
+              name: items[0].itemName,
+              baseName: items[0].itemName,
+              price: items[0].price,
+              unitMode: "portion",
+              qty: 2,
+              foodType: items[0].foodType,
+              sentQty: 0
+            });
+            currentOrderSession.items.push({
+              id: items[1].id,
+              name: items[1].itemName,
+              baseName: items[1].itemName,
+              price: items[1].price,
+              unitMode: "portion",
+              qty: 1,
+              foodType: items[1].foodType,
+              sentQty: 1
+            });
+          }
+          showView("pos");
+        }
+      } else {
+        showView(reqView);
+      }
+    }, 150);
+  }
 
   // Password Obscure / Reveal Toggle
   const passInput = document.getElementById("loginPassword");
@@ -3755,14 +4558,14 @@
       let resBadgeHtml = "";
       if (nextRes) {
         resBadgeHtml += `
-          <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
+          <span class="res-table-badge" style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
             📅 Res: ${nextRes.resTime} (${nextRes.guestName.split(' ')[0]})
           </span>
         `;
       }
       if (waitlistCount > 0) {
         resBadgeHtml += `
-          <span style="font-size:10px;font-weight:700;background:#fffbeb;color:#b45309;border:1px solid #fde68a;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
+          <span class="waitlist-table-badge" style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:3px;">
             ⏳ ${waitlistCount} Waitlist
           </span>
         `;
@@ -4027,9 +4830,9 @@
 
       let statusBadgeHtml = `<span class="table-status ${o.statusBadgeClass}" style="font-size:10.5px;padding:2px 8px;">${o.statusLabel}</span>`;
       if (isPending) {
-        statusBadgeHtml = `<span class="table-status" style="font-size:10.5px;padding:2px 8px;background:#fef3c7;color:#b45309;border:1px solid #fde68a;">⏸️ Pending / On Hold</span>`;
+        statusBadgeHtml = `<span class="table-status status-pending" style="font-size:10.5px;padding:2px 8px;">⏸️ Pending / On Hold</span>`;
       } else if (isCancelled) {
-        statusBadgeHtml = `<span class="table-status" style="font-size:10.5px;padding:2px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;">🚫 Cancelled</span>`;
+        statusBadgeHtml = `<span class="table-status" style="font-size:10.5px;padding:2px 8px;background:var(--nonveg-tint);color:var(--nonveg);border:1px solid rgba(239,68,68,0.3);">🚫 Cancelled</span>`;
       }
 
       return `
@@ -4518,7 +5321,7 @@
             <div class="dish-name">${it.itemName}</div>
             <div style="font-size:11px;color:var(--ink-soft);line-height:1.25;">${it.itemDescription || ''}</div>
             <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">
-              <span class="cog-badge multiple" style="font-size:9.5px;padding:1px 6px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">🔄 Plate &amp; KG</span>
+              <span class="cog-badge dual-mode" style="font-size:9.5px;padding:1px 6px;">🔄 Plate &amp; KG</span>
               ${singleGroups > 0 ? `<span class="cog-badge single" style="font-size:9.5px;padding:1px 5px;">🔘 Portions</span>` : ''}
               ${multiGroups > 0 ? `<span class="cog-badge multiple" style="font-size:9.5px;padding:1px 5px;">☑️ Extras</span>` : ''}
             </div>
@@ -4737,7 +5540,7 @@
         ${dish.foodType === 'nonveg' ? '<span class="nonveg-icon"><span></span></span>' : '<span class="veg-icon"><span></span></span>'}
         <span>${dish.itemName}</span>
         <span class="shortcode-badge">${dish.shortcode}</span>
-        <span class="cog-badge multiple" style="font-size:10px;padding:2px 7px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">🔄 Plate / KG Dual</span>
+        <span class="cog-badge dual-mode" style="font-size:10px;padding:2px 7px;">🔄 Plate / KG Dual</span>
       </div>
     `;
 
@@ -4817,11 +5620,11 @@
           </div>
 
           <!-- Live calculation breakdown card -->
-          <div style="padding:8px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:11.5px;color:#065f46;font-weight:600;">
+          <div class="kg-breakdown-card" style="padding:8px 12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11.5px;font-weight:600;">
               Breakdown: <b>${customWeightKg} Kg</b> × <b>${money(ratePerKg)}/Kg</b>
             </span>
-            <span style="font-size:14px;font-weight:800;color:#047857;" id="kgBreakdownTotal">
+            <span style="font-size:14px;font-weight:800;" id="kgBreakdownTotal">
               ${money(calculatedWeightPrice)}
             </span>
           </div>
@@ -5155,12 +5958,12 @@
 
     const isPending = Boolean(currentOrderSession && (currentOrderSession.isPending || currentOrderSession.status === "pending"));
     const pendingBannerHtml = isPending ? `
-      <div style="background:#fef3c7;border:1.5px solid #f59e0b;color:#b45309;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:space-between;margin:8px 0 12px 0;">
+      <div class="pending-order-banner" style="border:1.5px solid #f59e0b;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:space-between;margin:8px 0 12px 0;">
         <div style="display:flex;align-items:center;gap:6px;">
           <i data-lucide="clock" style="width:14px;height:14px;"></i>
           <span>PENDING / ON HOLD</span>
         </div>
-        <span style="font-size:10.5px;background:#fde68a;padding:2px 8px;border-radius:6px;">Ready to Send KOT or Pay</span>
+        <span style="font-size:10.5px;padding:2px 8px;border-radius:6px;">Ready to Send KOT or Pay</span>
       </div>
     ` : '';
 
@@ -5179,7 +5982,7 @@
               <div style="font-weight:700;font-size:12.5px;color:var(--ink);">${it.name}</div>
               ${it.unitMode === 'kg' ? `
                 <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
-                  <span class="cog-badge single" style="font-size:10px;padding:2px 7px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fde68a;">
+                  <span class="cog-badge kg-badge" style="font-size:10px;padding:2px 7px;font-weight:700;">
                     ⚖️ ${it.weightKg} Kg (@ ${money(it.pricePerKg)}/Kg)
                   </span>
                 </div>
@@ -5396,9 +6199,10 @@
       if (sgstEl) sgstEl.textContent = money(sgstVal);
       if (toggleTaxBtn) {
         toggleTaxBtn.textContent = "✕ Remove Tax";
-        toggleTaxBtn.style.background = "#fef2f2";
-        toggleTaxBtn.style.color = "#dc2626";
-        toggleTaxBtn.style.borderColor = "#fecaca";
+        toggleTaxBtn.className = "btn-tax-toggle remove-tax";
+        toggleTaxBtn.style.background = "";
+        toggleTaxBtn.style.color = "";
+        toggleTaxBtn.style.borderColor = "";
       }
     } else {
       if (taxRowsCont) taxRowsCont.style.display = "none";
@@ -5408,9 +6212,10 @@
       }
       if (toggleTaxBtn) {
         toggleTaxBtn.textContent = "+ Add Tax (5%)";
-        toggleTaxBtn.style.background = "#ecfdf5";
-        toggleTaxBtn.style.color = "#059669";
-        toggleTaxBtn.style.borderColor = "#a7f3d0";
+        toggleTaxBtn.className = "btn-tax-toggle add-tax";
+        toggleTaxBtn.style.background = "";
+        toggleTaxBtn.style.color = "";
+        toggleTaxBtn.style.borderColor = "";
       }
     }
 
@@ -6446,7 +7251,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
                                 </div>
                                 ${it.weightKg ? `
                                   <div style="margin-top:2px;">
-                                    <span class="cog-badge single" style="font-size:9.5px;padding:1px 6px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;">
+                                    <span class="cog-badge kg-badge" style="font-size:9.5px;padding:1px 6px;">
                                       ⚖️ ${it.weightKg} Kg
                                     </span>
                                   </div>
@@ -6460,7 +7265,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
                                   </div>
                                 ` : ''}
                                 ${it.note ? `
-                                  <div class="kot-item-note" style="margin-top:3px;font-size:10.5px;color:#c2410c;background:#fff7ed;padding:2px 6px;border-radius:4px;border:1px solid #ffedd5;font-weight:700;">
+                                  <div class="kot-item-note">
                                     📝 <b>Note:</b> ${it.note}
                                   </div>
                                 ` : ''}
@@ -6473,11 +7278,11 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
                   </div>
 
                   ${k.chefNote ? `
-                    <div class="kot-notes-box" style="margin-top:8px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:7px 9px;">
-                      <div class="kot-notes-tag" style="font-size:10px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:4px;">
+                    <div class="kot-notes-box" style="margin-top:8px;">
+                      <div class="kot-notes-tag" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:4px;">
                         <span>📝</span> KITCHEN INSTRUCTIONS / CHEF NOTE
                       </div>
-                      <div class="kot-notes-text" style="font-size:11.5px;color:#78350f;font-weight:700;margin-top:3px;line-height:1.35;">${k.chefNote}</div>
+                      <div class="kot-notes-text" style="font-size:11.5px;font-weight:700;margin-top:3px;line-height:1.35;">${k.chefNote}</div>
                     </div>
                   ` : ''}
 
@@ -7501,10 +8306,10 @@ For any queries or updates, reply to this message.`;
               <td>
                 ${it.pricingType === 'kg' ? `
                   <b style="color:var(--primary);">${money(it.pricePerKg || it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ KG</span><br>
-                  <span class="cog-badge single" style="font-size:9px;padding:1px 6px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;">⚖️ Sold By KG</span>
+                  <span class="cog-badge kg-badge" style="font-size:9px;padding:1px 6px;">⚖️ Sold By KG</span>
                 ` : it.pricingType === 'both' ? `
                   <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:10.5px;color:var(--ink-soft);">/ Pl</span> · <b style="color:#059669;">${money(it.pricePerKg)}</b> <span style="font-size:10.5px;color:var(--ink-soft);">/ KG</span><br>
-                  <span class="cog-badge multiple" style="font-size:9px;padding:1px 6px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">🔄 Plate &amp; KG Dual</span>
+                  <span class="cog-badge dual-mode" style="font-size:9px;padding:1px 6px;">🔄 Plate &amp; KG Dual</span>
                 ` : `
                   <b style="color:var(--primary);">${money(it.price)}</b> <span style="font-size:11px;color:var(--ink-soft);">/ Plate</span>
                 `}
@@ -8500,16 +9305,16 @@ For any queries or updates, reply to this message.`;
         <div style="margin-bottom:14px;background:var(--surface-subtle);border:1px solid var(--line);border-radius:8px;padding:10px 12px;">
           <div style="font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;">⚡ Quick Permission Presets:</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="btn btn-sm" id="presetKitchenOnly" style="font-size:11px;background:#fef3c7;color:#92400e;border-color:#fde68a;">
+            <button type="button" class="btn btn-sm preset-btn preset-kitchen" id="presetKitchenOnly" style="font-size:11px;">
               🍳 Kitchen Only (KOT Kanban Only)
             </button>
-            <button type="button" class="btn btn-sm" id="presetCashier" style="font-size:11px;background:#e0f2fe;color:#0369a1;border-color:#bae6fd;">
+            <button type="button" class="btn btn-sm preset-btn preset-cashier" id="presetCashier" style="font-size:11px;">
               💵 Cashier (POS &amp; Billing)
             </button>
-            <button type="button" class="btn btn-sm" id="presetWaiter" style="font-size:11px;background:#f0fdf4;color:#166534;border-color:#bbf7d0;">
+            <button type="button" class="btn btn-sm preset-btn preset-waiter" id="presetWaiter" style="font-size:11px;">
               🧑‍🍳 Captain (Orders &amp; Tables)
             </button>
-            <button type="button" class="btn btn-sm" id="presetFullAdmin" style="font-size:11px;background:#fae8ff;color:#86198f;border-color:#f5d0fe;">
+            <button type="button" class="btn btn-sm preset-btn preset-admin" id="presetFullAdmin" style="font-size:11px;">
               👑 Full Admin (All Rights)
             </button>
           </div>
