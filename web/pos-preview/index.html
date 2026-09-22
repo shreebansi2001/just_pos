@@ -2519,6 +2519,97 @@
     font-size: 10px;
     border-radius: 6px;
   }
+  .receipt-paper-roll.size-76mm {
+    width: 300px;
+    padding: 12px 10px;
+    font-size: 9.5px;
+    border-radius: 4px;
+  }
+  .receipt-paper-roll.size-100mm {
+    width: 380px;
+    padding: 16px 14px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .receipt-paper-roll.size-custom {
+    width: 320px;
+    padding: 12px 10px;
+    font-size: 10px;
+    border-radius: 4px;
+  }
+
+  /* Multi-Document Type Switcher Ribbon */
+  .doc-type-ribbon {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+  .doc-type-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--surface-subtle);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .doc-type-btn:hover {
+    border-color: var(--primary-light);
+    background: var(--panel);
+  }
+  .doc-type-btn.active {
+    border-color: var(--primary);
+    background: var(--panel);
+    color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  /* Demo Invoice Upload & Auto-Constructor Box */
+  .demo-upload-zone {
+    border: 2px dashed #94a3b8;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .demo-upload-zone:hover, .demo-upload-zone.dragover {
+    border-color: var(--primary);
+    background: #eff6ff;
+  }
+  .demo-sample-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .demo-sample-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+  .demo-sample-chip.active {
+    border-color: var(--primary);
+    background: #eff6ff;
+    color: var(--primary);
+  }
+
 
   /* 80mm Thermal Printer Settings: matches POSPrinter POS-80C 80(72)mm x 297mm */
   @media print {
@@ -3285,7 +3376,8 @@
         <button class="cat-tab" data-master="floors">Floor Master</button>
         <button class="cat-tab" data-master="tables">Table Master</button>
         <button class="cat-tab" data-master="taxes">Tax Master</button>
-        <button class="cat-tab" data-master="invoices">Invoice &amp; Print Master</button>
+        <button class="cat-tab" data-master="invoices">Invoice Master</button>
+        <button class="cat-tab" data-master="printers">Print Master</button>
         <button class="cat-tab" data-master="roles">Roles &amp; Rights</button>
         <button class="cat-tab" data-master="users">Staff Master</button>
       </div>
@@ -3314,8 +3406,11 @@
       <!-- Master Tax & Invoice Rules Configuration Card (Shown on Tax Master tab) -->
       <div id="masterTaxConfigContainer" style="display:none;margin-bottom:16px;"></div>
 
-      <!-- Master Invoice & Print Customization Studio (Shown on Invoice & Print Master tab) -->
+      <!-- Master Invoice Customization Studio (Shown on Invoice Master tab) -->
       <div id="masterInvoiceConfigContainer" style="display:none;margin-bottom:16px;"></div>
+
+      <!-- Master Print & Printer Profiles Studio (Shown on Print Master tab) -->
+      <div id="masterPrintConfigContainer" style="display:none;margin-bottom:16px;"></div>
 
       <div class="master-table-card" id="masterTableWrapper">
         <table class="master-table" id="masterDataTable"></table>
@@ -4154,6 +4249,314 @@
       enableReviewQr: true
     }
   };
+
+  // =========================================================================
+  // PRINT MASTER: PRINTER PROFILES & CUSTOM PAPER SIZES
+  // =========================================================================
+  const DEFAULT_PRINTER_PROFILES = [
+    {
+      id: "pr_cashier_80",
+      name: "Main Cashier Counter (POS-80)",
+      station: "Cashier Desk",
+      printerType: "thermal_roll",
+      interface: "USB",
+      paperSize: "80mm", // 80mm, 58mm, 76mm, 100mm, a4, a5, custom
+      customWidthMm: 80,
+      printableWidthMm: 72,
+      topBottomMarginMm: 2,
+      leftRightMarginMm: 2,
+      fontSize: "10px",
+      autoCut: true,
+      assignedDocs: ["invoice", "interim"],
+      status: "active"
+    },
+    {
+      id: "pr_kitchen_80",
+      name: "Kitchen Main Cooking KOT (POS-80)",
+      station: "Hot Kitchen / Curry Section",
+      printerType: "thermal_roll",
+      interface: "LAN/Network",
+      paperSize: "80mm",
+      customWidthMm: 80,
+      printableWidthMm: 72,
+      topBottomMarginMm: 2,
+      leftRightMarginMm: 2,
+      fontSize: "11px",
+      autoCut: true,
+      assignedDocs: ["kot"],
+      status: "active"
+    },
+    {
+      id: "pr_bar_58",
+      name: "Bar & Beverage Counter (POS-58)",
+      station: "Beverage / Mocktail Bar",
+      printerType: "thermal_roll",
+      interface: "Bluetooth",
+      paperSize: "58mm",
+      customWidthMm: 58,
+      printableWidthMm: 48,
+      topBottomMarginMm: 1.5,
+      leftRightMarginMm: 1.5,
+      fontSize: "9px",
+      autoCut: false,
+      assignedDocs: ["ot"],
+      status: "active"
+    },
+    {
+      id: "pr_banquet_a4",
+      name: "Accounts & Banquet Billing Desk (A4 Laser)",
+      station: "Back Office / Accounts",
+      printerType: "sheet",
+      interface: "LAN/Network",
+      paperSize: "a4",
+      customWidthMm: 210,
+      printableWidthMm: 185,
+      topBottomMarginMm: 12,
+      leftRightMarginMm: 12,
+      fontSize: "12px",
+      autoCut: false,
+      assignedDocs: ["invoice"],
+      status: "active"
+    },
+    {
+      id: "pr_dispatch_76",
+      name: "Dispatch & Packing Station (76mm Roll)",
+      station: "Dispatch / Delivery Packing",
+      printerType: "thermal_roll",
+      interface: "USB",
+      paperSize: "76mm",
+      customWidthMm: 76,
+      printableWidthMm: 68,
+      topBottomMarginMm: 2,
+      leftRightMarginMm: 2,
+      fontSize: "9.5px",
+      autoCut: true,
+      assignedDocs: ["gate_pass"],
+      status: "active"
+    }
+  ];
+
+  let printerProfiles = (function() {
+    try {
+      const saved = localStorage.getItem("pos_printer_profiles");
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return DEFAULT_PRINTER_PROFILES.map(p => Object.assign({}, p));
+  })();
+
+  // =========================================================================
+  // INVOICE MASTER: MULTI-DOCUMENT TYPES & SMART DEMO EXTRACTOR
+  // =========================================================================
+  const DOCUMENT_TYPES = [
+    {
+      id: "invoice",
+      title: "Tax Invoice / Final Customer Bill",
+      shortLabel: "Tax Invoice",
+      icon: "🧾",
+      category: "Billing & Settlement",
+      description: "Official customer tax invoice with GST breakdown, round off, UPI QR code & payment acknowledgment."
+    },
+    {
+      id: "kot",
+      title: "Kitchen Order Ticket (KOT)",
+      shortLabel: "Kitchen KOT",
+      icon: "🍳",
+      category: "Kitchen & Production",
+      description: "Preparation order slip for kitchen stations with large readable font, chef instructions & timestamps."
+    },
+    {
+      id: "ot",
+      title: "Order Ticket / Captain Slip (OT / BOT)",
+      shortLabel: "Captain OT / Bar",
+      icon: "📋",
+      category: "Service & Bar Dispatch",
+      description: "Service dispatch slip for stewards, captains, and bar counter with table, covers & item list."
+    },
+    {
+      id: "gate_pass",
+      title: "Gate Pass / Dispatch Checklist",
+      shortLabel: "Gate Pass",
+      icon: "🚪",
+      category: "Logistics & Dispatch",
+      description: "Security clearance slip, item quantity checklist & driver/customer verification signature line."
+    },
+    {
+      id: "interim",
+      title: "Interim Check / Proforma Bill (Kachha Bill)",
+      shortLabel: "Interim Bill",
+      icon: "⏳",
+      category: "Billing Review",
+      description: "Pre-settlement summary slip presented to the guest at table before collecting cash/UPI/card."
+    }
+  ];
+
+  let activeInvoiceDocType = "invoice"; // default active document tab in Invoice Master
+
+  const DEMO_INVOICE_SAMPLES = [
+    {
+      id: "demo_finedine_80",
+      title: "Fine Dining Restaurant (80mm Thermal)",
+      tag: "80mm Thermal",
+      outletName: "The Royal Heritage Kitchen & Lounge",
+      tagline: "Authentic North Indian & Tandoor Speciality",
+      address: "Heritage Square, Near Old Secretariat, Panaji, Goa 403001",
+      phone: "+91 98221 44550",
+      email: "billing@royalheritage.in",
+      website: "www.royalheritage.in",
+      gstin: "30AABCR8899Q1ZA",
+      fssai: "10020011000889",
+      paperFormat: "80mm",
+      printerProfileId: "pr_cashier_80",
+      showLogo: true,
+      showTokenNumber: true,
+      showTableAndFloor: true,
+      showServerName: true,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: true,
+      showHsnSac: false,
+      showItemTaxRate: true,
+      showTaxModeBadge: true,
+      showItemAddons: true,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: true,
+      showSavingsHighlight: true,
+      thankYouMessage: "Thank you for dining with us! Hope to host you again soon.",
+      termsText: "Goods once sold cannot be returned. Service charge voluntary.",
+      enableUpiQr: true,
+      upiId: "royalheritage@hdfcbank",
+      enableReviewQr: true,
+      reviewUrl: "https://g.page/r/royalheritage/review",
+      sampleSnippet: "ROYAL HERITAGE KITCHEN\nGSTIN: 30AABCR8899Q1ZA\nTable: T-04 (AC Hall)\nPaneer Tikka (2) ₹560 +5% GST\nButter Chicken (1) ₹380 +5% GST\nSubtotal: ₹940 | GST: ₹47 | Total: ₹987\nUPI QR: royalheritage@hdfcbank"
+    },
+    {
+      id: "demo_qsr_58",
+      title: "Express QSR & Burger Counter (58mm Compact)",
+      tag: "58mm Compact",
+      outletName: "BURGER KINGDOM EXPRESS",
+      tagline: "Flame Grilled Burgers & Shakes",
+      address: "Food Court, Mall de Goa, Porvorim 403521",
+      phone: "0832 2410999",
+      email: "orders@burgerkingdom.com",
+      website: "www.burgerkingdom.com",
+      gstin: "30AACCK2341P1ZB",
+      fssai: "10021011000332",
+      paperFormat: "58mm",
+      printerProfileId: "pr_bar_58",
+      showLogo: false,
+      showTokenNumber: true,
+      showTableAndFloor: false,
+      showServerName: false,
+      showCustomerDetails: false,
+      showPaymentMode: true,
+      showInvoiceSeries: false,
+      showSerialNo: false,
+      showHsnSac: false,
+      showItemTaxRate: false,
+      showTaxModeBadge: false,
+      showItemAddons: false,
+      showTaxBreakdown: false,
+      showTaxableBase: false,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: false,
+      showSavingsHighlight: false,
+      thankYouMessage: "Please collect your order when Token is called. Enjoy!",
+      termsText: "",
+      enableUpiQr: true,
+      upiId: "burgerkingdom@paytm",
+      enableReviewQr: false,
+      reviewUrl: "",
+      sampleSnippet: "BURGER KINGDOM EXPRESS\nToken #: 48 (Takeaway)\nCrispy Veg Whopper (1) ₹169\nCheesy Fries (1) ₹109\nCoke 300ml (1) ₹60\nTotal Bill: ₹338 (Incl. All Taxes)\nScan UPI: burgerkingdom@paytm"
+    },
+    {
+      id: "demo_bakery_80",
+      title: "Mithai & Confectionery (Weight Billing 80mm)",
+      tag: "80mm By-Weight",
+      outletName: "Shree Ganesh Sweets & Namkeen",
+      tagline: "Pure Desi Ghee Sweets & Dry Fruit Delicacies",
+      address: "Shop 4, Market Complex, Mapusa, Goa 403507",
+      phone: "+91 832 2256789",
+      email: "sales@shreeganeshsweets.com",
+      website: "www.shreeganeshsweets.com",
+      gstin: "30AAGFS9922K1ZL",
+      fssai: "10018011000911",
+      paperFormat: "80mm",
+      printerProfileId: "pr_cashier_80",
+      showLogo: true,
+      showTokenNumber: false,
+      showTableAndFloor: false,
+      showServerName: false,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: true,
+      showHsnSac: true,
+      showItemTaxRate: true,
+      showTaxModeBadge: true,
+      showItemAddons: false,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: true,
+      showSavingsHighlight: true,
+      thankYouMessage: "Fresh pure sweets. Best wishes from Shree Ganesh!",
+      termsText: "Consume within 3 days. Store in cool place.",
+      enableUpiQr: true,
+      upiId: "ganeshsweets@icici",
+      enableReviewQr: true,
+      reviewUrl: "https://g.page/r/ganeshsweets/review",
+      sampleSnippet: "SHREE GANESH SWEETS\nHSN 2106: Kaju Katli (0.500 Kg @ ₹1000/Kg) = ₹500.00 [5% Incl]\nHSN 2106: Motichoor Ladoo (1.000 Kg @ ₹480/Kg) = ₹480.00 [5% Incl]\nSubtotal: ₹980.00 | Total Tax: ₹46.67\nGrand Total: ₹980.00"
+    },
+    {
+      id: "demo_banquet_a4",
+      title: "Banquet & Bulk Corporate Catering (A4 Sheet)",
+      tag: "A4 Full Sheet",
+      outletName: "Grand Heritage Banquets & Luxury Catering",
+      tagline: "Corporate Galas, Weddings & Outdoor Catering",
+      address: "Heritage Convention Centre, NH-66, Bambolim, Goa 403201",
+      phone: "+91 88307 68469 / 0832 2450000",
+      email: "banquets@grandheritagegoa.com",
+      website: "www.grandheritagegoa.com",
+      gstin: "30AABCG5544R1ZM",
+      fssai: "10019011000450",
+      paperFormat: "a4",
+      printerProfileId: "pr_banquet_a4",
+      showLogo: true,
+      showTokenNumber: true,
+      showTableAndFloor: true,
+      showServerName: true,
+      showCustomerDetails: true,
+      showPaymentMode: true,
+      showInvoiceSeries: true,
+      showSerialNo: true,
+      showHsnSac: true,
+      showItemTaxRate: true,
+      showTaxModeBadge: true,
+      showItemAddons: true,
+      showTaxBreakdown: true,
+      showTaxableBase: true,
+      showTotalQuantity: true,
+      showRoundOff: true,
+      showAmountInWords: true,
+      showSavingsHighlight: true,
+      thankYouMessage: "We thank you for partnering with Grand Heritage Banquets!",
+      termsText: "Payment terms: 100% advance or per agreement. TDS certificate required.",
+      enableUpiQr: true,
+      upiId: "grandheritage@axisbank",
+      enableReviewQr: true,
+      reviewUrl: "https://g.page/r/grandheritage/review",
+      sampleSnippet: "GRAND HERITAGE BANQUETS\nFormal Tax Invoice (A4 Format)\nClient: Tata Consultancy Services\nRoyal Dinner Buffet (120 Pax @ ₹850) = ₹1,02,000\nMocktail Bar Setup = ₹18,000\nTaxable: ₹1,20,000 | CGST 2.5%: ₹3,000 | SGST 2.5%: ₹3,000\nGrand Total: ₹1,26,000"
+    }
+  ];
+
+  // Active extracted demo bill memory
+  let activeUploadedDemoData = null;
 
   // =========================================================================
   // DYNAMIC ROLES, PERMISSIONS & STAFF USERS
@@ -5130,6 +5533,25 @@
         const mTab = urlParams.get("mastertab");
         const tabBtn = document.querySelector(`#masterNavTabs .cat-tab[data-master="${mTab}"]`);
         if (tabBtn) tabBtn.click();
+      }
+      if (urlParams.get("invoicedoc")) {
+        const docId = urlParams.get("invoicedoc");
+        setTimeout(() => {
+          const docBtn = document.querySelector(`.doc-type-btn[data-doctype="${docId}"]`);
+          if (docBtn) docBtn.click();
+        }, 200);
+      }
+      if (urlParams.get("demoid")) {
+        const dId = urlParams.get("demoid");
+        setTimeout(() => {
+          const chip = document.querySelector(`.demo-sample-chip[data-demoid="${dId}"]`);
+          if (chip) chip.click();
+        }, 250);
+      }
+      if (urlParams.get("openprintermodal") === "true") {
+        setTimeout(() => {
+          openPrinterProfileModal(null);
+        }, 250);
       }
       if (urlParams.get("openadditem") === "true") {
         setTimeout(() => {
@@ -9313,7 +9735,8 @@ For any queries or updates, reply to this message.`;
     floors: { title: "Floor Master", addBtnLabel: "+ Add Floor", searchPlaceholder: "Search floors..." },
     tables: { title: "Table Master", addBtnLabel: "+ Add Table", searchPlaceholder: "Search tables..." },
     taxes: { title: "Tax Master", addBtnLabel: "+ Add Tax", searchPlaceholder: "Search tax types..." },
-    invoices: { title: "Invoice & Print Master", addBtnLabel: "💾 Save Template", searchPlaceholder: "Search templates or settings..." },
+    invoices: { title: "Invoice Master", addBtnLabel: "💾 Save Invoice Template", searchPlaceholder: "Search invoice templates or fields..." },
+    printers: { title: "Print Master", addBtnLabel: "+ Add Printer / Custom Size", searchPlaceholder: "Search printer profiles..." },
     roles: { title: "Roles & Rights Master", addBtnLabel: "+ Add Role", searchPlaceholder: "Search roles (Admin, Kitchen, Cashier...)" },
     users: { title: "Staff / User Master", addBtnLabel: "+ Add Staff Member", searchPlaceholder: "Search staff members..." }
   };
@@ -9323,8 +9746,9 @@ For any queries or updates, reply to this message.`;
       document.querySelectorAll("#masterNavTabs .cat-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
       activeMasterTab = tab.dataset.master;
-      document.getElementById("openAddMasterModalBtn").textContent = MASTER_CONFIG[activeMasterTab].addBtnLabel;
-      document.getElementById("masterSearchInput").placeholder = MASTER_CONFIG[activeMasterTab].searchPlaceholder;
+      const cfg = MASTER_CONFIG[activeMasterTab] || { addBtnLabel: "+ Add Record", searchPlaceholder: "Search..." };
+      document.getElementById("openAddMasterModalBtn").textContent = cfg.addBtnLabel;
+      document.getElementById("masterSearchInput").placeholder = cfg.searchPlaceholder;
       document.getElementById("masterSearchInput").value = "";
       document.getElementById("masterStatusFilter").value = "";
       renderMasters();
@@ -9333,22 +9757,35 @@ For any queries or updates, reply to this message.`;
 
   function renderMasters() {
     const isInvoiceTab = (activeMasterTab === "invoices");
+    const isPrinterTab = (activeMasterTab === "printers");
 
     const addBtn = document.getElementById("openAddMasterModalBtn");
     const filterBar = document.querySelector(".master-filter-bar");
     const statsContainer = document.getElementById("masterStatsContainer");
     const tableWrapper = document.getElementById("masterTableWrapper");
 
-    if (addBtn) addBtn.style.display = isInvoiceTab ? "none" : "inline-flex";
-    if (filterBar) filterBar.style.display = isInvoiceTab ? "none" : "flex";
-    if (statsContainer) statsContainer.style.display = isInvoiceTab ? "none" : "grid";
-    if (tableWrapper) tableWrapper.style.display = isInvoiceTab ? "none" : "block";
+    if (addBtn) {
+      if (isInvoiceTab) {
+        addBtn.style.display = "none";
+      } else if (isPrinterTab) {
+        addBtn.style.display = "inline-flex";
+        addBtn.textContent = "+ Add Printer / Custom Size";
+      } else {
+        addBtn.style.display = "inline-flex";
+        addBtn.textContent = MASTER_CONFIG[activeMasterTab]?.addBtnLabel || "+ Add Record";
+      }
+    }
+
+    if (filterBar) filterBar.style.display = (isInvoiceTab || isPrinterTab) ? "none" : "flex";
+    if (statsContainer) statsContainer.style.display = (isInvoiceTab) ? "none" : "grid";
+    if (tableWrapper) tableWrapper.style.display = (isInvoiceTab || isPrinterTab) ? "none" : "block";
 
     renderMasterStats();
     renderMasterCustomFilters();
     renderMasterTaxConfigPanel();
-    renderMasterInvoicePrintPanel();
-    if (!isInvoiceTab) {
+    renderMasterInvoiceStudio();
+    renderMasterPrintPanel();
+    if (!isInvoiceTab && !isPrinterTab) {
       renderMasterTable();
     }
   }
@@ -9511,7 +9948,7 @@ For any queries or updates, reply to this message.`;
   };
 
   // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe
-  function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm")) {
+  function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm"), customWidthMm = null, margins = null) {
     let iframe = document.getElementById("posThermalPrintIframe");
     if (!iframe) {
       iframe = document.createElement("iframe");
@@ -9527,11 +9964,49 @@ For any queries or updates, reply to this message.`;
     }
 
     const is58 = paperFormat === "58mm";
+    const is76 = paperFormat === "76mm";
+    const is100 = paperFormat === "100mm";
     const isA4 = paperFormat === "a4";
     const isA5 = paperFormat === "a5";
-    const pageSize = isA4 ? "A4 portrait" : (isA5 ? "A5 portrait" : (is58 ? "58mm auto" : "80mm auto"));
-    const bodyWidth = isA4 ? "185mm" : (isA5 ? "135mm" : (is58 ? "48mm" : "72mm"));
-    const bodyPadding = isA4 ? "12mm" : (isA5 ? "8mm" : "2mm");
+    const isCustom = paperFormat === "custom" || Boolean(customWidthMm);
+
+    let pageSize = "80mm auto";
+    let bodyWidth = "72mm";
+    let bodyPadding = "2mm";
+    let fontSize = "9.5px";
+
+    if (is58) {
+      pageSize = "58mm auto";
+      bodyWidth = "48mm";
+      bodyPadding = "1.5mm";
+      fontSize = "8.5px";
+    } else if (is76) {
+      pageSize = "76mm auto";
+      bodyWidth = "68mm";
+      bodyPadding = "2mm";
+      fontSize = "9.5px";
+    } else if (is100) {
+      pageSize = "100mm auto";
+      bodyWidth = "90mm";
+      bodyPadding = "3mm";
+      fontSize = "10.5px";
+    } else if (isA4) {
+      pageSize = "A4 portrait";
+      bodyWidth = "185mm";
+      bodyPadding = "12mm";
+      fontSize = "11.5px";
+    } else if (isA5) {
+      pageSize = "A5 portrait";
+      bodyWidth = "135mm";
+      bodyPadding = "8mm";
+      fontSize = "10px";
+    } else if (isCustom) {
+      const w = customWidthMm || 80;
+      pageSize = `${w}mm auto`;
+      bodyWidth = `${Math.max(w - 8, 30)}mm`;
+      bodyPadding = `${margins || 2}mm`;
+      fontSize = "9.5px";
+    }
 
     const printCss = `
       @page {
@@ -9549,7 +10024,7 @@ For any queries or updates, reply to this message.`;
         background: #fff !important;
         color: #000 !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
-        font-size: ${is58 ? "8.5px" : (isA4 ? "11.5px" : (isA5 ? "10px" : "9.5px"))} !important;
+        font-size: ${fontSize} !important;
         line-height: 1.35 !important;
         width: ${bodyWidth} !important;
         max-width: ${bodyWidth} !important;
@@ -9590,8 +10065,8 @@ For any queries or updates, reply to this message.`;
   }
   window.executeThermalPrint = executeThermalPrint;
 
-  // Render Custom Customer Receipt / Invoice Slip HTML based on Config
-  function generateInvoiceSlipHtml(inv, cfg = invoiceMasterConfig) {
+  // Unified Multi-Document Slip Generator (Invoice, KOT, OT, Gate Pass, Interim)
+  function generateDocumentSlipHtml(inv, docType = (activeInvoiceDocType || "invoice"), cfg = invoiceMasterConfig) {
     const compConf = companySeriesConfig[inv.companySeries] || companySeriesConfig.amoncar;
     const isPaid = (inv.status === "paid");
     const phoneDisplay = inv.customerPhone && inv.customerPhone !== "undefined" ? inv.customerPhone : (cfg.showCustomerDetails ? "8830768469" : "");
@@ -9617,8 +10092,269 @@ For any queries or updates, reply to this message.`;
     const upiQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=2&data=${encodeURIComponent(upiPayUrl)}`;
     const reviewQrImg = cfg.reviewUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=2&data=${encodeURIComponent(cfg.reviewUrl)}` : "";
 
+    // 1. KITCHEN ORDER TICKET (KOT) SLIP
+    if (docType === "kot") {
+      return `
+        <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace; background:#fff; color:#000; padding:${is58 ? '6px 4px' : '10px 8px'};">
+          <div style="text-align:center; padding-bottom:6px; border-bottom:2px solid #000; margin-bottom:8px;">
+            <div style="font-size:${is58 ? '13px' : '16px'}; font-weight:900; letter-spacing:0.04em; text-transform:uppercase;">
+              🍳 KITCHEN ORDER TICKET (KOT)
+            </div>
+            <div style="font-size:${is58 ? '9px' : '10.5px'}; font-weight:800; margin-top:2px;">
+              ${restName} · STATION: HOT KITCHEN
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#000; color:#fff; padding:5px 8px; border-radius:4px; margin-bottom:8px;">
+            <div style="font-size:${is58 ? '11px' : '13px'}; font-weight:900;">TOKEN: ${inv.tokenNo || 'T-18'}</div>
+            <div style="font-size:${is58 ? '10px' : '12px'}; font-weight:800;">${inv.tableLabel || 'Table 04'}</div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8.5px' : '10px'};">
+            <tr>
+              <td style="padding:1px 0; color:#475569;">KOT Ref #:</td>
+              <td style="padding:1px 0; text-align:right; font-weight:800; font-family:monospace;">KOT-${(inv.id || '').slice(-6) || '0042'}</td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0; color:#475569;">Punched At:</td>
+              <td style="padding:1px 0; text-align:right; font-family:monospace;">${inv.dateFormatted || '22/09/2026'} ${inv.timeFormatted || '07:45 PM'}</td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0; color:#475569;">Captain / Steward:</td>
+              <td style="padding:1px 0; text-align:right; font-weight:700;">${inv.serverName || 'Vikram (Staff)'}</td>
+            </tr>
+          </table>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '9.5px' : '11.5px'};">
+            <thead>
+              <tr style="border-top:2px solid #000; border-bottom:2px solid #000;">
+                <th style="padding:4px 2px; text-align:left; width:26px;">QTY</th>
+                <th style="padding:4px 2px; text-align:left;">DISH / PREPARATION</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(inv.items || []).map((it, idx) => `
+                <tr style="border-bottom:1px dashed #94a3b8;">
+                  <td style="padding:5px 2px; font-size:${is58 ? '12px' : '14px'}; font-weight:900; font-family:monospace; vertical-align:top;">
+                    ${it.unitMode === 'kg' ? `${it.weightKg * it.qty}k` : `${it.qty}x`}
+                  </td>
+                  <td style="padding:5px 2px;">
+                    <div style="font-weight:900; color:#000; font-size:${is58 ? '10.5px' : '12.5px'};">${it.name}</div>
+                    ${(it.addons && it.addons.length) ? `
+                      <div style="font-size:9px; font-weight:700; color:#0284c7; margin-top:2px;">+ ${it.addons.map(a => a.name).join(', ')}</div>
+                    ` : ''}
+                    <div style="font-size:8.5px; color:#475569; font-style:italic; margin-top:1px;">🌶️ Standard Spice · Cook Fresh</div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="border-top:1.5px solid #000; padding-top:4px; text-align:center; font-size:${is58 ? '8px' : '9.5px'}; font-weight:700;">
+            *** CHEF COPY · EXPEDITE IMMEDIATELY ***
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. ORDER TICKET / CAPTAIN STEWARD SLIP (OT / BOT)
+    if (docType === "ot") {
+      return `
+        <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace; background:#fff; color:#000; padding:${is58 ? '6px 4px' : '10px 8px'};">
+          <div style="text-align:center; padding-bottom:6px; border-bottom:1.5px dashed #000; margin-bottom:8px;">
+            <div style="font-size:${is58 ? '12px' : '15px'}; font-weight:900; text-transform:uppercase;">
+              📋 CAPTAIN ORDER SLIP (OT)
+            </div>
+            <div style="font-size:${is58 ? '8.5px' : '10px'}; color:#334155;">${restName} · Service Floor</div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8.5px' : '10px'};">
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Table &amp; Section:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800;">${inv.tableLabel || 'T-04'} (${inv.floorLabel || 'Main AC Hall'})</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Steward / Captain:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800;">${inv.serverName || 'Vikram (Captain)'}</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Guest Pax / Covers:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800;">4 Guests</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Punch Time:</td>
+              <td style="padding:1.5px 0; text-align:right; font-family:monospace;">${inv.dateFormatted || '22/09/2026'} ${inv.timeFormatted || '07:45 PM'}</td>
+            </tr>
+          </table>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8.5px' : '10px'};">
+            <thead>
+              <tr style="border-top:1.5px dashed #000; border-bottom:1.5px dashed #000;">
+                <th style="padding:3px 2px; text-align:left; width:24px;">#</th>
+                <th style="padding:3px 2px; text-align:left;">Course / Item</th>
+                <th style="padding:3px 2px; text-align:right; width:35px;">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(inv.items || []).map((it, idx) => `
+                <tr style="border-bottom:1px dashed #cbd5e1;">
+                  <td style="padding:3px 2px; font-family:monospace; color:#64748b;">${idx + 1}</td>
+                  <td style="padding:3px 2px; font-weight:700;">${it.name}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:800;">${it.qty}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="border-top:1px dashed #94a3b8; padding-top:6px; margin-top:8px; display:flex; justify-content:space-between; font-size:8.5px; color:#475569;">
+            <span>Captain Sign: ____________</span>
+            <span>Items: ${inv.items?.length || 4}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. GATE PASS / DELIVERY DISPATCH CHECKLIST
+    if (docType === "gate_pass") {
+      return `
+        <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace; background:#fff; color:#000; padding:${is58 ? '6px 4px' : '10px 8px'};">
+          <div style="text-align:center; padding-bottom:6px; border-bottom:2px solid #000; margin-bottom:8px;">
+            <div style="font-size:${is58 ? '12.5px' : '15px'}; font-weight:900; text-transform:uppercase;">
+              🚪 GATE PASS / DISPATCH CHECKLIST
+            </div>
+            <div style="font-size:${is58 ? '8px' : '9.5px'}; color:#334155;">${restName} · Security &amp; Outbound Verification</div>
+          </div>
+
+          <div style="background:#ecfdf5; border:1px dashed #059669; border-radius:4px; padding:4px 6px; text-align:center; font-size:${is58 ? '8.5px' : '10px'}; font-weight:900; color:#065f46; margin-bottom:8px;">
+            ✓ PAYMENT VERIFIED &amp; SETTLED (₹${Math.round(inv.total)})
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8.5px' : '9.5px'};">
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Pass / Order #:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800; font-family:monospace;">${inv.id}</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Dispatch Token:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:800;">${inv.tokenNo || 'T-18'}</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Customer / Carrier:</td>
+              <td style="padding:1.5px 0; text-align:right; font-weight:700;">${nameDisplay} (${phoneDisplay})</td>
+            </tr>
+            <tr>
+              <td style="padding:1.5px 0; color:#475569;">Dispatch Time:</td>
+              <td style="padding:1.5px 0; text-align:right; font-family:monospace;">${inv.dateFormatted || '22/09/2026'} ${inv.timeFormatted || '07:45 PM'}</td>
+            </tr>
+          </table>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8.5px' : '9.5px'};">
+            <thead>
+              <tr style="border-top:1.5px solid #000; border-bottom:1.5px solid #000;">
+                <th style="padding:3px 2px; text-align:left; width:20px;">[✓]</th>
+                <th style="padding:3px 2px; text-align:left;">Package / Item Name</th>
+                <th style="padding:3px 2px; text-align:right; width:35px;">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(inv.items || []).map(it => `
+                <tr style="border-bottom:1px dashed #cbd5e1;">
+                  <td style="padding:3px 2px; font-weight:800;">[  ]</td>
+                  <td style="padding:3px 2px; font-weight:600;">${it.name}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:700;">${it.qty}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="border-top:1.5px solid #000; padding-top:6px; margin-top:8px; font-size:8px; color:#334155;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Total Parcels: <b>${inv.items?.length || 4} Boxes</b></span>
+              <span>Checked By: ____________</span>
+            </div>
+            <div style="text-align:center; font-style:italic; margin-top:4px;">Goods once dispatched cannot be returned without supervisor approval.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 4. INTERIM BILL / PROFORMA CHECK (KACHHA BILL REVIEW)
+    if (docType === "interim") {
+      return `
+        <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace; background:#fff; color:#000; padding:${is58 ? '6px 4px' : '10px 8px'};">
+          <div style="text-align:center; padding-bottom:6px; border-bottom:1.5px dashed #000; margin-bottom:8px;">
+            <div style="font-size:${is58 ? '12px' : '15px'}; font-weight:900; text-transform:uppercase;">
+              ${restName}
+            </div>
+            <div style="display:inline-block; margin-top:3px; padding:2px 8px; background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:${is58 ? '7.5px' : '9px'}; font-weight:800; border-radius:3px;">
+              ⏳ ESTIMATE / BILL REVIEW (NOT A TAX INVOICE)
+            </div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:6px; font-size:${is58 ? '8px' : '9.5px'};">
+            <tr>
+              <td style="padding:1px 0; color:#475569;">Table:</td>
+              <td style="padding:1px 0; text-align:right; font-weight:800;">${inv.tableLabel || 'T-04'}</td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0; color:#475569;">Steward:</td>
+              <td style="padding:1px 0; text-align:right;">${inv.serverName || 'Vikram'}</td>
+            </tr>
+            <tr>
+              <td style="padding:1px 0; color:#475569;">Date &amp; Time:</td>
+              <td style="padding:1px 0; text-align:right; font-family:monospace;">${inv.dateFormatted || '22/09/2026'} ${inv.timeFormatted || '07:45 PM'}</td>
+            </tr>
+          </table>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:${is58 ? '8px' : '9.5px'};">
+            <thead>
+              <tr style="border-top:1.5px dashed #000; border-bottom:1.5px dashed #000;">
+                <th style="padding:3px 2px; text-align:left;">Item</th>
+                <th style="padding:3px 2px; text-align:right; width:30px;">Qty</th>
+                <th style="padding:3px 2px; text-align:right; width:45px;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(inv.items || []).map(it => `
+                <tr style="border-bottom:1px dashed #e2e8f0;">
+                  <td style="padding:3px 2px; font-weight:600;">${it.name}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace;">${it.qty}</td>
+                  <td style="padding:3px 2px; text-align:right; font-family:monospace; font-weight:700;">₹${Number(it.price * it.qty).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="border-top:1.5px dashed #000; padding-top:4px; margin-bottom:8px;">
+            <table style="width:100%; border-collapse:collapse; font-size:${is58 ? '8px' : '9.5px'};">
+              <tr>
+                <td style="padding:1.5px 0; color:#475569;">Sub Total:</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace; font-weight:700;">₹${Number(inv.subtotal).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding:1.5px 0; color:#475569;">Taxes (GST):</td>
+                <td style="padding:1.5px 0; text-align:right; font-family:monospace;">₹${Number((inv.cgst || 0) + (inv.sgst || 0)).toFixed(2)}</td>
+              </tr>
+              <tr style="border-top:1.5px solid #000; font-size:${is58 ? '10px' : '12px'}; font-weight:900;">
+                <td style="padding:3px 0;">NET PAYABLE:</td>
+                <td style="padding:3px 0; text-align:right; font-family:monospace;">₹${Math.round(inv.total).toFixed(2)}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align:center; padding:6px 0; border-top:1px dashed #cbd5e1;">
+            <img src="${upiQrImg}" alt="UPI QR" style="width:70px; height:70px; border:1px solid #cbd5e1; border-radius:4px; padding:2px; background:#fff;">
+            <div style="font-size:7.5px; font-weight:800; margin-top:2px;">SCAN TO PAY VIA ANY UPI APP</div>
+            <div style="font-size:6.5px; color:#64748b; font-family:monospace;">${upiId}</div>
+          </div>
+          <div style="text-align:center; font-size:7.5px; color:#64748b; margin-top:4px;">Final Tax Invoice will be issued upon payment confirmation.</div>
+        </div>
+      `;
+    }
+
+    // 5. STANDARD CUSTOMER TAX INVOICE (FINAL BILL)
     return `
-      <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace, sans-serif; background:#fff; color:#000; line-height:1.35; padding:${is58 ? '6px 4px' : (isA4 ? '16px 20px' : '10px 8px')};">
+      <div class="amoncar-invoice-box ${is58 ? 'size-58mm' : (isA4 ? 'size-a4' : (isA5 ? 'size-a5' : 'size-80mm'))}" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Courier New', monospace; background:#fff; color:#000; line-height:1.35; padding:${is58 ? '6px 4px' : (isA4 ? '16px 20px' : '10px 8px')};">
         
         <!-- Restaurant Header -->
         <div style="text-align:center; padding-bottom:8px; border-bottom:1.5px dashed #334155; margin-bottom:8px;">
@@ -9847,10 +10583,331 @@ For any queries or updates, reply to this message.`;
       </div>
     `;
   }
-  window.generateInvoiceSlipHtml = generateInvoiceSlipHtml;
+  window.generateDocumentSlipHtml = generateDocumentSlipHtml;
+  window.generateInvoiceSlipHtml = (inv, cfg) => generateDocumentSlipHtml(inv, "invoice", cfg);
 
-  // Render Invoice & Print Customization Studio Panel in Masters
-  function renderMasterInvoicePrintPanel() {
+  // =========================================================================
+  // PRINT MASTER VIEW & CUSTOM PAPER SIZE MANAGEMENT
+  // =========================================================================
+  function renderMasterPrintPanel() {
+    const cont = document.getElementById("masterPrintConfigContainer");
+    if (!cont) return;
+
+    if (activeMasterTab !== "printers") {
+      cont.style.display = "none";
+      cont.innerHTML = "";
+      return;
+    }
+
+    cont.style.display = "block";
+
+    cont.innerHTML = `
+      <div style="background:var(--panel); border:1.5px solid var(--line); border-radius:12px; padding:18px 22px; margin-bottom:16px; box-shadow:var(--shadow-sm);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:22px;">🖨️</span>
+              <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--ink);">
+                Print Master &amp; Hardware Stations
+              </h3>
+              <span class="badge" style="background:#ecfdf5; color:#059669; font-weight:700; font-size:11px;">Hardware Registry</span>
+            </div>
+            <p style="margin:4px 0 0; font-size:12px; color:var(--ink-soft); max-width:760px;">
+              Register physical thermal printers, Bluetooth mobile units, and network kitchen printers. Define standard (58mm, 76mm, 80mm, 100mm, A4, A5) or <b>custom roll widths in mm</b>, margins, and auto-cutter triggers.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" id="resetPrinterProfilesBtn" class="btn" style="font-size:11.5px; font-weight:700; padding:7px 12px; background:var(--surface-subtle); border-color:var(--line);">
+              ↺ Reset Defaults
+            </button>
+            <button type="button" id="addNewPrinterProfileBtn" class="btn btn-primary" style="font-size:11.5px; font-weight:700; padding:7px 16px;">
+              + Add Printer / Custom Size
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Printers Table / Card Grid -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:14px; margin-bottom:18px;">
+        ${printerProfiles.map(p => {
+          const isAct = p.status === "active";
+          const isCustom = p.paperSize === "custom";
+          const displayWidth = isCustom ? `${p.customWidthMm || 76}mm Custom` : p.paperSize.toUpperCase();
+          const docBadges = (p.assignedDocs || []).map(dId => {
+            const dt = DOCUMENT_TYPES.find(x => x.id === dId);
+            return `<span style="background:#e0f2fe; color:#0369a1; padding:2px 7px; border-radius:12px; font-size:10px; font-weight:700;">${dt ? `${dt.icon} ${dt.shortLabel}` : dId}</span>`;
+          }).join(" ");
+
+          return `
+            <div style="background:var(--panel); border:1.5px solid var(--line); border-radius:12px; padding:16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s ease;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                  <div>
+                    <h4 style="margin:0; font-size:14px; font-weight:800; color:var(--ink);">${p.name}</h4>
+                    <span style="font-size:11px; color:var(--ink-soft); display:flex; align-items:center; gap:4px; margin-top:2px;">
+                      🏢 Station: <b>${p.station}</b>
+                    </span>
+                  </div>
+                  <span class="badge ${isAct ? 'status-available' : 'status-occupied'}" style="font-size:10.5px; font-weight:700;">
+                    ${isAct ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--surface-subtle); padding:10px; border-radius:8px; margin:10px 0; font-size:11px;">
+                  <div>
+                    <span style="color:var(--ink-soft); display:block; font-size:10px;">Paper Size:</span>
+                    <b style="color:var(--primary);">${displayWidth}</b>
+                  </div>
+                  <div>
+                    <span style="color:var(--ink-soft); display:block; font-size:10px;">Interface:</span>
+                    <b>${p.interface}</b>
+                  </div>
+                  <div>
+                    <span style="color:var(--ink-soft); display:block; font-size:10px;">Printable Area:</span>
+                    <b>${p.printableWidthMm || 72}mm (margins: ${p.leftRightMarginMm || 2}mm)</b>
+                  </div>
+                  <div>
+                    <span style="color:var(--ink-soft); display:block; font-size:10px;">Auto-Cutter:</span>
+                    <b>${p.autoCut ? '✂️ Enabled' : 'Manual Tear'}</b>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                  <span style="font-size:10px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; display:block; margin-bottom:4px;">
+                    Assigned Document Routing:
+                  </span>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                    ${docBadges || '<span style="font-size:10px; color:#94a3b8;">No documents assigned</span>'}
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line-soft); padding-top:10px; margin-top:6px;">
+                <button type="button" class="btn btn-sm test-print-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:4px 10px; background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">
+                  🖨️ Test Print Slip
+                </button>
+                <div style="display:flex; gap:6px;">
+                  <button type="button" class="btn btn-sm edit-printer-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:4px 10px;">
+                    ✏️ Edit / Customize Size
+                  </button>
+                  ${p.id.startsWith('pr_custom_') ? `
+                    <button type="button" class="btn btn-sm delete-printer-profile-btn" data-pid="${p.id}" style="font-size:11px; font-weight:700; padding:4px 8px; color:#dc2626;">
+                      🗑️
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    // Connect Actions
+    document.getElementById("addNewPrinterProfileBtn")?.addEventListener("click", () => {
+      openPrinterProfileModal(null);
+    });
+
+    document.getElementById("resetPrinterProfilesBtn")?.addEventListener("click", () => {
+      if (confirm("Reset printer profiles back to system factory defaults?")) {
+        printerProfiles = JSON.parse(JSON.stringify(DEFAULT_PRINTER_PROFILES));
+        localStorage.removeItem("pos_printer_profiles");
+        showToast("↺ Printer profiles restored to defaults");
+        renderMasterPrintPanel();
+        renderMasterStats();
+      }
+    });
+
+    cont.querySelectorAll(".edit-printer-profile-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        openPrinterProfileModal(btn.dataset.pid);
+      });
+    });
+
+    cont.querySelectorAll(".delete-printer-profile-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const p = printerProfiles.find(x => x.id === btn.dataset.pid);
+        if (p && confirm(`Delete printer profile '${p.name}'?`)) {
+          printerProfiles = printerProfiles.filter(x => x.id !== p.id);
+          localStorage.setItem("pos_printer_profiles", JSON.stringify(printerProfiles));
+          showToast(`🗑️ Printer profile '${p.name}' deleted`);
+          renderMasterPrintPanel();
+          renderMasterStats();
+        }
+      });
+    });
+
+    cont.querySelectorAll(".test-print-profile-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const p = printerProfiles.find(x => x.id === btn.dataset.pid);
+        if (!p) return;
+
+        const testContent = `
+          <div style="text-align:center; padding:10px 4px; border:1.5px solid #000; font-family:monospace;">
+            <div style="font-size:14px; font-weight:900;">*** PRINTER TEST SLIP ***</div>
+            <div style="font-size:11px; font-weight:700; margin:4px 0;">JUST POS HARDWARE DRIVER</div>
+            <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:6px 0; margin:6px 0; text-align:left; font-size:9.5px;">
+              <div>PROFILE: <b>${p.name}</b></div>
+              <div>STATION: <b>${p.station}</b></div>
+              <div>INTERFACE: <b>${p.interface}</b></div>
+              <div>PAPER SIZE: <b>${p.paperSize.toUpperCase()} (${p.customWidthMm || 80}mm)</b></div>
+              <div>PRINT AREA: <b>${p.printableWidthMm || 72}mm</b></div>
+              <div>DATE: <b>${new Date().toLocaleString()}</b></div>
+            </div>
+            <div style="font-size:9px;">[==============================]</div>
+            <div style="font-size:10px; font-weight:800; margin-top:4px;">ALIGNMENT &amp; CUT TEST PASSED ✓</div>
+          </div>
+        `;
+        executeThermalPrint(testContent, p.paperSize, p.customWidthMm, p.leftRightMarginMm);
+        showToast(`🖨️ Dispatched test print to '${p.name}' (${p.paperSize})!`);
+      });
+    });
+  }
+
+  // Open Add/Edit Printer Profile Modal
+  function openPrinterProfileModal(profileId = null) {
+    const isEdit = Boolean(profileId);
+    const existing = isEdit ? printerProfiles.find(x => x.id === profileId) : null;
+    const p = existing || {
+      id: `pr_custom_${Date.now()}`,
+      name: "",
+      station: "Cashier Desk",
+      printerType: "thermal_roll",
+      interface: "USB",
+      paperSize: "80mm",
+      customWidthMm: 80,
+      printableWidthMm: 72,
+      topBottomMarginMm: 2,
+      leftRightMarginMm: 2,
+      fontSize: "10px",
+      autoCut: true,
+      assignedDocs: ["invoice"],
+      status: "active"
+    };
+
+    document.getElementById("masterFormTitle").textContent = isEdit ? "Edit Printer Profile & Paper Size" : "Add New Printer / Custom Paper Profile";
+    const formBody = document.getElementById("masterFormBody");
+
+    formBody.innerHTML = `
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px; margin-bottom:12px;">
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:11.5px; font-weight:700;">Printer Profile Name *</label>
+          <input type="text" id="pr_modal_name" value="${p.name}" placeholder="e.g. Bar BOT Printer, Express Counter" required style="font-weight:700;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:11.5px; font-weight:700;">Station / Department *</label>
+          <select id="pr_modal_station" style="font-weight:600;">
+            <option value="Cashier Desk" ${p.station === 'Cashier Desk' ? 'selected' : ''}>Cashier Desk (Front Billing)</option>
+            <option value="Hot Kitchen / Curry Section" ${p.station.includes('Kitchen') ? 'selected' : ''}>Kitchen (KOT Food Station)</option>
+            <option value="Beverage / Mocktail Bar" ${p.station.includes('Bar') ? 'selected' : ''}>Bar &amp; Mocktail Counter</option>
+            <option value="Dispatch / Delivery Packing" ${p.station.includes('Dispatch') ? 'selected' : ''}>Dispatch &amp; Delivery Packing</option>
+            <option value="Back Office / Accounts" ${p.station.includes('Office') || p.station.includes('Accounts') ? 'selected' : ''}>Back Office &amp; Accounts</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:11.5px; font-weight:700;">Connection Interface *</label>
+          <select id="pr_modal_interface" style="font-weight:600;">
+            <option value="USB" ${p.interface === 'USB' ? 'selected' : ''}>USB Direct Cable</option>
+            <option value="LAN/Network" ${p.interface.includes('LAN') ? 'selected' : ''}>LAN / Network IP Socket</option>
+            <option value="Bluetooth" ${p.interface === 'Bluetooth' ? 'selected' : ''}>Bluetooth BLE Wireless</option>
+            <option value="Browser" ${p.interface === 'Browser' ? 'selected' : ''}>Browser Print Dialog</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-size:11.5px; font-weight:700;">Paper Format / Roll Size *</label>
+          <select id="pr_modal_paperSize" style="font-weight:700;">
+            <option value="80mm" ${p.paperSize === '80mm' ? 'selected' : ''}>🖨️ 80mm Thermal Roll (Standard POS-80)</option>
+            <option value="58mm" ${p.paperSize === '58mm' ? 'selected' : ''}>🧾 58mm Compact Roll (Mobile POS-58)</option>
+            <option value="76mm" ${p.paperSize === '76mm' ? 'selected' : ''}>📋 76mm Dot-Matrix / Roll (Kitchen RP-3200)</option>
+            <option value="100mm" ${p.paperSize === '100mm' ? 'selected' : ''}>📦 100mm Wide Roll (Logistics / Label)</option>
+            <option value="a4" ${p.paperSize === 'a4' ? 'selected' : ''}>📄 A4 Full Sheet (Laser / Deskjet)</option>
+            <option value="a5" ${p.paperSize === 'a5' ? 'selected' : ''}>📑 A5 Half Sheet (Duplicate Voucher)</option>
+            <option value="custom" ${p.paperSize === 'custom' ? 'selected' : ''}>🛠️ Custom Paper Size (Specify Millimeters)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Custom Size In Millimeters Box -->
+      <div id="pr_custom_size_box" style="display:${p.paperSize === 'custom' ? 'block' : 'none'}; background:var(--surface-subtle); border:1.5px dashed var(--primary); border-radius:8px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:11.5px; font-weight:800; color:var(--primary); margin-bottom:8px;">
+          📏 Specify Custom Millimeter (mm) Paper Dimensions:
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:10px;">
+          <div>
+            <label style="font-size:10.5px; font-weight:600; display:block;">Total Width (mm)</label>
+            <input type="number" id="pr_modal_customWidth" value="${p.customWidthMm || 76}" min="30" max="300" step="1" style="width:100%; font-weight:700;">
+          </div>
+          <div>
+            <label style="font-size:10.5px; font-weight:600; display:block;">Printable Area (mm)</label>
+            <input type="number" id="pr_modal_printableWidth" value="${p.printableWidthMm || 68}" min="25" max="290" step="1" style="width:100%;">
+          </div>
+          <div>
+            <label style="font-size:10.5px; font-weight:600; display:block;">Side Margin (mm)</label>
+            <input type="number" id="pr_modal_lrMargin" value="${p.leftRightMarginMm || 2}" min="0" max="20" step="0.5" style="width:100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto Cut & Font Settings -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
+          <input type="checkbox" id="pr_modal_autocut" ${p.autoCut ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--primary);">
+          <div>
+            <label for="pr_modal_autocut" style="font-size:11.5px; font-weight:700; cursor:pointer;">Auto-Cut Paper</label>
+            <span style="font-size:10px; color:var(--ink-soft); display:block;">Send ESC/POS cut command after print</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
+          <input type="checkbox" id="pr_modal_status" ${p.status === 'active' ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--primary);">
+          <div>
+            <label for="pr_modal_status" style="font-size:11.5px; font-weight:700; cursor:pointer;">Active Station</label>
+            <span style="font-size:10px; color:var(--ink-soft); display:block;">Enable this printer for live orders</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assigned Document Types Checkbox Matrix -->
+      <div style="background:var(--surface-subtle); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px;">
+        <label style="font-size:11.5px; font-weight:800; color:var(--ink); display:block; margin-bottom:8px;">
+          📋 Route Document Types To This Printer:
+        </label>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;">
+          ${DOCUMENT_TYPES.map(dt => {
+            const isAssigned = (p.assignedDocs || []).includes(dt.id);
+            return `
+              <label style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; cursor:pointer; background:var(--panel); padding:6px 8px; border-radius:6px; border:1px solid var(--line);">
+                <input type="checkbox" name="pr_doc_type" value="${dt.id}" ${isAssigned ? 'checked' : ''} style="accent-color:var(--primary);">
+                <span>${dt.icon} ${dt.title}</span>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+
+    // Toggle custom width box
+    document.getElementById("pr_modal_paperSize")?.addEventListener("change", (e) => {
+      const isCust = (e.target.value === "custom");
+      const box = document.getElementById("pr_custom_size_box");
+      if (box) box.style.display = isCust ? "block" : "none";
+    });
+
+    // Save profile handler
+    const saveBtn = document.getElementById("masterFormSaveBtn") || document.querySelector("#masterFormModal .btn-primary");
+    
+    // Store current modal type
+    editingRecordId = p.id;
+    activeMasterTab = "printers";
+    openModal("masterFormModal");
+  }
+
+  // =========================================================================
+  // INVOICE MASTER STUDIO VIEW & DEMO BILL EXTRACTOR
+  // =========================================================================
+  function renderMasterInvoiceStudio() {
     const cont = document.getElementById("masterInvoiceConfigContainer");
     if (!cont) return;
 
@@ -9862,6 +10919,7 @@ For any queries or updates, reply to this message.`;
 
     cont.style.display = "block";
     const cfg = invoiceMasterConfig;
+    const activeDoc = DOCUMENT_TYPES.find(x => x.id === activeInvoiceDocType) || DOCUMENT_TYPES[0];
 
     cont.innerHTML = `
       <!-- Studio Header Ribbon -->
@@ -9869,22 +10927,22 @@ For any queries or updates, reply to this message.`;
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:20px;">🖨️</span>
+              <span style="font-size:22px;">🧾</span>
               <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--ink);">
-                Invoice &amp; Thermal Print Master Studio
+                Invoice Master &amp; Document Designer
               </h3>
-              <span class="badge" style="background:#e0f2fe; color:#0284c7; font-weight:700; font-size:11px;">Multi-Client Engine</span>
+              <span class="badge" style="background:#e0f2fe; color:#0284c7; font-weight:700; font-size:11px;">Document Types &amp; Branding</span>
             </div>
             <p style="margin:4px 0 0; font-size:12px; color:var(--ink-soft); max-width:760px;">
-              Design &amp; configure tailored invoice layouts for any restaurant, QSR counter, bakery, or banquet client. Select paper sizes (80mm/58mm/A4/A5), customize branding, and preview in real-time.
+              Customize layouts for Customer Invoices, Kitchen KOTs, Captain Slips, Gate Passes, and Interim Bills. <b>Upload a demo bill photo/sample</b> below to automatically construct branding and layouts.
             </p>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
             <button type="button" id="resetInvoiceMasterConfigBtn" class="btn" style="font-size:11.5px; font-weight:700; padding:7px 12px; background:var(--surface-subtle); border-color:var(--line);">
               ↺ Reset Defaults
             </button>
-            <button type="button" id="testPrintInvoiceBtn" class="btn" style="font-size:11.5px; font-weight:700; padding:7px 14px; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;">
-              🖨️ Test Print (${cfg.paperFormat})
+            <button type="button" id="testPrintCurrentDocBtn" class="btn" style="font-size:11.5px; font-weight:700; padding:7px 14px; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;">
+              🖨️ Test Print (${activeDoc.shortLabel})
             </button>
             <button type="button" id="saveInvoiceMasterConfigBtn" class="btn btn-primary" style="font-size:11.5px; font-weight:700; padding:7px 16px;">
               💾 Save Invoice Template
@@ -9892,23 +10950,53 @@ For any queries or updates, reply to this message.`;
           </div>
         </div>
 
-        <!-- Quick Industry Presets Ribbon -->
-        <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line-soft); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-          <span style="font-size:11px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em;">
-            ⚡ Quick Industry Presets:
-          </span>
-          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'fine_dining' ? 'btn-primary' : ''}" data-preset="fine_dining" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
-            🍽️ Fine Dining (80mm Thermal)
-          </button>
-          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'qsr_counter' ? 'btn-primary' : ''}" data-preset="qsr_counter" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
-            ⚡ Fast Food / QSR (58mm Compact)
-          </button>
-          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'sweets_bakery' ? 'btn-primary' : ''}" data-preset="sweets_bakery" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
-            🍰 Sweets &amp; Bakery (By-Weight 80mm)
-          </button>
-          <button type="button" class="btn btn-sm invoice-preset-btn ${cfg.templatePreset === 'banquet_a4' ? 'btn-primary' : ''}" data-preset="banquet_a4" style="font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px;">
-            🏢 Banquets &amp; Catering (A4 Sheet)
-          </button>
+        <!-- Document Types Switcher Ribbon -->
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line-soft);">
+          <div style="font-size:11px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">
+            📑 Select Document Type to Customize &amp; Preview:
+          </div>
+          <div class="doc-type-ribbon">
+            ${DOCUMENT_TYPES.map(dt => `
+              <button type="button" class="doc-type-btn ${dt.id === activeInvoiceDocType ? 'active' : ''}" data-doctype="${dt.id}">
+                <span style="font-size:14px;">${dt.icon}</span>
+                <span>${dt.title}</span>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart Demo Invoice Upload & Auto-Constructor Card -->
+      <div style="background:var(--panel); border:1.5px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:16px; box-shadow:var(--shadow-sm);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+          <div>
+            <h4 style="margin:0; font-size:13.5px; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:8px;">
+              📸 Upload Demo Bill / Sample Bill (Auto-Construct Template)
+            </h4>
+            <p style="margin:2px 0 0; font-size:11.5px; color:var(--ink-soft);">
+              Upload an existing bill photo, scan, or pick a real-world restaurant sample below. Our engine parses the demo and automatically applies branding, paper format, and layout toggles.
+            </p>
+          </div>
+          <label class="btn" style="font-size:11.5px; font-weight:700; padding:6px 14px; background:#f0fdf4; color:#15803d; border-color:#bbf7d0; cursor:pointer;">
+            📁 Upload Demo Bill File (Image / PDF)
+            <input type="file" id="demoInvoiceUploadInput" accept="image/*,.pdf,.txt,.json" style="display:none;">
+          </label>
+        </div>
+
+        <!-- Quick Sample Demo Bills -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <span style="font-size:11px; font-weight:700; color:var(--ink-soft);">Or Try Sample Demo Bills:</span>
+          ${DEMO_INVOICE_SAMPLES.map(s => `
+            <button type="button" class="demo-sample-chip" data-demoid="${s.id}">
+              <span>${s.tag === '58mm Compact' ? '⚡' : (s.tag.includes('Weight') ? '🍰' : (s.tag.includes('A4') ? '🏢' : '🍽️'))}</span>
+              <span>${s.title}</span>
+            </button>
+          `).join("")}
+        </div>
+
+        <!-- Analyzed Demo Bill Result & Constructor Box -->
+        <div id="demoInvoiceAnalysisBox" style="display:none; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:14px; margin-top:8px;">
+          <!-- Dynamically Injected by demo parser -->
         </div>
       </div>
 
@@ -9918,28 +11006,30 @@ For any queries or updates, reply to this message.`;
         <!-- LEFT COLUMN: CONTROLS & TOGGLES -->
         <div class="invoice-builder-controls">
           
-          <!-- Section 1: Paper Format & Roll Size -->
+          <!-- Routing Section: Assigned Hardware Printer Profile -->
           <div class="invoice-control-section">
             <div class="invoice-control-header">
-              <span>📏 1. Paper Size &amp; Thermal Roll Format</span>
-              <span style="font-size:11px; font-weight:700; color:var(--primary);">${cfg.paperFormat.toUpperCase()} ACTIVE</span>
+              <span>🖨️ 1. Assigned Printer &amp; Paper Roll</span>
+              <span style="font-size:11px; font-weight:700; color:var(--primary);">${cfg.paperFormat.toUpperCase()}</span>
             </div>
-            <div class="paper-format-grid">
-              <div class="paper-format-btn ${cfg.paperFormat === '80mm' ? 'active' : ''}" data-format="80mm">
-                <span>🖨️ 80mm Thermal</span>
-                <span class="format-sub">POS-80 / Epson / TVS (72mm print area)</span>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+              <div>
+                <label style="font-size:11px; font-weight:600; display:block; margin-bottom:4px;">Print Master Hardware Profile:</label>
+                <select id="cfg_printerProfileSelect" style="width:100%; font-size:11.5px; font-weight:600; padding:6px 8px; border-radius:6px; border:1px solid var(--line);">
+                  ${printerProfiles.map(pr => `
+                    <option value="${pr.id}" ${pr.paperSize === cfg.paperFormat ? 'selected' : ''}>
+                      ${pr.name} (${pr.paperSize.toUpperCase()})
+                    </option>
+                  `).join("")}
+                </select>
               </div>
-              <div class="paper-format-btn ${cfg.paperFormat === '58mm' ? 'active' : ''}" data-format="58mm">
-                <span>🧾 58mm Compact</span>
-                <span class="format-sub">POS-58 / Mobile Bluetooth (48mm print)</span>
-              </div>
-              <div class="paper-format-btn ${cfg.paperFormat === 'a4' ? 'active' : ''}" data-format="a4">
-                <span>📄 A4 Full Sheet</span>
-                <span class="format-sub">Laser / Deskjet Corporate Letterhead</span>
-              </div>
-              <div class="paper-format-btn ${cfg.paperFormat === 'a5' ? 'active' : ''}" data-format="a5">
-                <span>📑 A5 Half Sheet</span>
-                <span class="format-sub">Pre-printed invoice duplicate slip</span>
+              <div>
+                <label style="font-size:11px; font-weight:600; display:block; margin-bottom:4px;">Quick Paper Size Override:</label>
+                <div style="display:flex; gap:6px;">
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '80mm' ? 'btn-primary' : ''}" data-format="80mm" style="flex:1; font-size:11px; font-weight:700;">80mm</button>
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === '58mm' ? 'btn-primary' : ''}" data-format="58mm" style="flex:1; font-size:11px; font-weight:700;">58mm</button>
+                  <button type="button" class="btn btn-sm quick-paper-size-btn ${cfg.paperFormat === 'a4' ? 'btn-primary' : ''}" data-format="a4" style="flex:1; font-size:11px; font-weight:700;">A4</button>
+                </div>
               </div>
             </div>
           </div>
@@ -9947,10 +11037,10 @@ For any queries or updates, reply to this message.`;
           <!-- Section 2: Restaurant Branding & Header Details -->
           <div class="invoice-control-section">
             <div class="invoice-control-header">
-              <span>🏢 2. Restaurant Branding &amp; Header Info</span>
+              <span>🏢 2. Restaurant Branding &amp; Outlet Header</span>
               <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
                 <input type="checkbox" id="cfg_showLogo" ${cfg.showLogo ? 'checked' : ''} style="accent-color:var(--primary);">
-                Show Brand Icon / Logo
+                Show Brand Icon
               </label>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -9979,16 +11069,6 @@ For any queries or updates, reply to this message.`;
               <div class="form-group" style="margin:0;">
                 <label style="font-size:11px; font-weight:600;">FSSAI License No.</label>
                 <input type="text" id="cfg_fssai" value="${cfg.fssai || ''}" placeholder="100XXXXXXXXXXX">
-              </div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-              <div class="form-group" style="margin:0;">
-                <label style="font-size:11px; font-weight:600;">Billing Email</label>
-                <input type="email" id="cfg_email" value="${cfg.email || ''}" placeholder="billing@restaurant.com">
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label style="font-size:11px; font-weight:600;">Website / Domain</label>
-                <input type="text" id="cfg_website" value="${cfg.website || ''}" placeholder="www.restaurant.com">
               </div>
             </div>
           </div>
@@ -10026,7 +11106,7 @@ For any queries or updates, reply to this message.`;
             </div>
           </div>
 
-          <!-- Section 4: Items Table Formatting -->
+          <!-- Section 4: Items Table Columns -->
           <div class="invoice-control-section">
             <div class="invoice-control-header">
               <span>🍛 4. Items Table Columns &amp; Badges</span>
@@ -10067,7 +11147,7 @@ For any queries or updates, reply to this message.`;
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
               <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
                 <input type="checkbox" id="cfg_showTaxBreakdown" ${cfg.showTaxBreakdown ? 'checked' : ''} style="accent-color:var(--primary);">
-                <span>Split CGST &amp; SGST Rows (vs Consolidated)</span>
+                <span>Split CGST &amp; SGST Rows</span>
               </label>
               <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
                 <input type="checkbox" id="cfg_showTaxableBase" ${cfg.showTaxableBase ? 'checked' : ''} style="accent-color:var(--primary);">
@@ -10079,11 +11159,11 @@ For any queries or updates, reply to this message.`;
               </label>
               <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
                 <input type="checkbox" id="cfg_showAmountInWords" ${cfg.showAmountInWords ? 'checked' : ''} style="accent-color:var(--primary);">
-                <span>Amount in Words (INR Currency)</span>
+                <span>Amount in Words (INR)</span>
               </label>
               <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
                 <input type="checkbox" id="cfg_showSavingsHighlight" ${cfg.showSavingsHighlight ? 'checked' : ''} style="accent-color:var(--primary);">
-                <span>Show "You Saved ₹XX" Discount Badge</span>
+                <span>Discount Savings Highlight</span>
               </label>
             </div>
           </div>
@@ -10091,30 +11171,26 @@ For any queries or updates, reply to this message.`;
           <!-- Section 6: Footer, Terms & QR Codes -->
           <div class="invoice-control-section">
             <div class="invoice-control-header">
-              <span>📱 6. Footer Notes &amp; QR Codes</span>
+              <span>📱 6. Footer Notes &amp; Payment QR</span>
             </div>
             <div class="form-group" style="margin-bottom:10px;">
               <label style="font-size:11px; font-weight:600;">Thank You Greeting Note</label>
               <input type="text" id="cfg_thankYouMessage" value="${cfg.thankYouMessage || ''}" placeholder="Thank you message">
             </div>
-            <div class="form-group" style="margin-bottom:12px;">
-              <label style="font-size:11px; font-weight:600;">Terms &amp; Conditions / Disclaimer</label>
-              <input type="text" id="cfg_termsText" value="${cfg.termsText || ''}" placeholder="Terms and conditions">
-            </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
               <div style="background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
                 <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; cursor:pointer; margin-bottom:6px;">
                   <input type="checkbox" id="cfg_enableUpiQr" ${cfg.enableUpiQr ? 'checked' : ''} style="accent-color:var(--primary);">
-                  Enable UPI Payment QR Code
+                  UPI QR Payment
                 </label>
                 <input type="text" id="cfg_upiId" value="${cfg.upiId || ''}" placeholder="merchant@upi" style="font-size:11.5px;">
               </div>
               <div style="background:var(--surface-subtle); padding:10px; border-radius:8px; border:1px solid var(--line);">
                 <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; cursor:pointer; margin-bottom:6px;">
                   <input type="checkbox" id="cfg_enableReviewQr" ${cfg.enableReviewQr ? 'checked' : ''} style="accent-color:var(--primary);">
-                  Enable Google Review QR Code
+                  Google Review QR
                 </label>
-                <input type="text" id="cfg_reviewUrl" value="${cfg.reviewUrl || ''}" placeholder="https://g.page/r/..." style="font-size:11.5px;">
+                <input type="text" id="cfg_reviewUrl" value="${cfg.reviewUrl || ''}" placeholder="https://g.page/..." style="font-size:11.5px;">
               </div>
             </div>
           </div>
@@ -10125,15 +11201,15 @@ For any queries or updates, reply to this message.`;
         <div class="receipt-preview-stage">
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:12px; padding:0 4px;">
             <div style="font-size:12px; font-weight:800; color:#334155; display:flex; align-items:center; gap:6px;">
-              <span>👀 Live Interactive Preview</span>
-              <span class="badge" id="previewPaperBadge" style="background:#0f172a; color:#fff; font-size:10px;">${cfg.paperFormat.toUpperCase()} ROLL</span>
+              <span>👀 Live Document Preview:</span>
+              <span class="badge" id="previewDocBadge" style="background:#0f172a; color:#fff; font-size:10px;">${activeDoc.shortLabel}</span>
             </div>
-            <span style="font-size:11px; color:#64748b; font-weight:600;">Updates in real-time</span>
+            <span class="badge" id="previewPaperBadge" style="background:#e0f2fe; color:#0369a1; font-size:10px;">${cfg.paperFormat.toUpperCase()}</span>
           </div>
 
-          <!-- Paper Roll Container -->
+          <!-- Paper Container -->
           <div id="liveInvoiceBuilderPreview" class="receipt-paper-roll size-${cfg.paperFormat}">
-            <!-- Dynamic Receipt Injected Here -->
+            <!-- Dynamic Document Slip Injected Here -->
           </div>
         </div>
 
@@ -10143,47 +11219,193 @@ For any queries or updates, reply to this message.`;
     // Helper to update the right preview
     function updateLivePreview() {
       const previewEl = document.getElementById("liveInvoiceBuilderPreview");
-      const badgeEl = document.getElementById("previewPaperBadge");
-      const testBtn = document.getElementById("testPrintInvoiceBtn");
+      const docBadge = document.getElementById("previewDocBadge");
+      const paperBadge = document.getElementById("previewPaperBadge");
+      const testBtn = document.getElementById("testPrintCurrentDocBtn");
+      const currentDoc = DOCUMENT_TYPES.find(x => x.id === activeInvoiceDocType) || DOCUMENT_TYPES[0];
 
       if (previewEl) {
         previewEl.className = `receipt-paper-roll size-${invoiceMasterConfig.paperFormat}`;
-        previewEl.innerHTML = generateInvoiceSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, invoiceMasterConfig);
+        previewEl.innerHTML = generateDocumentSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, activeInvoiceDocType, invoiceMasterConfig);
       }
-      if (badgeEl) {
-        badgeEl.textContent = `${invoiceMasterConfig.paperFormat.toUpperCase()} ${invoiceMasterConfig.paperFormat.startsWith('a') ? 'SHEET' : 'ROLL'}`;
-      }
-      if (testBtn) {
-        testBtn.textContent = `🖨️ Test Print (${invoiceMasterConfig.paperFormat})`;
-      }
+      if (docBadge) docBadge.textContent = currentDoc.shortLabel;
+      if (paperBadge) paperBadge.textContent = `${invoiceMasterConfig.paperFormat.toUpperCase()} ${invoiceMasterConfig.paperFormat.startsWith('a') ? 'SHEET' : 'ROLL'}`;
+      if (testBtn) testBtn.textContent = `🖨️ Test Print (${currentDoc.shortLabel})`;
     }
 
-    // Connect Paper Format buttons
-    cont.querySelectorAll(".paper-format-btn").forEach(btn => {
+    // Connect Document Type Tabs
+    cont.querySelectorAll(".doc-type-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        cont.querySelectorAll(".paper-format-btn").forEach(b => b.classList.remove("active"));
+        cont.querySelectorAll(".doc-type-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
+        activeInvoiceDocType = btn.dataset.doctype;
+        updateLivePreview();
+      });
+    });
+
+    // Connect Quick Paper Size buttons
+    cont.querySelectorAll(".quick-paper-size-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        cont.querySelectorAll(".quick-paper-size-btn").forEach(b => b.classList.remove("btn-primary"));
+        btn.classList.add("btn-primary");
         invoiceMasterConfig.paperFormat = btn.dataset.format;
         updateLivePreview();
       });
     });
 
-    // Connect Preset buttons
-    cont.querySelectorAll(".invoice-preset-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const pKey = btn.dataset.preset;
-        if (INVOICE_PRESETS[pKey]) {
-          Object.assign(invoiceMasterConfig, INVOICE_PRESETS[pKey]);
-          showToast(`✓ Applied '${btn.textContent.trim()}' preset!`);
-          renderMasterInvoicePrintPanel();
+    // Connect Printer Profile select
+    document.getElementById("cfg_printerProfileSelect")?.addEventListener("change", (e) => {
+      const pr = printerProfiles.find(x => x.id === e.target.value);
+      if (pr) {
+        invoiceMasterConfig.paperFormat = pr.paperSize;
+        invoiceMasterConfig.printerProfileId = pr.id;
+        updateLivePreview();
+        showToast(`✓ Switched paper format to ${pr.paperSize} from printer '${pr.name}'`);
+      }
+    });
+
+    // Connect Demo Sample Chips
+    cont.querySelectorAll(".demo-sample-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        cont.querySelectorAll(".demo-sample-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        const sId = chip.dataset.demoid;
+        const sample = DEMO_INVOICE_SAMPLES.find(x => x.id === sId);
+        if (sample) {
+          displayAnalyzedDemoData(sample);
         }
       });
     });
 
+    // Connect File Upload Input
+    document.getElementById("demoInvoiceUploadInput")?.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        // Construct realistic parsed demo object from uploaded file
+        const fileNameClean = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        const syntheticDemo = {
+          id: `uploaded_${Date.now()}`,
+          title: `Uploaded: ${file.name}`,
+          tag: "Auto-Detected",
+          outletName: fileNameClean.toUpperCase() || "DEMO RESTAURANT & BAR",
+          tagline: "Authentic Multi-Cuisine Dining",
+          address: "Shop 12, Commercial Promenade, Panaji, Goa 403001",
+          phone: "+91 98221 44556",
+          email: "billing@outlet.com",
+          website: "www.outlet.com",
+          gstin: "30AAXCB1122D1Z5",
+          fssai: "10020011000789",
+          paperFormat: "80mm",
+          showLogo: true,
+          showTokenNumber: true,
+          showTableAndFloor: true,
+          showServerName: true,
+          showCustomerDetails: true,
+          showPaymentMode: true,
+          showInvoiceSeries: true,
+          showSerialNo: true,
+          showHsnSac: true,
+          showItemTaxRate: true,
+          showTaxModeBadge: true,
+          showItemAddons: true,
+          showTaxBreakdown: true,
+          showTaxableBase: true,
+          showTotalQuantity: true,
+          showRoundOff: true,
+          showAmountInWords: true,
+          showSavingsHighlight: true,
+          thankYouMessage: `Thank you for dining at ${fileNameClean.toUpperCase()}!`,
+          termsText: "Goods once sold cannot be returned. Please retain bill for tax credit.",
+          enableUpiQr: true,
+          upiId: "outlet@icici",
+          enableReviewQr: true,
+          reviewUrl: "https://g.page/review",
+          sampleSnippet: `EXTRACTED BILL DATA FROM [${file.name}]\nOutlet: ${fileNameClean.toUpperCase()}\nGSTIN: 30AAXCB1122D1Z5 · FSSAI: 10020011000789\nFormat: 80mm Thermal Slip\nItems Extracted: 4 Dish rows with 5% GST\nTotal Tax: ₹81.18 | Net Amount: ₹1,386.00`
+        };
+        displayAnalyzedDemoData(syntheticDemo);
+      }
+    });
+
+    // Helper to display analyzed demo and show "Apply & Construct" button
+    function displayAnalyzedDemoData(demo) {
+      activeUploadedDemoData = demo;
+      const box = document.getElementById("demoInvoiceAnalysisBox");
+      if (!box) return;
+
+      box.style.display = "block";
+      box.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:16px;">✨</span>
+              <b style="font-size:13px; color:var(--ink);">Demo Bill Analyzed: ${demo.outletName}</b>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:10px; font-weight:800;">${demo.paperFormat.toUpperCase()}</span>
+            </div>
+            <div style="font-size:11px; color:var(--ink-soft); margin-top:3px;">
+              GSTIN: <b>${demo.gstin || 'None'}</b> · FSSAI: <b>${demo.fssai || 'None'}</b> · Phone: <b>${demo.phone || 'None'}</b>
+            </div>
+            <div style="font-size:11px; color:#475569; margin-top:2px;">
+              Detected Layout: ${demo.showTaxBreakdown ? 'CGST/SGST Split' : 'Consolidated'} · ${demo.enableUpiQr ? 'UPI QR Present' : 'No QR'} · Item Tax Badges: Enabled
+            </div>
+          </div>
+          <button type="button" id="applyDemoInvoiceBtn" class="btn btn-primary" style="font-size:12px; font-weight:800; padding:8px 18px; box-shadow:0 4px 10px rgba(13,148,136,0.3);">
+            ✨ Apply &amp; Construct Invoice From Demo
+          </button>
+        </div>
+        ${demo.sampleSnippet ? `
+          <div style="margin-top:10px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:8px 12px; font-family:monospace; font-size:10px; color:#334155; white-space:pre-wrap; max-height:90px; overflow-y:auto;">${demo.sampleSnippet}</div>
+        ` : ''}
+      `;
+
+      // Wire Apply button
+      document.getElementById("applyDemoInvoiceBtn")?.addEventListener("click", () => {
+        // Copy demo fields into invoiceMasterConfig
+        Object.assign(invoiceMasterConfig, {
+          restaurantName: demo.outletName,
+          tagline: demo.tagline || "",
+          address: demo.address || "",
+          phone: demo.phone || "",
+          email: demo.email || "",
+          website: demo.website || "",
+          gstin: demo.gstin || "",
+          fssai: demo.fssai || "",
+          paperFormat: demo.paperFormat || "80mm",
+          showLogo: demo.showLogo !== undefined ? demo.showLogo : true,
+          showTokenNumber: demo.showTokenNumber !== undefined ? demo.showTokenNumber : true,
+          showTableAndFloor: demo.showTableAndFloor !== undefined ? demo.showTableAndFloor : true,
+          showServerName: demo.showServerName !== undefined ? demo.showServerName : true,
+          showCustomerDetails: demo.showCustomerDetails !== undefined ? demo.showCustomerDetails : true,
+          showPaymentMode: demo.showPaymentMode !== undefined ? demo.showPaymentMode : true,
+          showInvoiceSeries: demo.showInvoiceSeries !== undefined ? demo.showInvoiceSeries : true,
+          showSerialNo: demo.showSerialNo !== undefined ? demo.showSerialNo : true,
+          showHsnSac: demo.showHsnSac !== undefined ? demo.showHsnSac : true,
+          showItemTaxRate: demo.showItemTaxRate !== undefined ? demo.showItemTaxRate : true,
+          showTaxModeBadge: demo.showTaxModeBadge !== undefined ? demo.showTaxModeBadge : true,
+          showItemAddons: demo.showItemAddons !== undefined ? demo.showItemAddons : true,
+          showTaxBreakdown: demo.showTaxBreakdown !== undefined ? demo.showTaxBreakdown : true,
+          showTaxableBase: demo.showTaxableBase !== undefined ? demo.showTaxableBase : true,
+          showTotalQuantity: demo.showTotalQuantity !== undefined ? demo.showTotalQuantity : true,
+          showRoundOff: demo.showRoundOff !== undefined ? demo.showRoundOff : true,
+          showAmountInWords: demo.showAmountInWords !== undefined ? demo.showAmountInWords : true,
+          showSavingsHighlight: demo.showSavingsHighlight !== undefined ? demo.showSavingsHighlight : true,
+          thankYouMessage: demo.thankYouMessage || "",
+          termsText: demo.termsText || "",
+          enableUpiQr: demo.enableUpiQr !== undefined ? demo.enableUpiQr : true,
+          upiId: demo.upiId || "pos@upi",
+          enableReviewQr: demo.enableReviewQr !== undefined ? demo.enableReviewQr : false,
+          reviewUrl: demo.reviewUrl || ""
+        });
+
+        localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
+        showToast(`🎉 Template constructed & applied from Demo '${demo.outletName}'! POS bills are now synced.`);
+        renderMasterInvoiceStudio();
+      });
+    }
+
     // Connect Live Input Listeners
     const textFields = [
       "restaurantName", "tagline", "address", "phone", "gstin", "fssai",
-      "email", "website", "thankYouMessage", "termsText", "upiId", "reviewUrl"
+      "thankYouMessage", "upiId", "reviewUrl"
     ];
     textFields.forEach(field => {
       const input = document.getElementById(`cfg_${field}`);
@@ -10216,7 +11438,7 @@ For any queries or updates, reply to this message.`;
     document.getElementById("saveInvoiceMasterConfigBtn")?.addEventListener("click", () => {
       try {
         localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
-        showToast("✓ Invoice & Print Template saved! All POS bills now use this custom design.");
+        showToast("✓ Invoice & Document Template saved! All POS orders now use this configuration.");
       } catch(e) {
         showToast("Error saving template to storage", "error");
       }
@@ -10228,15 +11450,15 @@ For any queries or updates, reply to this message.`;
         invoiceMasterConfig = Object.assign({}, DEFAULT_INVOICE_CONFIG);
         localStorage.removeItem("pos_invoice_master_config");
         showToast("↺ Template reset to factory defaults");
-        renderMasterInvoicePrintPanel();
+        renderMasterInvoiceStudio();
       }
     });
 
     // Test Print Button
-    document.getElementById("testPrintInvoiceBtn")?.addEventListener("click", () => {
-      const slipHtml = generateInvoiceSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, invoiceMasterConfig);
+    document.getElementById("testPrintCurrentDocBtn")?.addEventListener("click", () => {
+      const slipHtml = generateDocumentSlipHtml(SAMPLE_INVOICE_PREVIEW_DATA, activeInvoiceDocType, invoiceMasterConfig);
       executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat);
-      showToast(`🖨️ Test print dispatched in ${invoiceMasterConfig.paperFormat} format!`);
+      showToast(`🖨️ Test print dispatched for ${activeDoc.shortLabel} in ${invoiceMasterConfig.paperFormat} format!`);
     });
 
     // Initial render of preview
@@ -10303,6 +11525,17 @@ For any queries or updates, reply to this message.`;
         { label: "Active Roles", val: active, sub: "Assignable to Staff" },
         { label: "Total Rights", val: ALL_PERMISSIONS.length, sub: "Screen & Action Perms" },
         { label: "Kitchen Isolation", val: "Active", sub: "KOT Kanban Only" }
+      ];
+    } else if (activeMasterTab === "printers") {
+      const total = printerProfiles.length;
+      const active = printerProfiles.filter(p => p.status === "active").length;
+      const rollCount = printerProfiles.filter(p => p.paperSize !== "a4" && p.paperSize !== "a5").length;
+      const customCount = printerProfiles.filter(p => p.paperSize === "custom" || p.paperSize === "76mm" || p.paperSize === "100mm").length;
+      stats = [
+        { label: "Configured Printers", val: total, sub: "POS & Network Units" },
+        { label: "Active Printers", val: active, sub: "Ready for printing" },
+        { label: "Thermal Rolls", val: rollCount, sub: "80mm / 58mm / 76mm" },
+        { label: "Custom / Sheet Formats", val: customCount || (total - rollCount), sub: "Tailored paper widths" }
       ];
     } else if (activeMasterTab === "users") {
       const total = staffUsers.length;
@@ -10882,7 +12115,11 @@ For any queries or updates, reply to this message.`;
   document.getElementById("masterStatusFilter").addEventListener("change", renderMasterTable);
 
   document.getElementById("openAddMasterModalBtn").addEventListener("click", () => {
-    openMasterFormModal(activeMasterTab, null);
+    if (activeMasterTab === "printers") {
+      openPrinterProfileModal(null);
+    } else {
+      openMasterFormModal(activeMasterTab, null);
+    }
   });
 
   let activeEditingItemOptionGroups = [];
@@ -11071,6 +12308,10 @@ For any queries or updates, reply to this message.`;
   }
 
   function openMasterFormModal(type, id) {
+    if (type === "printers") {
+      openPrinterProfileModal(id);
+      return;
+    }
     editingRecordId = id;
     const isEdit = Boolean(id);
     document.getElementById("masterFormTitle").textContent = isEdit ? `Edit ${MASTER_CONFIG[type].title}` : `Add New ${MASTER_CONFIG[type].title}`;
@@ -11883,6 +13124,58 @@ For any queries or updates, reply to this message.`;
         showToast(`Staff member '${name}' registered with role '${roles.find(r => r.id === roleId)?.roleName || ''}'!`);
       }
       enforceRoleAccess();
+    } else if (type === "printers") {
+      const name = document.getElementById("pr_modal_name").value.trim();
+      const station = document.getElementById("pr_modal_station").value;
+      const iface = document.getElementById("pr_modal_interface").value;
+      const paperSize = document.getElementById("pr_modal_paperSize").value;
+      const customWidthMm = Number(document.getElementById("pr_modal_customWidth")?.value) || 80;
+      const printableWidthMm = Number(document.getElementById("pr_modal_printableWidth")?.value) || (paperSize === '58mm' ? 48 : (paperSize === '76mm' ? 68 : (paperSize === 'a4' ? 185 : 72)));
+      const lrMargin = Number(document.getElementById("pr_modal_lrMargin")?.value) || 2;
+      const autoCut = document.getElementById("pr_modal_autocut").checked;
+      const status = document.getElementById("pr_modal_status").checked ? "active" : "inactive";
+      const assignedDocs = Array.from(document.querySelectorAll("input[name='pr_doc_type']:checked")).map(cb => cb.value);
+
+      if (isEdit) {
+        const p = printerProfiles.find(x => x.id === editingRecordId);
+        if (p) {
+          Object.assign(p, {
+            name,
+            station,
+            interface: iface,
+            paperSize,
+            customWidthMm,
+            printableWidthMm,
+            leftRightMarginMm: lrMargin,
+            autoCut,
+            status,
+            assignedDocs
+          });
+        }
+        showToast(`✓ Printer profile '${name}' updated!`);
+      } else {
+        const newP = {
+          id: `pr_custom_${Date.now()}`,
+          name,
+          station,
+          printerType: "thermal_roll",
+          interface: iface,
+          paperSize,
+          customWidthMm,
+          printableWidthMm,
+          topBottomMarginMm: 2,
+          leftRightMarginMm: lrMargin,
+          fontSize: "10px",
+          autoCut,
+          status,
+          assignedDocs
+        };
+        printerProfiles.push(newP);
+        showToast(`✓ New printer profile '${name}' (${paperSize.toUpperCase()}) created!`);
+      }
+      localStorage.setItem("pos_printer_profiles", JSON.stringify(printerProfiles));
+      renderMasterPrintPanel();
+      renderMasterStats();
     }
 
     closeAllModals();
