@@ -7935,10 +7935,32 @@
                   station: oi.station
                 }))
               };
+            } else {
+              const tkOrder = {
+                orderId: o.orderCode || ("ORD-" + o.id),
+                apiOrderId: o.id,
+                orderType: o.orderType || "pickup",
+                label: o.orderType === "delivery" ? `Delivery #${o.id}` : `Takeaway #${o.id}`,
+                customerName: o.customerName || "Counter Guest",
+                customerPhone: o.customerPhone || "",
+                status: o.status || "in-progress",
+                items: (o.items || []).map(oi => ({
+                  itemId: oi.itemId,
+                  name: oi.itemName,
+                  qty: oi.quantity,
+                  price: oi.unitPrice,
+                  kotSent: true,
+                  station: oi.station
+                }))
+              };
+              const exIdx = takeawayOrders.findIndex(t => t.orderId === tkOrder.orderId || t.apiOrderId === o.id);
+              if (exIdx >= 0) takeawayOrders[exIdx] = tkOrder;
+              else takeawayOrders.unshift(tkOrder);
             }
           });
           tableOrders = { ...tableOrders, ...newTableOrders };
           saveTableOrdersState();
+          saveTakeawayOrdersState();
         }
         if (typeof renderOrdersList === "function") renderOrdersList();
       } catch (e) {
@@ -9287,7 +9309,14 @@
   // Helper: compute running total for an order
   function getOrderTotal(order) {
     if (!order || !order.items) return 0;
-    const sub = order.items.reduce((sum, it) => sum + (it.price * it.qty), 0);
+    const sub = order.items.reduce((sum, it) => {
+      let p = Number(it.price);
+      if (isNaN(p) || p <= 0) {
+        const found = items.find(m => m.name === (it.baseName || it.name));
+        p = found ? (Number(found.price) || 0) : 0;
+      }
+      return sum + (p * (Number(it.qty) || 1));
+    }, 0);
     const tax = sub * 0.05; // 5% total tax (CGST + SGST)
     return sub + tax;
   }
@@ -9534,6 +9563,75 @@
     const grid = document.getElementById("ordersGrid");
     if (!grid) return;
     const searchVal = (document.getElementById("orderSearchInput")?.value || "").toLowerCase().trim();
+
+    // 0. Reconcile with active KOTs: If any active KOT ticket exists that is not yet in tableOrders or takeawayOrders, restore it
+    kots.forEach(k => {
+      if (k.status === 'cancelled') return;
+      const orderId = k.orderId || k.id;
+      const isDineIn = Boolean(k.orderType === 'dineIn' && k.tableId);
+      const alreadyInTables = Boolean(k.tableId && tableOrders[k.tableId]);
+      const alreadyInTakeaway = takeawayOrders.some(t => t.orderId === orderId || (t.label && t.label === k.table));
+      const alreadyInInvoices = invoices.some(i => i.orderCode === orderId || i.id === orderId);
+
+      if (!alreadyInTables && !alreadyInTakeaway && !alreadyInInvoices) {
+        if (isDineIn && k.tableId) {
+          tableOrders[k.tableId] = {
+            orderId: orderId,
+            tableId: k.tableId,
+            tableName: k.table || `Table ${k.tableId}`,
+            shortcode: k.table || `T-${k.tableId}`,
+            orderType: "dineIn",
+            customerName: k.customerName || "Dine-in Guest",
+            customerPhone: k.customerPhone || "—",
+            status: k.status === "served" ? "served" : "running",
+            time: k.time || "Active",
+            items: (k.items || []).map(ki => {
+              const matchedItem = items.find(it => it.name === (ki.baseName || ki.name));
+              const price = matchedItem ? (Number(matchedItem.price) || 0) : (Number(ki.price) || 0);
+              return {
+                id: ki.id,
+                name: ki.name,
+                baseName: ki.baseName || ki.name,
+                qty: Number(ki.qty) || 1,
+                price: price,
+                status: ki.done ? "ready" : (k.status === "served" ? "ready" : "cooking"),
+                sentQty: Number(ki.qty) || 1,
+                unitMode: ki.unitMode || "portion",
+                weightKg: ki.weightKg
+              };
+            })
+          };
+          saveTableOrdersState();
+        } else {
+          const restoredOrder = {
+            orderId: orderId,
+            orderType: k.orderType || "pickup",
+            label: k.table || "Counter Order",
+            customerName: k.customerName || (k.chefNote && k.chefNote.startsWith("Guest:") ? k.chefNote.split("•")[0].replace("Guest:", "").trim() : "Counter Guest"),
+            customerPhone: k.customerPhone || "—",
+            status: k.status === "served" ? "served" : "running",
+            time: k.time || "Active",
+            items: (k.items || []).map(ki => {
+              const matchedItem = items.find(it => it.name === (ki.baseName || ki.name));
+              const price = matchedItem ? (Number(matchedItem.price) || 0) : (Number(ki.price) || 0);
+              return {
+                id: ki.id,
+                name: ki.name,
+                baseName: ki.baseName || ki.name,
+                qty: Number(ki.qty) || 1,
+                price: price,
+                status: ki.done ? "ready" : (k.status === "served" ? "ready" : "cooking"),
+                sentQty: Number(ki.qty) || 1,
+                unitMode: ki.unitMode || "portion",
+                weightKg: ki.weightKg
+              };
+            })
+          };
+          takeawayOrders.unshift(restoredOrder);
+          saveTakeawayOrdersState();
+        }
+      }
+    });
 
     // 1. Gather all dine-in orders (running + pending)
     const dineInList = Object.values(tableOrders).map(ord => {
@@ -11851,8 +11949,24 @@
     session.isPending = false;
     delete session.pendingSince;
 
+    // Immediately persist session in tableOrders or takeawayOrders
+    if (session.tableId) {
+      tableOrders[session.tableId] = session;
+      saveTableOrdersState();
+      saveTablesState();
+    } else {
+      const existIdx = takeawayOrders.findIndex(t => t.orderId === session.orderId);
+      if (existIdx >= 0) {
+        takeawayOrders[existIdx] = session;
+      } else {
+        takeawayOrders.unshift(session);
+      }
+      saveTakeawayOrdersState();
+    }
+
     saveKotsState();
     if (typeof renderKot === "function") renderKot();
+    if (typeof renderOrdersList === "function") renderOrdersList();
 
     return targetKot;
   }
@@ -11883,18 +11997,23 @@
       if (typeof apiClient !== "undefined" && apiClient.updateTableStatus) {
         apiClient.updateTableStatus(currentOrderSession.tableId, "occupied");
       }
-    }
-    if (currentOrderSession.tableId) {
       tableOrders[currentOrderSession.tableId] = currentOrderSession;
       saveTableOrdersState();
       saveTablesState();
     } else {
+      const existIdx = takeawayOrders.findIndex(t => t.orderId === currentOrderSession.orderId);
+      if (existIdx >= 0) {
+        takeawayOrders[existIdx] = currentOrderSession;
+      } else {
+        takeawayOrders.unshift(currentOrderSession);
+      }
       saveTakeawayOrdersState();
     }
 
     showToast(`🍳 ${ticket ? ticket.id : 'KOT'} sent to kitchen for ${tableLabel}!`, "success");
     renderCart();
     renderTables();
+    if (typeof renderOrdersList === "function") renderOrdersList();
     updateGlobalStats();
     showView("kot");
   });
