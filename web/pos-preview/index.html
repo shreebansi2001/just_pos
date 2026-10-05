@@ -4752,7 +4752,7 @@
             <label>Station / Employee Code</label>
             <div class="login-input-wrap">
               <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
-              <input type="text" id="loginUserCode" value="" placeholder="e.g. JCX-KIT-01 or Company Code">
+              <input type="text" id="loginUserCode" value="JCX182486" placeholder="e.g. JCX182486 or Employee Code">
             </div>
           </div>
 
@@ -4760,7 +4760,7 @@
             <label>Email or Staff Username</label>
             <div class="login-input-wrap">
               <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <input type="text" id="loginUsername" value="" placeholder="e.g. name@company.com or Staff Code">
+              <input type="text" id="loginUsername" value="" placeholder="e.g. amoncarclassiccaterers@gmail.com or Staff Code">
             </div>
           </div>
 
@@ -7501,14 +7501,15 @@
     },
     async login(email, password, userCode) {
       try {
-        console.log(`[API] Calling Auth Login: ${AUTH_API_BASE}/login for ${email}`);
+        const finalCode = (userCode || localStorage.getItem("pos_unique_code") || "JCX182486").trim();
+        console.log(`[API] Calling Auth Login: ${AUTH_API_BASE}/login for ${email} (uniqueCode: ${finalCode})`);
         const res = await fetch(`${AUTH_API_BASE}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: email,
             password: password,
-            uniqueCode: userCode || "",
+            uniqueCode: finalCode,
             otp: "",
             softType: "jcx"
           })
@@ -9170,10 +9171,25 @@
       }
     };
 
-    const codeVal = (document.getElementById("loginUserCode")?.value || "").trim().toUpperCase();
-    const usernameVal = (document.getElementById("loginUsername")?.value || "").trim();
-    const emailVal = usernameVal.toLowerCase();
+    const rawCode = (document.getElementById("loginUserCode")?.value || "").trim();
+    const rawUser = (document.getElementById("loginUsername")?.value || "").trim();
     const passVal = (document.getElementById("loginPassword")?.value || "").trim();
+
+    let emailVal = "";
+    let codeVal = "";
+    let usernameVal = rawUser || rawCode;
+
+    if (rawUser.includes("@")) {
+      emailVal = rawUser.toLowerCase();
+      codeVal = rawCode ? rawCode.toUpperCase() : (localStorage.getItem("pos_unique_code") || "JCX182486");
+    } else if (rawCode.includes("@")) {
+      emailVal = rawCode.toLowerCase();
+      codeVal = rawUser ? rawUser.toUpperCase() : (localStorage.getItem("pos_unique_code") || "JCX182486");
+      usernameVal = rawCode;
+    } else {
+      emailVal = rawUser ? rawUser.toLowerCase() : "";
+      codeVal = rawCode ? rawCode.toUpperCase() : (localStorage.getItem("pos_unique_code") || "JCX182486");
+    }
 
     if (!passVal) {
       const errMsg = "Please enter your password or staff PIN.";
@@ -9181,7 +9197,7 @@
       if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
       return;
     }
-    if (!codeVal && !usernameVal) {
+    if (!codeVal && !usernameVal && !emailVal) {
       const errMsg = "Please enter your User / Employee Code or Email.";
       showToast("⚠️ " + errMsg);
       if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
@@ -9242,7 +9258,7 @@
     }
 
     // 2. Call real Auth Login API for central accounts sending softType: "jcx"
-    const loginResult = await apiClient.login(usernameVal || emailVal, passVal, codeVal);
+    const loginResult = await apiClient.login(emailVal || usernameVal, passVal, codeVal);
 
     if (loginResult && loginResult.success && loginResult.data) {
       const uDetails = loginResult.data["User Details"] || loginResult.data["userDetails"] || loginResult.data;
@@ -9289,6 +9305,7 @@
       localStorage.setItem('pos_store_owner_id', dynamicUserId.toString());
       localStorage.setItem('pos_store_token', u.token || "");
       localStorage.setItem('pos_user_id', dynamicUserId.toString());
+      localStorage.setItem('pos_unique_code', codeVal || u?.uniqueCode || "JCX182486");
       sessionStorage.setItem('pos_user_id', dynamicUserId.toString());
       currentUserId = dynamicUserId;
       const displayName = u ? ([u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Operator") : "Operator";
