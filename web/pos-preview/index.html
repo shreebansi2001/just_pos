@@ -6032,14 +6032,8 @@
 (function(){
   "use strict";
 
-  const urlParamBackend = (new URLSearchParams(window.location.search)).get("backend_url") || (new URLSearchParams(window.location.search)).get("backend");
-  if (urlParamBackend) {
-    localStorage.setItem("pos_backend_base", urlParamBackend.replace(/\/+$/, ""));
-  }
-
-  const BACKEND_BASE = window.__BACKEND_BASE__ ||
-                       localStorage.getItem("pos_backend_base") ||
-                       "https://www.justcatering.in/JCPortal";
+  try { localStorage.removeItem("pos_backend_base"); } catch(e){}
+  const BACKEND_BASE = window.__BACKEND_BASE__ || "https://www.justcatering.in/JCPortal";
 
   const API_BASE = `${BACKEND_BASE}/v1/api/pos`;
   const AUTH_API_BASE = `${BACKEND_BASE}/v1/api/auth`;
