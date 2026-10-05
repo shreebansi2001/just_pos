@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Just POS — Precision Floor Desk &amp; Instant Billing</title>
+<title>Just POS</title>
 <script>
   (function(){
     try {
@@ -8870,7 +8870,7 @@
 
       enforceRoleAccess();
       updateUserDisplay();
-      document.title = `${compName} — POS Floor Desk`;
+      document.title = "Just POS";
 
       // Clean token query parameter from URL bar cleanly
       if (window.history.replaceState) {
@@ -8912,7 +8912,7 @@
                 invoiceMasterConfig.restaurantName = refreshedName;
                 localStorage.setItem("pos_custom_company_series_config", JSON.stringify(companySeriesConfig));
                 localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
-                document.title = `${refreshedName} — POS Floor Desk`;
+                document.title = "Just POS";
               }
             }
           }
@@ -9277,7 +9277,7 @@
 
       enforceRoleAccess();
       updateUserDisplay();
-      document.title = `${compName} — POS Floor Desk`;
+      document.title = "Just POS";
       const curUser = getCurrentUser();
       const curRole = getCurrentRole();
       showToast(`✓ Terminal unlocked! Authenticated as ${curUser.name} (${curRole.roleName}) [User ID: ${currentUserId}]`);
