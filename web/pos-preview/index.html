@@ -6346,21 +6346,15 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // If legacy demo tables exist (e.g. GF-01), discard them
-          const isDemo = parsed.some(t => t.shortcode === "GF-01" || t.tableName === "GF-01");
-          if (!isDemo) {
-            return parsed.map(t => ({
-              ...t,
-              tableName: t.tableName || t.name || t.tableNumber || ("Table " + (t.shortcode || t.id)),
-              shortcode: t.shortcode || t.name || ("T-" + t.id),
-              tableNumber: t.tableNumber || t.name || t.tableName || ("T-" + t.id),
-              capacity: Number(t.capacity) || 4,
-              masterStatus: t.masterStatus || (t.active === false ? "inactive" : "active"),
-              status: t.status || "available"
-            }));
-          } else {
-            localStorage.removeItem("pos_custom_tables");
-          }
+          return parsed.map(t => ({
+            ...t,
+            tableName: t.tableName || t.name || t.tableNumber || ("Table " + (t.shortcode || t.id)),
+            shortcode: t.shortcode || t.name || ("T-" + t.id),
+            tableNumber: t.tableNumber || t.name || t.tableName || ("T-" + t.id),
+            capacity: Number(t.capacity) || 4,
+            masterStatus: t.masterStatus || (t.active === false ? "inactive" : "active"),
+            status: t.status || "available"
+          }));
         }
       }
     } catch (e) {
