@@ -6050,30 +6050,7 @@
   const API_BASE = `${BACKEND_BASE}/v1/api/pos`;
   const AUTH_API_BASE = `${BACKEND_BASE}/v1/api/auth`;
 
-  // One-time automatic clean reset to ensure all masters and transactional data everywhere start 100% fresh
-  const POS_DATA_EPOCH_KEY = "pos_clean_masters_epoch_2026_10_04";
-  if (localStorage.getItem(POS_DATA_EPOCH_KEY) !== "cleared") {
-    localStorage.removeItem("pos_custom_table_orders");
-    localStorage.removeItem("pos_custom_takeaway_orders");
-    localStorage.removeItem("pos_custom_kots");
-    localStorage.removeItem("pos_custom_invoices");
-    localStorage.removeItem("pos_custom_tables");
-    localStorage.removeItem("pos_custom_floors");
-    localStorage.removeItem("pos_custom_categories");
-    localStorage.removeItem("pos_custom_items");
-    localStorage.removeItem("pos_custom_reservations");
-    localStorage.removeItem("pos_custom_company_series_config");
-    localStorage.removeItem("pos_active_company_series");
-    localStorage.removeItem("pos_printer_profiles");
-    localStorage.removeItem("pos_invoice_master_config");
-    localStorage.removeItem("pos_custom_category_meta");
-    Object.keys(localStorage).forEach(k => {
-      if (k.startsWith("pos_seq_") || k.startsWith("pos_custom_") || k.startsWith("pos_invoice_")) {
-        localStorage.removeItem(k);
-      }
-    });
-    localStorage.setItem(POS_DATA_EPOCH_KEY, "cleared");
-  }
+  // Data persistence note: Automatic wipe disabled to preserve all orders, KOTs, invoices, and tables.
 
   // Toast Helper
   function showToast(message, type = "success") {
@@ -7072,7 +7049,14 @@
   // PERSISTENT TABLE ORDERS & SESSIONS (STRICTLY API DRIVEN)
   // =========================================================================
   const defaultTableOrders = {};
-  let tableOrders = {};
+  let tableOrders = (() => {
+    try {
+      const stored = localStorage.getItem("pos_custom_table_orders");
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      return {};
+    }
+  })();
 
   function saveTableOrdersState() {
     try {
@@ -7085,7 +7069,14 @@
 
   // Dedicated Counter & Takeaway orders array (API Driven)
   const defaultTakeawayOrders = [];
-  let takeawayOrders = [];
+  let takeawayOrders = (() => {
+    try {
+      const stored = localStorage.getItem("pos_custom_takeaway_orders");
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  })();
 
   function saveTakeawayOrdersState() {
     try {
@@ -7099,9 +7090,16 @@
   // Cancelled Orders history
   let cancelledOrders = [];
 
-  // KOT Tickets (100% Live API Driven)
+  // KOT Tickets (Persistent & Live Synchronized)
   const defaultKots = [];
-  let kots = [];
+  let kots = (() => {
+    try {
+      const stored = localStorage.getItem("pos_custom_kots");
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  })();
 
   function saveKotsState() {
     try {
@@ -7293,9 +7291,16 @@
     return 'INR ' + res.trim() + ' Only';
   }
 
-  // Invoices (100% Live API Driven)
+  // Invoices (Persistent & Live Synchronized)
   const defaultInvoices = [];
-  let invoices = [];
+  let invoices = (() => {
+    try {
+      const stored = localStorage.getItem("pos_custom_invoices");
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  })();
 
   function saveInvoicesState() {
     try {
@@ -7932,7 +7937,8 @@
               };
             }
           });
-          tableOrders = newTableOrders;
+          tableOrders = { ...tableOrders, ...newTableOrders };
+          saveTableOrdersState();
         }
         if (typeof renderOrdersList === "function") renderOrdersList();
       } catch (e) {
@@ -7943,24 +7949,48 @@
       try {
         console.log(`[API:KOT] Syncing KOTs for userId=${this.getUserId()}...`);
         const kts = await this.getKots();
-        if (Array.isArray(kts)) {
-          kots = kts.map(k => ({
-            id: k.kotCode || ("KOT-" + k.id),
-            apiKotId: k.id,
-            orderId: k.orderCode || ("ORD-" + k.orderId),
-            tableLabel: k.tableNumber || ("Table " + k.tableId),
-            type: k.orderType || "dineIn",
-            customerName: k.customerName || "Guest",
-            time: k.createdAt ? new Date(k.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now",
-            status: k.status || "pending",
-            station: k.station || "Kitchen",
-            items: (k.items || []).map(ki => ({
-              name: ki.itemName,
-              qty: ki.quantity,
-              unitMode: "portion",
-              station: ki.station
-            }))
-          }));
+        if (Array.isArray(kts) && kts.length > 0) {
+          kts.forEach(k => {
+            const kotCode = k.kotCode || ("KOT-" + k.id);
+            const orderCode = k.orderCode || ("ORD-" + k.orderId);
+            const existing = kots.find(x => x.id === kotCode || x.apiKotId === k.id || (x.orderId && x.orderId === orderCode));
+            if (existing) {
+              if (k.status && existing.status !== k.status) {
+                existing.status = k.status;
+              }
+              if (k.id) existing.apiKotId = k.id;
+            } else {
+              kots.push({
+                id: kotCode,
+                apiKotId: k.id,
+                kot: k.kotCode || String(k.id),
+                orderId: orderCode,
+                table: k.tableNumber || ("Table " + k.tableId),
+                tableLabel: k.tableNumber || ("Table " + k.tableId),
+                floor: k.floorName || "Ground Floor",
+                guests: k.guests || 2,
+                waiter: k.waiterName || "Operator",
+                orderType: k.orderType || "dineIn",
+                station: k.station || "Kitchen",
+                status: k.status || "pending",
+                time: k.createdAt ? new Date(k.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now",
+                round: k.round || 1,
+                items: (k.items || []).map((ki, idx) => ({
+                  id: `i_api_${k.id}_${idx}`,
+                  name: ki.itemName || ki.name,
+                  baseName: ki.itemName || ki.name,
+                  qty: ki.quantity || ki.qty || 1,
+                  unitMode: ki.unitMode || "portion",
+                  weightKg: ki.weightKg || null,
+                  variantLabel: ki.variantLabel || "",
+                  station: ki.station || "Kitchen",
+                  done: Boolean(ki.done || ki.status === "ready" || ki.status === "served"),
+                  round: ki.round || 1
+                }))
+              });
+            }
+          });
+          saveKotsState();
         }
         if (typeof renderKot === "function") renderKot();
         if (typeof renderKotTickets === "function") renderKotTickets();
@@ -7975,28 +8005,40 @@
           this.getInvoices(),
           this.getTaxes()
         ]);
-        if (Array.isArray(invs)) {
-          invoices = invs.map(iv => ({
-            id: iv.invoiceNumber || ("INV-" + iv.id),
-            apiInvoiceId: iv.id,
-            orderCode: iv.orderCode || ("ORD-" + iv.orderId),
-            tableLabel: iv.tableNumber || ("Table " + iv.tableId),
-            type: iv.orderType || "dineIn",
-            customerName: iv.customerName || "Customer",
-            customerPhone: iv.customerPhone || "",
-            dateFormatted: iv.createdAt ? new Date(iv.createdAt).toLocaleDateString("en-GB") : "",
-            time: iv.createdAt ? new Date(iv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
-            subtotal: Number(iv.subtotal) || 0,
-            discountAmount: Number(iv.discountAmount) || 0,
-            taxableAmount: Number(iv.taxableAmount) || 0,
-            taxRate: Number(iv.taxRate) || 5,
-            cgst: Number(iv.cgst) || 0,
-            sgst: Number(iv.sgst) || 0,
-            total: Number(iv.total) || 0,
-            status: iv.status || "paid",
-            paymentMode: iv.paymentMode || "Cash",
-            items: []
-          }));
+        if (Array.isArray(invs) && invs.length > 0) {
+          invs.forEach(iv => {
+            const invId = iv.invoiceNumber || ("INV-" + iv.id);
+            const existing = invoices.find(x => x.id === invId || x.apiInvoiceId === iv.id);
+            if (existing) {
+              if (iv.status) existing.status = iv.status;
+              if (iv.paymentMode) existing.paymentMode = iv.paymentMode;
+              if (iv.id) existing.apiInvoiceId = iv.id;
+            } else {
+              invoices.push({
+                id: invId,
+                apiInvoiceId: iv.id,
+                orderCode: iv.orderCode || ("ORD-" + iv.orderId),
+                tableLabel: iv.tableNumber || ("Table " + iv.tableId),
+                type: iv.orderType || "dineIn",
+                customerName: iv.customerName || "Customer",
+                customerPhone: iv.customerPhone || "",
+                dateFormatted: iv.createdAt ? new Date(iv.createdAt).toLocaleDateString("en-GB") : "",
+                isoDate: iv.createdAt ? new Date(iv.createdAt).toISOString().split('T')[0] : "",
+                time: iv.createdAt ? new Date(iv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
+                subtotal: Number(iv.subtotal) || 0,
+                discountAmount: Number(iv.discountAmount) || 0,
+                taxableAmount: Number(iv.taxableAmount) || 0,
+                taxRate: Number(iv.taxRate) || 5,
+                cgst: Number(iv.cgst) || 0,
+                sgst: Number(iv.sgst) || 0,
+                total: Number(iv.total) || 0,
+                status: iv.status || "paid",
+                paymentMode: iv.paymentMode || "Cash",
+                items: iv.items || []
+              });
+            }
+          });
+          saveInvoicesState();
         }
         if (Array.isArray(txs) && txs.length > 0) {
           taxes = txs.map(tx => ({
@@ -8565,11 +8607,6 @@
 
   // Authentication Gateway - Seamless JCX SSO & RefreshToken Auto-Login Flow
   async function checkJcxAuthentication() {
-    // Clear any legacy mock caches so only live API data displays
-    localStorage.removeItem("pos_custom_table_orders");
-    localStorage.removeItem("pos_custom_takeaway_orders");
-    localStorage.removeItem("pos_custom_kots");
-    localStorage.removeItem("pos_custom_invoices");
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("clear") === "1" || urlParams.get("reset") === "1") {
@@ -9023,25 +9060,7 @@
       }
       resetSubmitBtn();
 
-      // Purge all legacy demo mock data from localStorage so the client starts 100% clean
-      localStorage.removeItem("pos_custom_tables");
-      localStorage.removeItem("pos_custom_company_series_config");
-      localStorage.removeItem("pos_custom_kots");
-      localStorage.removeItem("pos_custom_invoices");
-      localStorage.removeItem("pos_custom_table_orders");
-      localStorage.removeItem("pos_custom_takeaway_orders");
-      localStorage.removeItem("pos_seq_amoncar");
-      localStorage.removeItem("pos_seq_kta");
-      localStorage.removeItem("pos_invoice_master_config");
-      tables = [];
-      floors = [];
-      categories = [];
-      items = [];
-      kots = [];
-      invoices = [];
-      reservations = [];
-      tableOrders = {};
-      takeawayOrders = [];
+      // Preserve custom data and active orders across logins
 
       // Auto-configure default outlet with the client's actual company profile
       const compName = (u.userBasicDetails && u.userBasicDetails.companyName) ? u.userBasicDetails.companyName.trim() : (displayName || "Main Restaurant");
@@ -11663,35 +11682,46 @@
   });
 
   // =========================================================================
-  // SEND KOT (SOLVES KOT FIRST THEN INVOICE LIFECYCLE)
+  // SEND KOT & ADVANCE DISPATCH LOGIC (SOLVES KOT FIRST AND DIRECT BILLING)
   // =========================================================================
-  document.getElementById("sendKotBtn").addEventListener("click", () => {
-    if (!currentOrderSession || currentOrderSession.items.length === 0) {
-      showToast("Order is empty! Please add dishes to send KOT.", "error");
-      return;
-    }
+  function dispatchKotForOrder(session, isAdvancePaid = false, paymentMode = "") {
+    if (!session || !session.items || session.items.length === 0) return null;
 
-    // Filter only new unsent items!
-    const unsentItems = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
-    if (unsentItems.length === 0) {
-      showToast("All items in this order have already been sent to the kitchen!", "error");
-      return;
-    }
-
-    const tableLabel = currentOrderSession.shortcode || currentOrderSession.label || "Counter";
-    const orderNote = document.getElementById("orderKitchenNote")?.value.trim() || currentOrderSession.instruction || "";
-    if (orderNote) currentOrderSession.instruction = orderNote;
-
+    // Filter unsent items
+    let unsentItems = session.items.filter(i => i.qty > (i.sentQty || 0));
+    const tableLabel = session.shortcode || session.label || (session.tableName ? session.tableName : "Counter");
     const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const orderNote = (typeof document !== "undefined" ? document.getElementById("orderKitchenNote")?.value.trim() : "") || session.instruction || "";
+    if (orderNote) session.instruction = orderNote;
+
+    // If all items were already sent, but this is an advance payment, mark the active KOT as paid
+    if (unsentItems.length === 0) {
+      if (isAdvancePaid) {
+        const existingKot = kots.find(k => 
+          (k.orderId === session.orderId || (k.table && k.table === tableLabel)) &&
+          k.status !== 'cancelled'
+        );
+        if (existingKot) {
+          existingKot.isAdvancePaid = true;
+          existingKot.paymentStatus = "Paid";
+          if (paymentMode) existingKot.paymentMode = paymentMode;
+          saveKotsState();
+          if (typeof renderKot === "function") renderKot();
+          return existingKot;
+        }
+      }
+      return null;
+    }
 
     // Check if an active / running KOT already exists for this table or order
     const existingActiveKot = kots.find(k => 
-      (k.orderId === currentOrderSession.orderId || (k.table && k.table === tableLabel)) &&
+      (k.orderId === session.orderId || (k.table && k.table === tableLabel)) &&
       k.status !== 'served' && k.status !== 'cancelled'
     );
 
+    let targetKot = null;
+
     if (existingActiveKot) {
-      // Consolidate into existing KOT: Chef sees 1 unified ticket instead of 2 confusing cards!
       existingActiveKot.round = (existingActiveKot.round || 1) + 1;
       const roundNum = existingActiveKot.round;
 
@@ -11700,7 +11730,7 @@
         if (c.unitMode === 'kg') fullName += ` (${c.weightKg} Kg)`;
         if (c.variantLabel && c.unitMode !== 'kg') fullName += ` [${c.variantLabel}]`;
         return {
-          id: `i_${Date.now()}_${c.id}_${Math.random().toString(36).substr(2, 4)}`,
+          id: `i_${Date.now()}_${c.id || Math.random().toString(36).substr(2, 4)}_${Math.random().toString(36).substr(2, 4)}`,
           name: fullName,
           baseName: c.name,
           unitMode: c.unitMode || 'portion',
@@ -11724,49 +11754,56 @@
           : orderNote;
       }
 
-      // If the ticket was marked ready, reopen to preparing because new items need cooking!
+      if (isAdvancePaid) {
+        existingActiveKot.isAdvancePaid = true;
+        existingActiveKot.paymentStatus = "Paid";
+        if (paymentMode) existingActiveKot.paymentMode = paymentMode;
+      }
+
       if (existingActiveKot.status === 'ready') {
         existingActiveKot.status = 'preparing';
       }
 
-      // Mark items as sent in order session
       unsentItems.forEach(i => {
         i.sentQty = i.qty;
         i.kotId = existingActiveKot.id;
         i.status = "cooking";
       });
 
-      showToast(`🍳 Added ${unsentItems.length} items to ${tableLabel}'s running ticket ${existingActiveKot.id} (Round ${roundNum})!`);
+      targetKot = existingActiveKot;
     } else {
-      // Create initial KOT ticket
       const newKotNum = Math.floor(1000 + Math.random() * 9000);
       const kotId = `KOT-${newKotNum}`;
 
       let combinedChefNote = orderNote;
-      if (currentOrderSession.customerName) {
-        combinedChefNote = combinedChefNote ? `Guest: ${currentOrderSession.customerName} • ${combinedChefNote}` : `Guest: ${currentOrderSession.customerName}`;
+      if (session.customerName) {
+        combinedChefNote = combinedChefNote ? `Guest: ${session.customerName} • ${combinedChefNote}` : `Guest: ${session.customerName}`;
       }
 
       const newKot = {
         id: kotId,
         kot: `${newKotNum}`,
-        orderId: currentOrderSession.orderId,
+        orderId: session.orderId,
+        tableId: session.tableId,
         time: timeNow,
         table: tableLabel,
-        floor: "Ground Floor",
-        guests: 2,
-        waiter: "Operator",
-        orderType: currentOrderSession.orderType,
+        floor: session.floorName || "Ground Floor",
+        guests: session.guests || 2,
+        waiter: session.waiter || "Operator",
+        orderType: session.orderType || "dineIn",
         station: "Kitchen",
         status: "pending",
         round: 1,
+        isAdvancePaid: Boolean(isAdvancePaid),
+        paymentStatus: isAdvancePaid ? "Paid" : "Unpaid",
+        paymentMode: paymentMode || "",
         chefNote: combinedChefNote || null,
         items: unsentItems.map(c => {
           let fullName = c.name;
           if (c.unitMode === 'kg') fullName += ` (${c.weightKg} Kg)`;
           if (c.variantLabel && c.unitMode !== 'kg') fullName += ` [${c.variantLabel}]`;
           return {
-            id: `i_${Date.now()}_${c.id}_${Math.random().toString(36).substr(2, 4)}`,
+            id: `i_${Date.now()}_${c.id || Math.random().toString(36).substr(2, 4)}_${Math.random().toString(36).substr(2, 4)}`,
             name: fullName,
             baseName: c.name,
             unitMode: c.unitMode || 'portion',
@@ -11784,39 +11821,57 @@
       };
 
       kots.unshift(newKot);
+
       if (typeof apiClient !== "undefined") {
         if (apiClient.createOrder) {
           apiClient.createOrder({
-            tableId: currentOrderSession.tableId,
-            orderType: currentOrderSession.orderType || "dineIn",
-            items: currentOrderSession.items,
-            subtotal: currentOrderSession.subtotal || 0,
-            total: currentOrderSession.total || 0,
+            tableId: session.tableId,
+            orderType: session.orderType || "dineIn",
+            items: session.items,
+            subtotal: session.subtotal || 0,
+            total: session.total || 0,
             status: "active"
           });
         }
         if (apiClient.sendKot) {
-          apiClient.sendKot(kotId, newKot.items);
-        }
-        if (apiClient.updateTableStatus && currentOrderSession.tableId) {
-          apiClient.updateTableStatus(currentOrderSession.tableId, "occupied");
+          apiClient.sendKot(session.apiOrderId || session.orderId || kotId, newKot.items);
         }
       }
 
-      // Mark items as sent in order session
       unsentItems.forEach(i => {
         i.sentQty = i.qty;
         i.kotId = kotId;
         i.status = "cooking";
       });
 
-      showToast(`🍳 ${kotId} sent to kitchen for ${tableLabel}!`);
+      targetKot = newKot;
     }
 
-    // Reset pending status when items are sent to kitchen
-    currentOrderSession.status = "running";
-    currentOrderSession.isPending = false;
-    delete currentOrderSession.pendingSince;
+    session.status = "running";
+    session.isPending = false;
+    delete session.pendingSince;
+
+    saveKotsState();
+    if (typeof renderKot === "function") renderKot();
+
+    return targetKot;
+  }
+  window.dispatchKotForOrder = dispatchKotForOrder;
+
+  document.getElementById("sendKotBtn").addEventListener("click", () => {
+    if (!currentOrderSession || currentOrderSession.items.length === 0) {
+      showToast("Order is empty! Please add dishes to send KOT.", "error");
+      return;
+    }
+
+    const unsentItems = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
+    if (unsentItems.length === 0) {
+      showToast("All items in this order have already been sent to the kitchen!", "error");
+      return;
+    }
+
+    const tableLabel = currentOrderSession.shortcode || currentOrderSession.label || "Counter";
+    const ticket = dispatchKotForOrder(currentOrderSession, false);
 
     // Mark table occupied
     if (currentOrderSession.tableId) {
@@ -11824,6 +11879,9 @@
       if (tbl) {
         tbl.status = "occupied";
         delete tbl.isPending;
+      }
+      if (typeof apiClient !== "undefined" && apiClient.updateTableStatus) {
+        apiClient.updateTableStatus(currentOrderSession.tableId, "occupied");
       }
     }
     if (currentOrderSession.tableId) {
@@ -11833,8 +11891,8 @@
     } else {
       saveTakeawayOrdersState();
     }
-    saveKotsState();
 
+    showToast(`🍳 ${ticket ? ticket.id : 'KOT'} sent to kitchen for ${tableLabel}!`, "success");
     renderCart();
     renderTables();
     updateGlobalStats();
@@ -12322,12 +12380,19 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
           invoices.unshift(inv);
         }
 
+        // Dispatch / update KOT to kitchen (advance payment or direct billing)
+        const sessionToKot = currentOrderSession || inv;
+        if (sessionToKot && sessionToKot.items && sessionToKot.items.length > 0) {
+          dispatchKotForOrder(sessionToKot, true, mode);
+        }
+
         // Free up table / remove session!
         if (currentOrderSession && currentOrderSession.tableId) {
           const tbl = tables.find(t => t.id === currentOrderSession.tableId);
           if (tbl) {
             tbl.status = "available";
             tbl.isPending = false;
+            tbl.isServed = false;
           }
           apiClient.updateTableStatus(currentOrderSession.tableId, "available");
           delete tableOrders[currentOrderSession.tableId];
@@ -12342,7 +12407,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
         currentOrderSession = null;
         closeAllModals();
-        showToast(`✓ Invoice ${inv.id} (${committed.config.shortName}) settled via ${mode}!`);
+        showToast(`✓ Invoice ${inv.id} (${committed.config.shortName}) settled via ${mode}! KOT sent to kitchen.`);
         updateGlobalStats();
         renderTables();
         renderBilling();
@@ -12389,12 +12454,14 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
   function renderKot() {
     const board = document.getElementById("kotKanbanBoard");
-    const stationFilter = document.getElementById("kotStationFilter").value;
+    if (!board) return;
+    const stationFilterEl = document.getElementById("kotStationFilter");
+    const stationFilter = stationFilterEl ? stationFilterEl.value : "all";
 
     board.innerHTML = KOT_COLUMNS.map(col => {
       const tickets = kots.filter(k => {
         const matchCol = k.status === col.id;
-        const matchStation = stationFilter === "all" || k.station === stationFilter;
+        const matchStation = !stationFilter || stationFilter === "all" || (k.station && k.station.toLowerCase() === stationFilter.toLowerCase());
         return matchCol && matchStation;
       });
 
@@ -12417,41 +12484,46 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
             ${tickets.map(k => `
               <div class="kot-order-card" draggable="true" data-kotid="${k.id}">
-                <div class="kot-type-stripe ${k.orderType}"></div>
+                <div class="kot-type-stripe ${k.orderType || 'dineIn'}"></div>
 
                 <div class="kot-card-body">
                   <div class="kot-card-top">
-                    <div style="display:flex;align-items:center;gap:6px;">
-                      <span class="kot-type-pill ${k.orderType}">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                      <span class="kot-type-pill ${k.orderType || 'dineIn'}">
                         ● ${k.orderType === 'dineIn' ? 'Dine In' : (k.orderType === 'delivery' ? 'Delivery' : 'Pick Up')}
                       </span>
+                      ${k.isAdvancePaid || k.paymentStatus === 'Paid' ? `
+                        <span style="font-size:10px;font-weight:800;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;padding:2px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;">
+                          💳 Paid in Advance ${k.paymentMode ? `(${k.paymentMode})` : ''}
+                        </span>
+                      ` : ''}
                       ${k.round > 1 ? `
                         <span style="font-size:10px;font-weight:800;background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:2px 7px;border-radius:6px;">
                           ⚡ Running Order (R-${k.round})
                         </span>
                       ` : ''}
                     </div>
-                    <span style="font-size:11px;font-weight:700;color:var(--ink-soft);">⏱ ${k.time}</span>
+                    <span style="font-size:11px;font-weight:700;color:var(--ink-soft);">⏱ ${k.time || 'Just now'}</span>
                   </div>
 
                   <div class="kot-stat-grid">
                     <div class="kot-stat-cell">
-                      <div class="kot-stat-val">${k.table}</div>
+                      <div class="kot-stat-val">${k.table || k.tableLabel || 'Counter'}</div>
                       <div class="kot-stat-lbl">Table</div>
                     </div>
                     <div class="kot-stat-cell">
-                      <div class="kot-stat-val">${k.kot}</div>
+                      <div class="kot-stat-val">${k.kot || k.id}</div>
                       <div class="kot-stat-lbl">KOT No.</div>
                     </div>
                     <div class="kot-stat-cell">
-                      <div class="kot-stat-val">${k.time}</div>
+                      <div class="kot-stat-val">${k.time || 'Just now'}</div>
                       <div class="kot-stat-lbl">Time</div>
                     </div>
                   </div>
 
                   <div class="kot-secondary-meta">
-                    <span>Floor: <b>${k.floor}</b></span>
-                    <span>Guests: <b>${k.guests}</b></span>
+                    <span>Floor: <b>${k.floor || 'Ground Floor'}</b></span>
+                    <span>Guests: <b>${k.guests || 2}</b></span>
                   </div>
 
                   <div class="kot-items-list">
