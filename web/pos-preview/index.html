@@ -5518,11 +5518,61 @@
     </div>
     <div class="modal-body" style="padding:18px;display:flex;flex-direction:column;gap:16px;">
       
-      <!-- Section 1: Number of Copies -->
+      <!-- Section 1: Slip Type Selection -->
       <div>
-        <label style="font-weight:700;font-size:12.5px;color:var(--ink);display:block;margin-bottom:8px;">
-          📄 Number of Copies to Print
+        <label style="font-weight:800;font-size:13px;color:var(--ink);display:block;margin-bottom:8px;">
+          1. Select What to Print:
         </label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:2px solid var(--primary);border-radius:10px;cursor:pointer;background:rgba(1,122,156,0.06);transition:all .15s ease;" class="print-mode-card" id="card_print_with_kot">
+            <input type="radio" name="orderPrintMode" value="with_kot" checked style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
+            <div style="flex:1;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 Customer Bill + Kitchen KOT</div>
+                <span style="font-size:10.5px;font-weight:800;background:var(--primary);color:#fff;padding:2px 8px;border-radius:12px;">Standard (2 Slips)</span>
+              </div>
+              <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
+                Page 1: Customer Dining Bill · Page 2: Kitchen KOT preparation ticket for Chef.
+              </div>
+            </div>
+          </label>
+
+          <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel);transition:all .15s ease;" class="print-mode-card" id="card_print_without_kot">
+            <input type="radio" name="orderPrintMode" value="without_kot" style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
+            <div style="flex:1;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🧾 Customer Bill Only</div>
+                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip</span>
+              </div>
+              <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
+                Dining estimate / guest check slip only. No kitchen ticket.
+              </div>
+            </div>
+          </label>
+
+          <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel);transition:all .15s ease;" class="print-mode-card" id="card_print_kot_only">
+            <input type="radio" name="orderPrintMode" value="kot_only" style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
+            <div style="flex:1;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 Kitchen KOT Only</div>
+                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip</span>
+              </div>
+              <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
+                Cook order ticket for chefs only. No customer bill.
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 2: Print Sets / Quantity -->
+      <div style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label style="font-weight:800;font-size:12.5px;color:var(--ink);margin:0;">
+            2. Print Quantity / Sets:
+          </label>
+          <span style="font-size:11px;color:var(--ink-soft);">Default is 1 Set</span>
+        </div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;">
             <button type="button" id="btnPrintCopiesDec" style="width:38px;height:38px;border:none;background:var(--surface-subtle);font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;">−</button>
@@ -5530,56 +5580,24 @@
             <button type="button" id="btnPrintCopiesInc" style="width:38px;height:38px;border:none;background:var(--surface-subtle);font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;">+</button>
           </div>
           <div style="display:flex;gap:6px;">
-            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="1" style="font-weight:700;padding:6px 12px;border-radius:6px;">1 Copy</button>
-            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="2" style="font-weight:700;padding:6px 12px;border-radius:6px;">2 Copies</button>
-            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="3" style="font-weight:700;padding:6px 12px;border-radius:6px;">3 Copies</button>
+            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="1" style="font-weight:800;padding:7px 14px;border-radius:6px;background:var(--primary);color:#fff;border-color:var(--primary);">1 Set (Default)</button>
+            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="2" style="font-weight:700;padding:7px 14px;border-radius:6px;">2 Sets</button>
+            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="3" style="font-weight:700;padding:7px 14px;border-radius:6px;">3 Sets</button>
           </div>
         </div>
       </div>
 
-      <!-- Section 2: Print Mode (With KOT vs Without KOT vs KOT Only) -->
-      <div>
-        <label style="font-weight:700;font-size:12.5px;color:var(--ink);display:block;margin-bottom:8px;">
-          🎛️ Slip Selection (With or Without KOT)
-        </label>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--primary);border-radius:8px;cursor:pointer;background:rgba(1,122,156,0.06);" class="print-mode-card" id="card_print_with_kot">
-            <input type="radio" name="orderPrintMode" value="with_kot" checked style="margin-top:3px;">
-            <div style="flex:1;">
-              <div style="font-weight:800;font-size:13px;color:var(--ink);">🍳 With Kitchen KOT (Bill + KOT)</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Prints customer estimate / dining bill AND kitchen preparation ticket.</div>
-            </div>
-          </label>
-
-          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--panel);" class="print-mode-card" id="card_print_without_kot">
-            <input type="radio" name="orderPrintMode" value="without_kot" style="margin-top:3px;">
-            <div style="flex:1;">
-              <div style="font-weight:800;font-size:13px;color:var(--ink);">🧾 Without Kitchen KOT (Bill Only)</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Prints customer estimate / dining guest check only. No kitchen slip.</div>
-            </div>
-          </label>
-
-          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--panel);" class="print-mode-card" id="card_print_kot_only">
-            <input type="radio" name="orderPrintMode" value="kot_only" style="margin-top:3px;">
-            <div style="flex:1;">
-              <div style="font-weight:800;font-size:13px;color:var(--ink);">🍳 Kitchen KOT Only (Kitchen Slip Only)</div>
-              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Prints only the kitchen order ticket for chefs. No bill slip.</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
       <!-- Section 3: Kitchen Dispatch Checkbox -->
-      <div id="printDispatchKotOption" style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:8px;padding:10px 12px;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;margin:0;">
-          <input type="checkbox" id="orderPrintDispatchKitchen" checked>
-          <span>🍳 Also dispatch ticket to active Kitchen KOT Board</span>
+      <div id="printDispatchKotOption" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:#166534;margin:0;">
+          <input type="checkbox" id="orderPrintDispatchKitchen" checked style="accent-color:#16a34a;width:15px;height:15px;">
+          <span>✓ Also dispatch ticket live to Kitchen KOT screen (#view-kot)</span>
         </label>
       </div>
 
       <!-- Live Preview Summary -->
-      <div id="orderPrintSummaryText" style="font-size:11.5px;color:var(--primary);font-weight:700;background:rgba(1,122,156,0.08);padding:8px 12px;border-radius:6px;border-left:3px solid var(--primary);">
-        Summary: 1 copy · Bill + Kitchen KOT (2 slips total)
+      <div id="orderPrintSummaryText" style="font-size:13px;color:#15803d;font-weight:800;background:#dcfce7;border:1.5px solid #86efac;padding:12px 14px;border-radius:8px;display:flex;align-items:center;gap:8px;">
+        📄 <span>Ready to Print: Exactly 2 Slips (Page 1: Customer Bill · Page 2: Kitchen KOT)</span>
       </div>
 
     </div>
@@ -12518,9 +12536,27 @@
       if (isChecked) {
         c.style.borderColor = "var(--primary)";
         c.style.background = "rgba(1,122,156,0.06)";
+        c.style.borderWidth = "2px";
       } else {
         c.style.borderColor = "var(--line)";
         c.style.background = "var(--panel)";
+        c.style.borderWidth = "1.5px";
+      }
+    });
+
+    // Highlight active preset button
+    document.querySelectorAll(".btn-preset-copy").forEach(b => {
+      const bCopies = parseInt(b.dataset.copies) || 1;
+      if (bCopies === copies) {
+        b.style.background = "var(--primary)";
+        b.style.color = "#fff";
+        b.style.borderColor = "var(--primary)";
+        b.style.fontWeight = "800";
+      } else {
+        b.style.background = "";
+        b.style.color = "";
+        b.style.borderColor = "";
+        b.style.fontWeight = "700";
       }
     });
 
@@ -12528,22 +12564,19 @@
       dispatchBox.style.display = (mode === "without_kot") ? "none" : "block";
     }
 
-    let modeText = "";
-    let slipsPerCopy = 1;
-    if (mode === "with_kot") {
-      modeText = "Customer Bill + Kitchen KOT";
-      slipsPerCopy = 2;
-    } else if (mode === "without_kot") {
-      modeText = "Customer Bill / Estimate Only";
-      slipsPerCopy = 1;
-    } else {
-      modeText = "Kitchen KOT Only";
-      slipsPerCopy = 1;
-    }
-
-    const totalSlips = copies * slipsPerCopy;
     if (summaryEl) {
-      summaryEl.textContent = `Summary: ${copies} ${copies === 1 ? 'Copy' : 'Copies'} · ${modeText} (Total ${totalSlips} ${totalSlips === 1 ? 'slip' : 'slips'} will print)`;
+      if (mode === "with_kot") {
+        const totalSlips = copies * 2;
+        if (copies === 1) {
+          summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">Exactly 2 Slips</b> (Page 1: Customer Bill · Page 2: Kitchen KOT)</span>`;
+        } else {
+          summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">${totalSlips} Slips</b> (${copies}× Customer Bill + ${copies}× Kitchen KOT)</span>`;
+        }
+      } else if (mode === "without_kot") {
+        summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">${copies} ${copies === 1 ? 'Slip' : 'Slips'}</b> (Customer Bill Only · No Kitchen Slip)</span>`;
+      } else {
+        summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">${copies} ${copies === 1 ? 'Slip' : 'Slips'}</b> (Kitchen KOT Only · No Customer Bill)</span>`;
+      }
     }
   }
 
@@ -15315,7 +15348,7 @@ For any queries or updates, reply to this message.`;
           </div>
 
           <div style="text-align:center; padding:6px 0; border-top:1px dashed #cbd5e1;">
-            <img src="${upiQrImg}" alt="UPI QR" style="width:70px; height:70px; border:1px solid #cbd5e1; border-radius:4px; padding:2px; background:#fff;">
+            <img src="${upiQrImg}" alt="UPI QR" onerror="this.parentElement.style.display='none';" style="width:70px; height:70px; border:1px solid #cbd5e1; border-radius:4px; padding:2px; background:#fff;">
             <div style="font-size:7.5px; font-weight:800; margin-top:2px;">SCAN TO PAY VIA ANY UPI APP</div>
             <div style="font-size:6.5px; color:#64748b; font-family:monospace;">${upiId}</div>
           </div>
