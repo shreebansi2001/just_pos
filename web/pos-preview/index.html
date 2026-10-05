@@ -12627,83 +12627,91 @@
   });
 
   document.getElementById("btnExecuteOrderPrint")?.addEventListener("click", () => {
-    if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
-      showToast("Order is empty!", "error");
+    try {
+      if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
+        showToast("Order is empty!", "error");
+        closeModal("orderPrintOptionsModal");
+        return;
+      }
+
+      const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
+      const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
+      const dispatchKitchen = Boolean(document.getElementById("orderPrintDispatchKitchen")?.checked);
+
+      const bill = calculateOrderBill(currentOrderSession, currentOrderSession.items);
+      const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
+      const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
+      const tempInv = {
+        id: currentOrderSession.orderId || ("ORD-" + Date.now().toString().slice(-6)),
+        companySeries: companyKey,
+        tableLabel: currentOrderSession.shortcode || currentOrderSession.label || "Counter",
+        tokenNo: currentOrderSession.tokenNo || ("T-" + String(Date.now()).slice(-3)),
+        serverName: currentOrderSession.serverName || (activeUser ? activeUser.name : "Staff"),
+        customerName: currentOrderSession.customerName || (document.getElementById("orderCustName")?.value.trim()) || "Walk-in Guest",
+        customerPhone: currentOrderSession.customerPhone || (document.getElementById("orderCustPhone")?.value.trim()) || "",
+        items: currentOrderSession.items,
+        subtotal: bill.subtotal,
+        discountAmount: bill.discountAmount,
+        taxableAmount: bill.taxable,
+        cgst: bill.cgst,
+        sgst: bill.sgst,
+        total: bill.total,
+        paymentMode: "Pending / Bill Review",
+        status: "estimate",
+        dateFormatted: new Date().toLocaleDateString('en-GB'),
+        timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      let combinedHtml = "";
+      for (let c = 1; c <= copies; c++) {
+        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9px;font-weight:800;color:#64748b;padding-bottom:2px;border-bottom:1px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
+
+        if (mode === "with_kot" || mode === "without_kot") {
+          // Customer Bill / Estimate Slip
+          const billSlip = generateDocumentSlipHtml(tempInv, "interim");
+          combinedHtml += `
+            <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
+              ${copyBadge}
+              ${billSlip}
+            </div>
+          `;
+        }
+
+        if (mode === "with_kot" || mode === "kot_only") {
+          // Kitchen KOT Slip
+          const kotSlip = generateDocumentSlipHtml(tempInv, "kot");
+          combinedHtml += `
+            <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
+              ${copyBadge}
+              ${kotSlip}
+            </div>
+          `;
+        }
+      }
+
+      // Close modal before opening print dialog
       closeModal("orderPrintOptionsModal");
-      return;
-    }
 
-    const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
-    const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
-    const dispatchKitchen = Boolean(document.getElementById("orderPrintDispatchKitchen")?.checked);
+      // Trigger Print
+      executeThermalPrint(combinedHtml, invoiceMasterConfig.paperFormat || "80mm");
 
-    const bill = calculateOrderBill(currentOrderSession, currentOrderSession.items);
-    const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
-    const tempInv = {
-      id: currentOrderSession.orderId || ("ORD-" + Date.now().toString().slice(-6)),
-      companySeries: companyKey,
-      tableLabel: currentOrderSession.shortcode || currentOrderSession.label || "Counter",
-      tokenNo: currentOrderSession.tokenNo || ("T-" + String(Date.now()).slice(-3)),
-      serverName: currentOrderSession.serverName || (currentStaffUser ? currentStaffUser.name : "Staff"),
-      customerName: currentOrderSession.customerName || (document.getElementById("orderCustName")?.value.trim()) || "Walk-in Guest",
-      customerPhone: currentOrderSession.customerPhone || (document.getElementById("orderCustPhone")?.value.trim()) || "",
-      items: currentOrderSession.items,
-      subtotal: bill.subtotal,
-      discountAmount: bill.discountAmount,
-      taxableAmount: bill.taxable,
-      cgst: bill.cgst,
-      sgst: bill.sgst,
-      total: bill.total,
-      paymentMode: "Pending / Bill Review",
-      status: "estimate",
-      dateFormatted: new Date().toLocaleDateString('en-GB'),
-      timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-    };
-
-    let combinedHtml = "";
-    for (let c = 1; c <= copies; c++) {
-      const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9px;font-weight:800;color:#64748b;padding-bottom:2px;border-bottom:1px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
-
-      if (mode === "with_kot" || mode === "without_kot") {
-        // Customer Bill / Estimate Slip
-        const billSlip = generateDocumentSlipHtml(tempInv, "interim");
-        combinedHtml += `
-          <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
-            ${copyBadge}
-            ${billSlip}
-          </div>
-        `;
+      // Optional dispatch to Kitchen KOT board
+      if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
+        const unsent = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
+        if (unsent.length > 0) {
+          dispatchKotForOrder(currentOrderSession, false);
+          renderCart();
+          renderTables();
+          if (typeof renderOrdersList === "function") renderOrdersList();
+        }
       }
 
-      if (mode === "with_kot" || mode === "kot_only") {
-        // Kitchen KOT Slip
-        const kotSlip = generateDocumentSlipHtml(tempInv, "kot");
-        combinedHtml += `
-          <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
-            ${copyBadge}
-            ${kotSlip}
-          </div>
-        `;
-      }
+      const modeLabel = (mode === "with_kot") ? "Bill + Kitchen KOT" : (mode === "without_kot" ? "Bill Only" : "Kitchen KOT Only");
+      showToast(`🖨️ Sent ${copies} ${copies === 1 ? 'copy' : 'copies'} (${modeLabel}) to printer!`, "success");
+    } catch (err) {
+      console.error("[OrderPrint] Execute print error:", err);
+      showToast("❌ Print error: " + (err.message || err), "error");
     }
-
-    // Trigger Print
-    executeThermalPrint(combinedHtml, invoiceMasterConfig.paperFormat || "80mm");
-
-    // Optional dispatch to Kitchen KOT board
-    if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
-      const unsent = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
-      if (unsent.length > 0) {
-        dispatchKotForOrder(currentOrderSession, false);
-        renderCart();
-        renderTables();
-        if (typeof renderOrdersList === "function") renderOrdersList();
-      }
-    }
-
-    closeModal("orderPrintOptionsModal");
-    const modeLabel = (mode === "with_kot") ? "Bill + Kitchen KOT" : (mode === "without_kot" ? "Bill Only" : "Kitchen KOT Only");
-    showToast(`🖨️ Sent ${copies} ${copies === 1 ? 'copy' : 'copies'} (${modeLabel}) to printer!`, "success");
   });
 
   let currentInvoiceTab = "tax_invoice"; // "tax_invoice", "gate_pass", "digital"
