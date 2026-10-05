@@ -4859,9 +4859,6 @@
         <div class="stat-chip"><b id="statTablesFree">0</b> tables free</div>
         <div class="stat-chip"><b id="statActiveKots">0</b> active KOTs</div>
         <div class="stat-chip primary"><b id="statTodaySales">₹0.00</b> sales today</div>
-        <button id="topbarClearDataBtn" class="stat-chip" style="background:#fee2e2;border:1px dashed #ef4444;color:#991b1b;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;" title="Reset all test orders, bills, and KOTs to start testing fresh">
-          <span>🧹</span> Clear Test Data
-        </button>
         <div class="stat-chip operator-chip" id="topbarOperatorChip" style="cursor:default;user-select:none;">
           <span>👤</span> <b id="topbarOperatorName">Admin</b>
           <span id="topbarRoleBadge" class="op-role-pill admin">ADMIN</span>
@@ -8771,7 +8768,6 @@
     if (typeof renderKots === "function") renderKots();
     showToast("🧹 All test orders, KOTs, and bills cleared! Fresh state ready.");
   };
-  document.getElementById("topbarClearDataBtn")?.addEventListener("click", () => window.clearAllTestData(true));
 
   document.getElementById("posLoginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
