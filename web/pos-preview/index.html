@@ -6096,59 +6096,104 @@
 </div>
 
 <!-- MODAL: CANCEL ORDER CONFIRMATION & REASON -->
-<div class="modal-backdrop" id="cancelOrderModal">
-  <div class="modal-box" style="max-width:440px;">
-    <div class="modal-head" style="border-bottom:1px solid #fee2e2;background:#fff1f2;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:20px;">🚫</span>
+<div class="modal-backdrop" id="cancelOrderModal" style="background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);">
+  <div class="modal" style="max-width:460px;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.35);border:1.5px solid var(--line);background:var(--panel);">
+    
+    <!-- Modal Header -->
+    <div class="modal-head" style="padding:16px 20px;background:linear-gradient(135deg,rgba(239,68,68,0.08) 0%,rgba(220,38,38,0.02) 100%);border-bottom:1.5px solid rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:42px;height:42px;border-radius:12px;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(220,38,38,0.18);flex-shrink:0;">
+          <i data-lucide="alert-octagon" style="width:22px;height:22px;"></i>
+        </div>
         <div>
-          <h3 style="color:#b91c1c;margin:0;">Cancel Order</h3>
-          <div style="font-size:11.5px;color:#991b1b;margin-top:2px;" id="cancelModalOrderCode">ORD-1001</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <h3 style="font-size:16.5px;font-weight:800;color:#991b1b;margin:0;letter-spacing:-0.01em;">Cancel Order</h3>
+            <span id="cancelModalOrderCode" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:800;background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;">#ORD-1001</span>
+          </div>
+          <div style="font-size:12px;color:#b91c1c;opacity:0.85;margin-top:2px;font-weight:500;">
+            Void kitchen tickets &amp; release table / counter
+          </div>
         </div>
       </div>
-      <button class="modal-close" data-close-modal="cancelOrderModal">&times;</button>
+      <button class="modal-close" data-close-modal="cancelOrderModal" style="width:32px;height:32px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s ease;">
+        <i data-lucide="x" style="width:16px;height:16px;"></i>
+      </button>
     </div>
-    <div class="modal-body" style="padding:18px;">
-      <div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
-          <span style="color:var(--ink-soft);">Table / Source:</span>
-          <b id="cancelModalSource" style="color:var(--ink);">Table GF-3</b>
+
+    <!-- Modal Body -->
+    <div class="modal-body" style="padding:20px;">
+      
+      <!-- Order Details Summary Card -->
+      <div style="background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--line);">
+          <span style="font-size:12px;color:var(--ink-soft);font-weight:600;display:flex;align-items:center;gap:6px;">
+            <i data-lucide="map-pin" style="width:13px;height:13px;color:var(--primary);"></i> Table / Source:
+          </span>
+          <span id="cancelModalSource" style="font-size:13px;font-weight:800;color:var(--ink);background:var(--panel);padding:2px 8px;border-radius:6px;border:1px solid var(--line);">Table GF-3</span>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
-          <span style="color:var(--ink-soft);">Guest Name:</span>
-          <b id="cancelModalGuest" style="color:var(--ink);">Rahul Sharma</b>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--line);">
+          <span style="font-size:12px;color:var(--ink-soft);font-weight:600;display:flex;align-items:center;gap:6px;">
+            <i data-lucide="user" style="width:13px;height:13px;color:var(--primary);"></i> Guest Name:
+          </span>
+          <span id="cancelModalGuest" style="font-size:13px;font-weight:700;color:var(--ink);">Rahul Sharma</span>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:12.5px;">
-          <span style="color:var(--ink-soft);">Order Amount:</span>
-          <b id="cancelModalAmount" style="color:var(--ink);font-family:'JetBrains Mono',monospace;">₹520.00</b>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--ink-soft);font-weight:600;display:flex;align-items:center;gap:6px;">
+            <i data-lucide="receipt" style="width:13px;height:13px;color:#dc2626;"></i> Order Amount:
+          </span>
+          <span id="cancelModalAmount" style="font-size:16px;font-weight:900;color:#dc2626;font-family:'JetBrains Mono',monospace;">₹520.00</span>
         </div>
       </div>
 
+      <!-- Reason Selection -->
       <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:6px;">Reason for Cancellation:</label>
-        <select id="cancelReasonSelect" class="form-control" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:13px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink);margin-bottom:6px;">
+          <i data-lucide="help-circle" style="width:14px;height:14px;color:var(--primary);"></i>
+          <span>Reason for Cancellation <b style="color:#dc2626;">*</b></span>
+        </label>
+        <select id="cancelReasonSelect" class="form-control" style="width:100%;height:40px;padding:8px 12px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;outline:none;">
           <option value="Customer changed mind / Left">Customer changed mind / Left</option>
-          <option value="Accidental duplicate order">Accidental duplicate order</option>
+          <option value="Placed by mistake / Duplicate test order">Placed by mistake / Duplicate test order</option>
           <option value="Kitchen delay / Dish unavailable">Kitchen delay / Dish unavailable</option>
           <option value="Payment issue / Declined">Payment issue / Declined</option>
+          <option value="Customer dissatisfied with service">Customer dissatisfied with service</option>
           <option value="Other reason">Other reason...</option>
         </select>
       </div>
 
-      <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:6px;">Notes (Optional):</label>
-        <input type="text" id="cancelNotesInput" placeholder="e.g. Guest had an emergency" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:12.5px;">
+      <!-- Notes Field -->
+      <div style="margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink);margin-bottom:6px;">
+          <i data-lucide="file-text" style="width:14px;height:14px;color:var(--ink-soft);"></i>
+          <span>Notes / Remarks <span style="font-weight:500;color:var(--ink-soft);font-size:11px;">(Optional)</span></span>
+        </label>
+        <input type="text" id="cancelNotesInput" placeholder="e.g. Guest had an emergency or left before food arrived" style="width:100%;height:40px;padding:8px 12px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font-size:12.5px;outline:none;">
       </div>
 
-      <div style="background:#fef2f2;border:1px dashed #f87171;border-radius:8px;padding:10px;font-size:11.5px;color:#991b1b;display:flex;gap:8px;align-items:flex-start;">
-        <span style="font-size:14px;">⚠️</span>
-        <span>Cancelling will immediately release the dining table back to <b>Available</b> and void pending kitchen items.</span>
+      <!-- Warning Callout Box -->
+      <div style="background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:24px;height:24px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+          <i data-lucide="alert-triangle" style="width:14px;height:14px;"></i>
+        </div>
+        <div style="font-size:12px;line-height:1.45;color:#991b1b;">
+          <b>Caution:</b> Cancelling will void all kitchen tickets and immediately release the table / counter back to <b>Available</b>.
+        </div>
       </div>
+
     </div>
-    <div class="modal-foot" style="display:flex;justify-content:flex-end;gap:10px;padding:12px 18px;background:var(--paper);border-top:1px solid var(--line);">
-      <button class="btn" data-close-modal="cancelOrderModal" style="background:var(--panel);">Keep Order</button>
-      <button class="btn btn-danger" id="confirmCancelOrderBtn" style="font-weight:700;">Confirm Cancellation</button>
+
+    <!-- Modal Footer -->
+    <div class="modal-foot" style="display:flex;gap:10px;padding:14px 20px;background:var(--surface-subtle);border-top:1.5px solid var(--line);">
+      <button type="button" class="btn" data-close-modal="cancelOrderModal" style="flex:1;height:42px;font-weight:700;font-size:13.5px;border-radius:9px;background:var(--panel);border:1.5px solid var(--line);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .15s ease;">
+        <i data-lucide="arrow-left" style="width:15px;height:15px;"></i>
+        <span>Keep Order</span>
+      </button>
+      <button type="button" class="btn btn-danger" id="confirmCancelOrderBtn" style="flex:1.4;height:42px;font-weight:800;font-size:13.5px;border-radius:9px;background:#dc2626;border:1.5px solid #dc2626;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(220,38,38,0.25);cursor:pointer;transition:all .15s ease;">
+        <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+        <span>Confirm Cancellation</span>
+      </button>
     </div>
+
   </div>
 </div>
 
