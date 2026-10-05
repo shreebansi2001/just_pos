@@ -12662,32 +12662,33 @@
         timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       };
 
-      let combinedHtml = "";
+      const slips = [];
       for (let c = 1; c <= copies; c++) {
-        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9px;font-weight:800;color:#64748b;padding-bottom:2px;border-bottom:1px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
+        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
 
         if (mode === "with_kot" || mode === "without_kot") {
           // Customer Bill / Estimate Slip
           const billSlip = generateDocumentSlipHtml(tempInv, "interim");
-          combinedHtml += `
-            <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
+          slips.push(`
+            <div class="print-slip-cut">
               ${copyBadge}
               ${billSlip}
             </div>
-          `;
+          `);
         }
 
         if (mode === "with_kot" || mode === "kot_only") {
           // Kitchen KOT Slip
           const kotSlip = generateDocumentSlipHtml(tempInv, "kot");
-          combinedHtml += `
-            <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
+          slips.push(`
+            <div class="print-slip-cut">
               ${copyBadge}
               ${kotSlip}
             </div>
-          `;
+          `);
         }
       }
+      const combinedHtml = slips.join("\n");
 
       // Close modal before opening print dialog
       closeModal("orderPrintOptionsModal");
@@ -14950,16 +14951,19 @@ For any queries or updates, reply to this message.`;
         const wrap = doc.getElementById("thermalSlipWrapper") || doc.body;
         const scrollHPx = Math.max(wrap.scrollHeight, wrap.offsetHeight, doc.body.scrollHeight, 60);
         const measuredHeightMm = Math.ceil((scrollHPx * (zoomScale || 1) * 25.4) / 96);
-        const calculatedHeightMm = customHeightMm ? Number(customHeightMm) : Math.max(measuredHeightMm + 5, 25);
+        const hasMultipleSlips = contentHtml.includes("print-slip-cut");
 
         let pageRule = "";
         if (isA4) {
           pageRule = "@page { size: A4 portrait !important; margin: 8mm !important; }";
         } else if (isA5) {
           pageRule = "@page { size: A5 portrait !important; margin: 6mm !important; }";
+        } else if (hasMultipleSlips) {
+          // For multi-slip printing: size roll width with auto height per slip
+          pageRule = `@page { size: ${rollWidthMm}mm auto !important; margin: 0mm auto !important; }`;
         } else {
-          // Setting explicit width & height produces exact slip cut size without excess A4 margins
-          pageRule = `@page { size: ${rollWidthMm}mm ${calculatedHeightMm}mm !important; margin: 0mm !important; }`;
+          const calculatedHeightMm = customHeightMm ? Number(customHeightMm) : Math.max(measuredHeightMm + 4, 25);
+          pageRule = `@page { size: ${rollWidthMm}mm ${calculatedHeightMm}mm !important; margin: 0mm auto !important; }`;
         }
 
         const finalPrintCss = `
@@ -14977,17 +14981,32 @@ For any queries or updates, reply to this message.`;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
             font-size: ${fontSize} !important;
             line-height: 1.35 !important;
-            ${!isA4 && !isA5 ? `width: ${rollWidthMm}mm !important; min-height: ${calculatedHeightMm}mm !important; max-width: ${rollWidthMm}mm !important; overflow: hidden !important;` : ''}
+            width: 100% !important;
           }
           #thermalSlipWrapper {
             width: ${printableAreaMm}mm !important;
-            max-width: ${printableAreaMm}mm !important;
+            max-width: 100% !important;
             margin: 0 auto !important;
             padding: ${bodyPaddingMm}mm !important;
             box-sizing: border-box !important;
             ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
+          }
+          .print-slip-cut {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+          }
+          .print-slip-cut:not(:last-child) {
+            page-break-after: always !important;
+            break-after: page !important;
+            padding-bottom: 6mm !important;
+            margin-bottom: 6mm !important;
+            border-bottom: 1.5px dashed #000 !important;
+          }
+          .amoncar-invoice-box {
+            margin: 0 auto !important;
           }
           table {
             width: 100% !important;
