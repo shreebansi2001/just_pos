@@ -2862,6 +2862,39 @@
     40%, 80% { transform: translateX(4px); }
   }
 
+  .dish-in-cart-badge {
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid #6ee7b7;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .dish-card-standard.is-in-order {
+    border-color: #10b981 !important;
+    background: #fcfdfc !important;
+  }
+  [data-theme="dark"] .dish-card-standard.is-in-order {
+    background: rgba(16, 185, 129, 0.06) !important;
+    border-color: #059669 !important;
+  }
+  #btnQuickQtyDec:hover {
+    background: #fca5a5 !important;
+    transform: scale(1.05);
+  }
+  #btnQuickQtyInc:hover {
+    background: #bbf7d0 !important;
+    transform: scale(1.05);
+  }
+  #quickQtyChips button:hover {
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+  }
+
   /* 3. Items List Container - Maximized space, silky smooth */
   .cart-items {
     flex: 1 1 0;
@@ -5997,6 +6030,94 @@
           ✓ Add to Order Slip
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Item Quantity Modal (Easy + and - stepper for adding more) -->
+<div class="modal-backdrop" id="quickItemQtyModal">
+  <div class="modal" style="max-width:440px;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.22);">
+    <div class="modal-head" style="padding:14px 18px;border-bottom:1.5px solid var(--line);background:var(--panel);">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="quickQtyFoodType"></span>
+          <h3 id="quickQtyDishTitle" style="font-size:16px;font-weight:800;color:var(--ink);margin:0;">Dish Name</h3>
+          <span class="shortcode-badge" id="quickQtyShortcode">LAS</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <span style="font-size:12px;font-weight:700;color:var(--primary);" id="quickQtyUnitPrice">₹0.00 / Plate</span>
+          <span class="dish-in-cart-badge" id="quickQtyCartStatus" style="display:none;background:#ecfdf5;color:#059669;font-size:11px;font-weight:800;padding:2px 8px;border-radius:12px;border:1px solid #a7f3d0;">
+            ✓ 1 currently in order
+          </span>
+        </div>
+      </div>
+      <button class="modal-close" data-close-modal style="font-size:18px;">✕</button>
+    </div>
+
+    <div class="modal-body" style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+      <!-- Big Center Stepper Card -->
+      <div style="background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:12px;font-weight:800;color:var(--ink);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;" id="quickQtyStepperLabel">
+          Quantity to Order
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;">
+          <button type="button" id="btnQuickQtyDec" style="width:48px;height:48px;border-radius:10px;border:1.5px solid #fca5a5;background:#fee2e2;color:#b91c1c;font-size:24px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s ease;" title="Decrease quantity">
+            −
+          </button>
+          
+          <input type="number" id="quickQtyInput" min="1" max="999" value="1" style="width:85px;height:48px;text-align:center;font-size:26px;font-weight:900;font-family:'JetBrains Mono',monospace;border:2px solid var(--primary);border-radius:10px;background:var(--paper);color:var(--ink);outline:none;">
+          
+          <button type="button" id="btnQuickQtyInc" style="width:48px;height:48px;border-radius:10px;border:1.5px solid #86efac;background:#dcfce7;color:#15803d;font-size:24px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s ease;" title="Increase quantity">
+            +
+          </button>
+        </div>
+
+        <!-- Quick Preset Chips -->
+        <div style="margin-top:14px;">
+          <div style="font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;text-transform:uppercase;">Quick Presets:</div>
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;" id="quickQtyChips">
+            <button type="button" class="btn btn-sm" data-set-qty="1" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--panel);">1</button>
+            <button type="button" class="btn btn-sm" data-set-qty="2" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--panel);">2</button>
+            <button type="button" class="btn btn-sm" data-set-qty="3" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--panel);">3</button>
+            <button type="button" class="btn btn-sm" data-set-qty="4" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--panel);">4</button>
+            <button type="button" class="btn btn-sm" data-set-qty="5" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--panel);">5</button>
+            <button type="button" class="btn btn-sm" data-add-qty="1" style="font-weight:800;padding:4px 10px;border-radius:6px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">+1 More</button>
+            <button type="button" class="btn btn-sm" data-add-qty="2" style="font-weight:800;padding:4px 10px;border-radius:6px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">+2 More</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Calculation Breakdown Strip -->
+      <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;">Price Calculation</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--ink);" id="quickQtyCalcDesc">₹350.00 × 1 plate</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;">Item Total</div>
+          <div style="font-size:19px;font-weight:900;color:var(--primary);font-family:'JetBrains Mono',monospace;" id="quickQtyTotalDisplay">₹350.00</div>
+        </div>
+      </div>
+
+      <!-- Optional Quick Chef Tags -->
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:6px;">Chef Note / Instruction (Optional)</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;" id="quickQtyChefTags">
+          <button type="button" class="tag-chip" data-quick-tag="🌶️ Less Spicy">🌶️ Less Spicy</button>
+          <button type="button" class="tag-chip" data-quick-tag="🔥 Extra Spicy">🔥 Extra Spicy</button>
+          <button type="button" class="tag-chip" data-quick-tag="🧈 Extra Butter">🧈 Extra Butter</button>
+          <button type="button" class="tag-chip" data-quick-tag="📦 Pack Separately">📦 Pack</button>
+        </div>
+        <input type="text" id="quickQtyCustomNote" placeholder="Any specific preparation instructions..." style="width:100%;height:32px;font-size:12px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);">
+      </div>
+    </div>
+
+    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:10px;background:var(--panel);border-top:1.5px solid var(--line);">
+      <button type="button" class="btn" data-close-modal style="flex:0.8;font-weight:700;">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmQuickQty" style="flex:1.5;height:44px;font-size:14px;font-weight:800;background:#059669;border-color:#059669;box-shadow:0 2px 8px rgba(5,150,105,0.25);">
+        ✓ Update Order
+      </button>
     </div>
   </div>
 </div>
@@ -10841,6 +10962,9 @@
       const singleGroups = it.optionGroups ? it.optionGroups.filter(g => g.selectionType === 'single').length : 0;
       const multiGroups = it.optionGroups ? it.optionGroups.filter(g => g.selectionType === 'multiple').length : 0;
 
+      const existingInCart = (currentOrderSession?.items || []).filter(x => x.id === it.id && x.unitMode === 'portion' && !x.variantLabel);
+      const inCartTotalQty = existingInCart.reduce((sum, x) => sum + (x.qty || 0), 0);
+
       let priceHtml = '';
       let buttonsHtml = '';
 
@@ -10852,7 +10976,11 @@
             <span class="price-unit">/ Plate</span>
           </div>
         `;
-        buttonsHtml = `
+        buttonsHtml = inCartTotalQty > 0 ? `
+          <button type="button" class="dish-btn-primary btn-direct-plate has-items-in-cart" data-dishid="${it.id}" style="background:#059669;border-color:#059669;display:inline-flex;align-items:center;gap:4px;" title="Adjust or add more portions with + and -">
+            <span>+ Add More (${inCartTotalQty})</span>
+          </button>
+        ` : `
           <button type="button" class="dish-btn-primary btn-direct-plate" data-dishid="${it.id}">
             + Add Plate
           </button>
@@ -10892,8 +11020,8 @@
         `;
         buttonsHtml = `
           <div style="display:flex;gap:5px;">
-            <button type="button" class="dish-btn-outline btn-direct-plate" data-dishid="${it.id}" title="Order 1 Plate">
-              + Plate
+            <button type="button" class="dish-btn-outline btn-direct-plate ${inCartTotalQty > 0 ? 'has-items-in-cart' : ''}" data-dishid="${it.id}" style="${inCartTotalQty > 0 ? 'background:#059669;color:#fff;border-color:#059669;' : ''}" title="Order Plates with + and -">
+              ${inCartTotalQty > 0 ? `+ More (${inCartTotalQty})` : `+ Plate`}
             </button>
             <button type="button" class="dish-btn-kg btn-direct-kg" data-dishid="${it.id}" title="Weigh &amp; Order in KG">
               ⚖️ KG
@@ -10908,7 +11036,11 @@
             <span class="price-unit">/ ${itemUnitLabel}</span>
           </div>
         `;
-        buttonsHtml = `
+        buttonsHtml = inCartTotalQty > 0 ? `
+          <button type="button" class="dish-btn-primary btn-direct-plate has-items-in-cart" data-dishid="${it.id}" style="background:#059669;border-color:#059669;display:inline-flex;align-items:center;gap:4px;" title="Adjust or add more portions with + and -">
+            <span>+ Add More (${inCartTotalQty})</span>
+          </button>
+        ` : `
           <button type="button" class="dish-btn-primary btn-direct-plate" data-dishid="${it.id}">
             + Add ${itemUnitLabel}
           </button>
@@ -10916,14 +11048,17 @@
       }
 
       return `
-        <div class="dish-card-standard" data-dishid="${it.id}">
+        <div class="dish-card-standard ${inCartTotalQty > 0 ? 'is-in-order' : ''}" data-dishid="${it.id}">
           <div>
             <div class="dish-card-header">
               <div class="dish-badge-group">
                 ${it.foodType === 'nonveg' ? '<span class="nonveg-icon"><span></span></span>' : '<span class="veg-icon"><span></span></span>'}
                 <span class="shortcode-badge">${it.shortcode}</span>
               </div>
-              ${singleGroups > 0 ? `<span class="dish-sub-tag">🔘 Portions</span>` : (catObj ? `<span class="dish-sub-tag">${catObj.categoryName}</span>` : '')}
+              <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                ${singleGroups > 0 ? `<span class="dish-sub-tag">🔘 Portions</span>` : (catObj ? `<span class="dish-sub-tag">${catObj.categoryName}</span>` : '')}
+                ${inCartTotalQty > 0 ? `<span class="dish-in-cart-badge">✓ ${inCartTotalQty} in Order</span>` : ''}
+              </div>
             </div>
             <div class="dish-card-body">
               <h4 class="dish-title-large" title="${it.itemName}">${it.itemName}</h4>
@@ -10957,11 +11092,12 @@
         if (hasSizeOptions || (dish.optionGroups && dish.optionGroups.length > 0)) {
           openDishCustomizationModal(dish, 'portion');
         } else {
-          // Direct add 1 plate
           const existingItem = currentOrderSession.items.find(x => x.id === dish.id && x.unitMode === 'portion' && !x.variantLabel && (!x.addons || x.addons.length === 0));
           if (existingItem) {
-            existingItem.qty += 1;
+            // Already in cart: OPEN QUICK QUANTITY DIALOG WITH + AND - !
+            openQuickItemQtyModal(dish);
           } else {
+            // Direct add 1 plate
             currentOrderSession.items.push({
               id: dish.id,
               uid: `ci_${dish.id}_${Date.now()}`,
@@ -10980,9 +11116,10 @@
               status: "new",
               note: ""
             });
+            renderCart();
+            updateMenuCardBadges();
+            showToast(`✓ Added 1 plate of ${dish.itemName}!`);
           }
-          renderCart();
-          showToast(`✓ Added 1 plate of ${dish.itemName}!`);
         }
       });
     });
@@ -10992,7 +11129,12 @@
         if (e.target.closest("button")) return;
         const dish = items.find(x => x.id === Number(c.dataset.dishid));
         if (!dish || !currentOrderSession) return;
-        openDishCustomizationModal(dish, posSellingMode === 'kg' ? 'kg' : 'portion');
+        const hasOptions = (dish.optionGroups && dish.optionGroups.length > 0) || posSellingMode === 'kg';
+        if (hasOptions) {
+          openDishCustomizationModal(dish, posSellingMode === 'kg' ? 'kg' : 'portion');
+        } else {
+          openQuickItemQtyModal(dish);
+        }
       });
     });
   }
@@ -11084,7 +11226,275 @@
     syncKitchenNoteDisplay();
   });
 
-  document.getElementById("menuSearch").addEventListener("input", renderPosMenu);
+  // ---------------------------------------------------------------------------
+  // QUICK ITEM QUANTITY MODAL (Touch-friendly + and - quantity dialog)
+  // ---------------------------------------------------------------------------
+  let activeQuickDish = null;
+  let activeQuickQty = 1;
+  let activeQuickExistingItem = null;
+  let activeQuickSelectedTags = [];
+
+  function openQuickItemQtyModal(dish, initialQty) {
+    if (!dish || !currentOrderSession) return;
+    activeQuickDish = dish;
+
+    // Find if already in cart
+    activeQuickExistingItem = (currentOrderSession.items || []).find(x => 
+      x.id === dish.id && 
+      x.unitMode === 'portion' && 
+      !x.variantLabel && 
+      (!x.addons || x.addons.length === 0)
+    );
+
+    const inOrderCount = activeQuickExistingItem ? activeQuickExistingItem.qty : 0;
+
+    // Default quantity: if already in order, set to inOrderCount + 1 (adding more!) or explicit initialQty
+    if (initialQty !== undefined && initialQty > 0) {
+      activeQuickQty = initialQty;
+    } else if (inOrderCount > 0) {
+      activeQuickQty = inOrderCount + 1;
+    } else {
+      activeQuickQty = 1;
+    }
+
+    activeQuickSelectedTags = [];
+    const customNoteInput = document.getElementById("quickQtyCustomNote");
+    if (customNoteInput) customNoteInput.value = (activeQuickExistingItem?.note || "");
+
+    // Populate Food type icon
+    const foodTypeEl = document.getElementById("quickQtyFoodType");
+    if (foodTypeEl) {
+      foodTypeEl.innerHTML = dish.foodType === 'nonveg' 
+        ? '<span class="nonveg-icon"><span></span></span>' 
+        : '<span class="veg-icon"><span></span></span>';
+    }
+
+    const titleEl = document.getElementById("quickQtyDishTitle");
+    if (titleEl) titleEl.textContent = dish.itemName;
+
+    const codeEl = document.getElementById("quickQtyShortcode");
+    if (codeEl) codeEl.textContent = dish.shortcode || "";
+
+    const priceEl = document.getElementById("quickQtyUnitPrice");
+    if (priceEl) priceEl.textContent = `${money(dish.price)} / Plate`;
+
+    const statusEl = document.getElementById("quickQtyCartStatus");
+    if (statusEl) {
+      if (inOrderCount > 0) {
+        statusEl.style.display = "inline-flex";
+        statusEl.textContent = `✓ ${inOrderCount} in Order`;
+      } else {
+        statusEl.style.display = "none";
+      }
+    }
+
+    const labelEl = document.getElementById("quickQtyStepperLabel");
+    if (labelEl) {
+      labelEl.textContent = inOrderCount > 0 ? `Update Quantity (Currently: ${inOrderCount})` : `Quantity to Order`;
+    }
+
+    // Reset Chef tags highlight
+    document.querySelectorAll("#quickQtyChefTags .tag-chip").forEach(btn => {
+      btn.classList.remove("active");
+      btn.style.background = "var(--surface-subtle)";
+      btn.style.color = "var(--ink)";
+      btn.style.borderColor = "var(--line)";
+    });
+
+    updateQuickQtyDisplay();
+    openModal("quickItemQtyModal");
+
+    // Focus input
+    setTimeout(() => {
+      const inp = document.getElementById("quickQtyInput");
+      if (inp) inp.select();
+    }, 150);
+  }
+  window.openQuickItemQtyModal = openQuickItemQtyModal;
+
+  function updateQuickQtyDisplay() {
+    if (!activeQuickDish) return;
+    const inp = document.getElementById("quickQtyInput");
+    if (inp) inp.value = activeQuickQty;
+
+    const descEl = document.getElementById("quickQtyCalcDesc");
+    if (descEl) {
+      descEl.textContent = `${money(activeQuickDish.price)} × ${activeQuickQty} plate${activeQuickQty > 1 ? 's' : ''}`;
+    }
+
+    const totalEl = document.getElementById("quickQtyTotalDisplay");
+    const totalAmount = activeQuickDish.price * activeQuickQty;
+    if (totalEl) {
+      totalEl.textContent = money(totalAmount);
+    }
+
+    const confirmBtn = document.getElementById("btnConfirmQuickQty");
+    if (confirmBtn) {
+      const inOrderCount = activeQuickExistingItem ? activeQuickExistingItem.qty : 0;
+      if (inOrderCount > 0) {
+        const diff = activeQuickQty - inOrderCount;
+        const diffText = diff > 0 ? ` (+${diff} More)` : (diff < 0 ? ` (${diff})` : '');
+        confirmBtn.innerHTML = `✓ Update Order · ${activeQuickQty} Plates${diffText} · ${money(totalAmount)}`;
+      } else {
+        confirmBtn.innerHTML = `✓ Add to Order · ${activeQuickQty} Plate${activeQuickQty > 1 ? 's' : ''} · ${money(totalAmount)}`;
+      }
+    }
+  }
+
+  // Wire Quick Quantity Stepper controls
+  document.getElementById("btnQuickQtyDec")?.addEventListener("click", () => {
+    const minQty = (activeQuickExistingItem && activeQuickExistingItem.sentQty > 0) 
+      ? activeQuickExistingItem.sentQty 
+      : 1;
+    if (activeQuickQty > minQty) {
+      activeQuickQty--;
+      updateQuickQtyDisplay();
+    } else if (activeQuickExistingItem && activeQuickExistingItem.sentQty > 0) {
+      showToast(`⚠️ Cannot reduce below ${activeQuickExistingItem.sentQty} (already sent to kitchen)`, "warning");
+    }
+  });
+
+  document.getElementById("btnQuickQtyInc")?.addEventListener("click", () => {
+    activeQuickQty++;
+    updateQuickQtyDisplay();
+  });
+
+  document.getElementById("quickQtyInput")?.addEventListener("input", (e) => {
+    const val = parseInt(e.target.value);
+    if (!isNaN(val) && val >= 1) {
+      activeQuickQty = Math.min(999, val);
+      updateQuickQtyDisplay();
+    }
+  });
+
+  document.querySelectorAll("#quickQtyChips button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.setQty) {
+        activeQuickQty = Number(btn.dataset.setQty);
+      } else if (btn.dataset.addQty) {
+        activeQuickQty += Number(btn.dataset.addQty);
+      }
+      updateQuickQtyDisplay();
+    });
+  });
+
+  document.querySelectorAll("#quickQtyChefTags .tag-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tag = btn.dataset.quickTag;
+      btn.classList.toggle("active");
+      const isActive = btn.classList.contains("active");
+      if (isActive) {
+        btn.style.background = "var(--primary-tint)";
+        btn.style.color = "var(--primary)";
+        btn.style.borderColor = "var(--primary)";
+        if (!activeQuickSelectedTags.includes(tag)) activeQuickSelectedTags.push(tag);
+      } else {
+        btn.style.background = "var(--surface-subtle)";
+        btn.style.color = "var(--ink)";
+        btn.style.borderColor = "var(--line)";
+        activeQuickSelectedTags = activeQuickSelectedTags.filter(t => t !== tag);
+      }
+    });
+  });
+
+  document.getElementById("btnConfirmQuickQty")?.addEventListener("click", () => {
+    if (!activeQuickDish || !currentOrderSession) return;
+    const dish = activeQuickDish;
+
+    const customNote = (document.getElementById("quickQtyCustomNote")?.value || "").trim();
+    const allNotes = [...activeQuickSelectedTags];
+    if (customNote) allNotes.push(customNote);
+    const finalNote = allNotes.join(" • ");
+
+    if (activeQuickExistingItem) {
+      // Update existing item
+      activeQuickExistingItem.qty = activeQuickQty;
+      if (finalNote) {
+        activeQuickExistingItem.note = activeQuickExistingItem.note 
+          ? `${activeQuickExistingItem.note} • ${finalNote}` 
+          : finalNote;
+      }
+      showToast(`✓ Updated ${dish.itemName} (${activeQuickQty} plates) in order!`);
+    } else {
+      // Add new item
+      currentOrderSession.items.push({
+        id: dish.id,
+        uid: `ci_${dish.id}_${Date.now()}`,
+        name: dish.itemName,
+        unitMode: 'portion',
+        weightKg: null,
+        pricePerKg: null,
+        variantLabel: '',
+        addons: [],
+        price: dish.price,
+        taxType: dish.taxType || 'exclusive',
+        gstRate: dish.gstRate !== undefined ? dish.gstRate : 5,
+        qty: activeQuickQty,
+        sentQty: 0,
+        kotId: null,
+        status: "new",
+        note: finalNote
+      });
+      showToast(`✓ Added ${activeQuickQty} plate${activeQuickQty > 1 ? 's' : ''} of ${dish.itemName}!`);
+    }
+
+    closeModal("quickItemQtyModal");
+    renderCart();
+    updateMenuCardBadges();
+  });
+
+  function updateMenuCardBadges() {
+    const menuGrid = document.getElementById("posMenuGrid");
+    if (!menuGrid || !currentOrderSession) return;
+    const itemsList = currentOrderSession.items || [];
+
+    menuGrid.querySelectorAll(".dish-card-standard").forEach(card => {
+      const dishId = Number(card.dataset.dishid);
+      const dish = items.find(x => x.id === dishId);
+      if (!dish) return;
+
+      const inOrderItems = itemsList.filter(x => x.id === dishId && x.unitMode === 'portion' && !x.variantLabel);
+      const inOrderQty = inOrderItems.reduce((s, x) => s + (x.qty || 0), 0);
+
+      // Badge in card header
+      let badge = card.querySelector(".dish-in-cart-badge");
+      if (inOrderQty > 0) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "dish-in-cart-badge";
+          const header = card.querySelector(".dish-card-header");
+          if (header) {
+            const group = header.querySelector("div:last-child") || header;
+            group.appendChild(badge);
+          }
+        }
+        badge.textContent = `✓ ${inOrderQty} in Order`;
+        badge.style.display = "inline-flex";
+        card.classList.add("is-in-order");
+      } else {
+        if (badge) badge.style.display = "none";
+        card.classList.remove("is-in-order");
+      }
+
+      // Button in card footer
+      const plateBtn = card.querySelector(".btn-direct-plate");
+      if (plateBtn) {
+        const itemUnitLabel = dish.unitLabel || 'Plate';
+        if (inOrderQty > 0) {
+          plateBtn.innerHTML = `<span>+ Add More (${inOrderQty})</span>`;
+          plateBtn.style.background = "#059669";
+          plateBtn.style.borderColor = "#059669";
+          plateBtn.classList.add("has-items-in-cart");
+        } else {
+          plateBtn.innerHTML = `+ Add ${itemUnitLabel}`;
+          plateBtn.style.background = "";
+          plateBtn.style.borderColor = "";
+          plateBtn.classList.remove("has-items-in-cart");
+        }
+      }
+    });
+  }
+  window.updateMenuCardBadges = updateMenuCardBadges;
 
   // ---------------------------------------------------------------------------
   // DISH CUSTOMIZATION MODAL (Portion Half/Full, Toppings, and KG Weight Presets)
@@ -12063,6 +12473,9 @@
       mobFloatBar.style.display = totalCount > 0 ? "flex" : "none";
     }
 
+    if (typeof updateMenuCardBadges === "function") {
+      updateMenuCardBadges();
+    }
     refreshLucideIcons();
   }
 
