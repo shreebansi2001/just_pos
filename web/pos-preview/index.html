@@ -5241,6 +5241,14 @@
             <button class="btn btn-primary" id="checkoutBtn" style="width:100%;height:44px;padding:0;background:#059669;border-color:#059669;font-weight:800;font-size:14.5px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 2px 8px rgba(5,150,105,0.25);">
               <i data-lucide="receipt" style="width:17px;height:17px;"></i> Generate Invoice &amp; Settle
             </button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+              <button type="button" class="btn" id="splitInvoiceBtn" style="height:35px;padding:0 6px;background:var(--panel);border:1.5px solid #6366f1;color:#4f46e5;font-weight:700;font-size:12px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;" title="Split invoice into multiple payments / customer bills">
+                ✂️ Split Invoicing
+              </button>
+              <button type="button" class="btn" id="groupInvoiceBtn" style="height:35px;padding:0 6px;background:var(--panel);border:1.5px solid #0891b2;color:#0e7490;font-weight:700;font-size:12px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;" title="Group items into separate sub-invoices">
+                👥 Group Invoicing
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -6001,6 +6009,185 @@
       <button type="button" class="btn" data-close-modal style="flex:1;">Cancel</button>
       <button type="button" class="btn btn-primary" id="payInvoiceBtn" style="flex:1.4;background:#059669;border-color:#059669;">
         ✓ Collect Payment &amp; Free Table
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Split-wise Invoicing Modal (Multiple invoices & payment modes from single transaction) -->
+<div class="modal-backdrop" id="splitInvoiceModal">
+  <div class="modal" style="max-width:640px;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.25);">
+    <div class="modal-head" style="padding:14px 18px;border-bottom:1.5px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;">
+          <span>✂️ Split-wise Invoicing</span>
+          <span class="series-badge" id="splitOrderCodeBadge" style="font-size:11px;background:#e0e7ff;color:#4338ca;padding:2px 8px;border-radius:12px;font-weight:800;">Order</span>
+        </h3>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">
+          Generate separate sequential invoices with independent payment modes (Cash, UPI, Card)
+        </div>
+      </div>
+      <button class="modal-close" data-close-modal style="font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;max-height:68vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <!-- Total Order Bill Summary Bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:10px;">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;">Total Bill to Settle</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);" id="splitTableLabelDisplay">Table 01 · 3 Items</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;">Grand Total</div>
+          <div style="font-size:22px;font-weight:900;color:var(--primary);font-family:'JetBrains Mono',monospace;" id="splitGrandTotalDisplay">₹0.00</div>
+        </div>
+      </div>
+
+      <!-- Quick Preset Split Chips -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;" id="splitPresetChips">
+          <span style="font-size:11px;font-weight:700;color:var(--ink-soft);margin-right:2px;">Equal Splits:</span>
+          <button type="button" class="btn btn-sm" data-split-count="2" style="font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:6px;background:var(--panel);">
+            👥 2 Splits (50/50)
+          </button>
+          <button type="button" class="btn btn-sm" data-split-count="3" style="font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:6px;background:var(--panel);">
+            👥 3 Splits
+          </button>
+          <button type="button" class="btn btn-sm" data-split-count="4" style="font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:6px;background:var(--panel);">
+            👥 4 Splits
+          </button>
+        </div>
+        <button type="button" class="btn btn-sm" id="btnAddSplitCardBtn" style="font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:6px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">
+          + Add Split Card
+        </button>
+      </div>
+
+      <!-- Dynamic Splits Container -->
+      <div id="splitCardsContainer" style="display:flex;flex-direction:column;gap:10px;"></div>
+
+      <!-- Live Split Balance Status Bar -->
+      <div id="splitBalanceStatusBar" style="padding:10px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--line);background:var(--panel);">
+        <div>
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;" id="splitBalanceStatusTitle">Split Balance Check</div>
+          <div style="font-size:12px;font-weight:700;" id="splitBalanceStatusDesc">Allocated ₹0.00 of ₹0.00</div>
+        </div>
+        <button type="button" class="btn btn-sm" id="btnAutoBalanceSplit" style="display:none;font-size:11px;font-weight:800;background:var(--primary);color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;">
+          ⚖️ Auto-Balance
+        </button>
+      </div>
+    </div>
+    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:10px;background:var(--panel);border-top:1.5px solid var(--line);">
+      <button type="button" class="btn" data-close-modal style="flex:0.8;font-weight:700;">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmSplitSettlement" style="flex:1.5;height:44px;font-size:14px;font-weight:800;background:#059669;border-color:#059669;box-shadow:0 2px 8px rgba(5,150,105,0.25);">
+        ✓ Settle &amp; Generate Invoices
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Group-wise Invoicing Modal (Generate multiple invoices per group with selected items) -->
+<div class="modal-backdrop" id="groupInvoiceModal">
+  <div class="modal" style="max-width:780px;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.25);">
+    <div class="modal-head" style="padding:14px 18px;border-bottom:1.5px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;">
+          <span>👥 Group-wise Invoicing</span>
+          <span class="series-badge" id="groupOrderCodeBadge" style="font-size:11px;background:#cffafe;color:#0e7490;padding:2px 8px;border-radius:12px;font-weight:800;">Order</span>
+        </h3>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">
+          Assign order items across groups to generate distinct itemized invoices for each group
+        </div>
+      </div>
+      <button class="modal-close" data-close-modal style="font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;max-height:72vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;">
+      <!-- Order Summary & Toolbar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:10px;">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;">Order Items Total</div>
+          <div style="font-size:18px;font-weight:900;color:var(--primary);font-family:'JetBrains Mono',monospace;" id="groupOrderTotalDisplay">₹0.00</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm" id="btnAutoGroupByCat" style="font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:6px;background:#f0fdf4;border:1.5px solid #22c55e;color:#15803d;cursor:pointer;" title="Auto-create groups based on dish categories">
+            ⚡ Auto-Group by Category
+          </button>
+          <button type="button" class="btn btn-sm" id="btnSplitTwoGroups" style="font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:6px;background:var(--panel);border:1px solid var(--line);cursor:pointer;">
+            ⚖️ 2 Groups (50/50 Items)
+          </button>
+          <button type="button" class="btn btn-sm" id="btnAddGroupBtn" style="font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:6px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;cursor:pointer;">
+            + Add Group
+          </button>
+        </div>
+      </div>
+
+      <!-- Item Allocation Matrix / Cards -->
+      <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:12px;">
+        <div style="font-size:11.5px;font-weight:800;color:var(--ink);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span>📦 Items In Order &amp; Group Allocation</span>
+          <span style="font-size:11px;font-weight:700;color:var(--ink-soft);" id="groupItemsAllocatedCount">Allocated: 0 / 0</span>
+        </div>
+        <div id="groupItemAllocationTable" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- Groups Breakdown Cards Container -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:11.5px;font-weight:800;color:var(--ink);text-transform:uppercase;letter-spacing:.04em;">
+          📑 Generated Group Invoices Preview
+        </div>
+        <div id="groupsCardsContainer" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:10px;"></div>
+      </div>
+
+      <!-- Allocation Warning / Success Strip -->
+      <div id="groupAllocationStatusBar" style="padding:10px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--line);background:var(--panel);">
+        <div>
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;" id="groupStatusTitle">Allocation Status</div>
+          <div style="font-size:12px;font-weight:700;" id="groupStatusDesc">Checking items allocation...</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:10px;background:var(--panel);border-top:1.5px solid var(--line);">
+      <button type="button" class="btn" data-close-modal style="flex:0.8;font-weight:700;">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmGroupSettlement" style="flex:1.5;height:44px;font-size:14px;font-weight:800;background:#0891b2;border-color:#0891b2;box-shadow:0 2px 8px rgba(8,145,178,0.25);">
+        ✓ Settle &amp; Generate Group Invoices
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Multi-Invoice Success & Print Modal -->
+<div class="modal-backdrop" id="multiInvoiceSuccessModal">
+  <div class="modal" style="max-width:580px;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.25);">
+    <div class="modal-head" style="padding:14px 18px;border-bottom:1.5px solid var(--line);background:#f0fdf4;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h3 style="margin:0;font-size:16px;font-weight:800;color:#166534;display:flex;align-items:center;gap:8px;">
+          <span>🎉 Invoices Generated &amp; Settled!</span>
+        </h3>
+        <div style="font-size:11.5px;color:#15803d;margin-top:2px;" id="multiInvoiceSuccessSub">
+          All invoices committed with sequential company series numbers
+        </div>
+      </div>
+      <button class="modal-close" data-close-modal style="font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <!-- Batch Print Action Strip -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:10px;">
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#065f46;">Thermal Continuous Batch Print</div>
+          <div style="font-size:11px;color:#047857;">Print all slips at once with neat tear separators</div>
+        </div>
+        <button type="button" class="btn btn-primary" id="btnPrintAllMultiInvoices" style="background:#059669;border-color:#059669;font-weight:800;font-size:12.5px;padding:6px 14px;border-radius:7px;display:flex;align-items:center;gap:5px;cursor:pointer;">
+          🖨️ Print All Slips
+        </button>
+      </div>
+
+      <!-- Generated Invoices List -->
+      <div id="multiInvoicesListContainer" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:10px;background:var(--panel);border-top:1.5px solid var(--line);">
+      <button type="button" class="btn btn-secondary" id="btnMultiSuccessGoBilling" style="flex:1;font-weight:700;">
+        🧾 View in Billing
+      </button>
+      <button type="button" class="btn btn-primary" data-close-modal style="flex:1;font-weight:800;">
+        ✓ Back to POS Desk
       </button>
     </div>
   </div>
@@ -12003,7 +12190,7 @@
   });
   window.openDishCustomizationModal = openDishCustomizationModal;
 
-  // Unified Bill Calculation Engine (Handles per-item Inclusive vs Exclusive GST + Slabs)
+  // Unified Bill Calculation Engine (Handles per-item Inclusive vs Exclusive GST + Slabs + Exemption/Exclude GST)
   function calculateOrderBill(session, itemsList) {
     const rawSubtotal = (itemsList || []).reduce((s, i) => s + (Number(i.price) * Number(i.qty)), 0);
 
@@ -12019,13 +12206,15 @@
     }
     const discountFactor = rawSubtotal > 0 ? (1 - (discountAmount / rawSubtotal)) : 1;
 
-    const isGlobalTaxOn = session?.taxEnabled !== false && (session?.taxRate === undefined || session?.taxRate > 0);
+    // Check if GST is globally disabled OR explicitly excluded for this bill/session
+    const isGlobalTaxOn = session?.taxEnabled !== false && (session?.taxRate === undefined || session?.taxRate > 0) && !session?.excludeGst;
 
     let totalTaxable = 0;
     let totalCgst = 0;
     let totalSgst = 0;
     let totalInclusiveGst = 0;
     let totalExclusiveGst = 0;
+    let totalExempt = 0;
 
     (itemsList || []).forEach(it => {
       const lineTotal = Number(it.price) * Number(it.qty);
@@ -12033,9 +12222,11 @@
       
       const itRate = (it.gstRate !== undefined) ? Number(it.gstRate) : (session?.taxRate !== undefined ? Number(session.taxRate) : (masterTaxConfig.defaultTaxRate || 5));
       const itTaxType = it.taxType || "exclusive";
+      const isItemExempt = it.isExempt === true || it.gstExempt === true || itTaxType === "exempt" || itRate === 0;
 
-      if (!isGlobalTaxOn || itRate === 0) {
-        totalTaxable += discountedLine;
+      if (!isGlobalTaxOn || isItemExempt) {
+        // GST is globally excluded or this item is zero-rated/exempt from GST
+        totalExempt += discountedLine;
       } else if (itTaxType === "inclusive") {
         // Price already INCLUDES GST: Back-calculate base taxable & tax
         const lineTaxable = discountedLine / (1 + (itRate / 100));
@@ -12056,6 +12247,7 @@
     });
 
     totalTaxable = Math.round(totalTaxable * 100) / 100;
+    totalExempt = Math.round(totalExempt * 100) / 100;
     totalCgst = Math.round(totalCgst * 100) / 100;
     totalSgst = Math.round(totalSgst * 100) / 100;
     const totalGst = totalCgst + totalSgst;
@@ -12066,7 +12258,7 @@
     const serviceChargeVal = isScOn ? Math.round(totalTaxable * (scRateVal / 100) * 100) / 100 : 0;
 
     // Grand total & Cash Round-Off (Zero Decimals on Net Payable!)
-    const rawGrandTotal = totalTaxable + totalCgst + totalSgst + serviceChargeVal;
+    const rawGrandTotal = totalTaxable + totalExempt + totalCgst + totalSgst + serviceChargeVal;
     const roundedGrandTotal = Math.round(rawGrandTotal);
     const roundOff = Math.round((roundedGrandTotal - rawGrandTotal) * 100) / 100;
 
@@ -12074,6 +12266,7 @@
       subtotal: rawSubtotal,
       discountAmount,
       taxable: totalTaxable,
+      exemptAmount: totalExempt,
       cgst: totalCgst,
       sgst: totalSgst,
       totalGst,
@@ -12083,7 +12276,8 @@
       roundOff,
       rawTotal: rawGrandTotal,
       total: roundedGrandTotal,
-      isTaxOn: isGlobalTaxOn
+      isTaxOn: isGlobalTaxOn,
+      isGstExcluded: !!session?.excludeGst
     };
   }
 
@@ -13572,6 +13766,26 @@
       }
 
       body.innerHTML = `
+        <!-- GST Auto-Detect vs Exclude GST Handling Bar -->
+        ${!isPaid ? `
+        <div class="gst-handling-bar no-print" style="margin-bottom:10px;padding:8px 12px;background:var(--line-soft);border:1.5px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;">GST Handling Mode</div>
+            <div style="font-size:12px;font-weight:800;color:${inv.excludeGst ? '#dc2626' : (inv.totalGst > 0 ? '#059669' : 'var(--ink)')};" id="modalGstStatusLabel">
+              ${inv.excludeGst ? '🚫 GST Excluded (Bill of Supply · ₹0 Tax)' : (inv.totalGst > 0 ? `✓ Auto-Detected GST (₹${Number(inv.totalGst).toFixed(2)})` : 'ℹ️ Zero-Rated / Exempt Items (₹0.00 GST)')}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-sm" id="btnToggleAutoGst" style="font-size:11px;font-weight:800;padding:5px 12px;border-radius:6px;cursor:pointer;${!inv.excludeGst ? 'background:#059669;color:#fff;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.15);' : 'background:var(--panel);color:var(--ink);border:1px solid var(--line);'}" title="Auto-detect item GST rates and include in bill">
+              ✓ Auto-Detect GST
+            </button>
+            <button type="button" class="btn btn-sm" id="btnToggleExcludeGst" style="font-size:11px;font-weight:800;padding:5px 12px;border-radius:6px;cursor:pointer;${inv.excludeGst ? 'background:#dc2626;color:#fff;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.15);' : 'background:var(--panel);color:var(--ink);border:1px solid var(--line);'}" title="Exclude GST from this bill (Bill of Supply)">
+              🚫 Exclude GST
+            </button>
+          </div>
+        </div>
+        ` : ''}
+
         <!-- Company Invoice Series Switcher -->
         <div class="company-series-selector-bar no-print" style="margin-bottom:12px;padding:8px 12px;background:var(--line-soft);border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div>
@@ -13653,6 +13867,22 @@
                 <input type="radio" name="payMode" value="Card" ${billTypeDisplay === 'Card' ? 'checked' : ''} style="display:none;">
                 💳 Card
               </label>
+            </div>
+          </div>
+
+          <!-- Quick Access to Split-wise & Group-wise Invoicing -->
+          <div class="no-print" style="margin-top:12px;padding:9px 12px;background:var(--surface-subtle);border:1.5px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:10.5px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;">Need Separate Invoices?</div>
+              <div style="font-size:11.5px;font-weight:700;color:var(--ink);">Generate split payments or group-wise invoices for this table</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn btn-sm" id="modalOpenSplitBtn" style="font-size:11px;font-weight:800;padding:5px 10px;border-radius:6px;background:#f8fafc;border:1.5px solid #6366f1;color:#4f46e5;cursor:pointer;">
+                ✂️ Split Invoicing
+              </button>
+              <button type="button" class="btn btn-sm" id="modalOpenGroupBtn" style="font-size:11px;font-weight:800;padding:5px 10px;border-radius:6px;background:#f8fafc;border:1.5px solid #0891b2;color:#0e7490;cursor:pointer;">
+                👥 Group Invoicing
+              </button>
             </div>
           </div>
         ` : ''}
@@ -13774,6 +14004,56 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
           });
         });
       }
+
+      // GST Auto-Detect vs Exclude GST button handlers
+      const autoGstBtn = body.querySelector("#btnToggleAutoGst");
+      const exclGstBtn = body.querySelector("#btnToggleExcludeGst");
+      if (autoGstBtn && exclGstBtn) {
+        autoGstBtn.onclick = () => {
+          inv.excludeGst = false;
+          const freshBill = calculateOrderBill(Object.assign({}, currentOrderSession || inv, { excludeGst: false }), inv.items);
+          inv.subtotal = freshBill.subtotal;
+          inv.discountAmount = freshBill.discountAmount;
+          inv.taxableAmount = freshBill.taxable;
+          inv.exemptAmount = freshBill.exemptAmount;
+          inv.cgst = freshBill.cgst;
+          inv.sgst = freshBill.sgst;
+          inv.totalGst = freshBill.totalGst;
+          inv.serviceCharge = freshBill.serviceCharge;
+          inv.roundOff = freshBill.roundOff;
+          inv.total = freshBill.total;
+          inv.amountInWords = numberToWordsINR(freshBill.total);
+          showToast("✓ Auto-detected item GST rates and included tax.");
+          renderActiveInvoiceTab();
+        };
+        exclGstBtn.onclick = () => {
+          inv.excludeGst = true;
+          const freshBill = calculateOrderBill(Object.assign({}, currentOrderSession || inv, { excludeGst: true }), inv.items);
+          inv.subtotal = freshBill.subtotal;
+          inv.discountAmount = freshBill.discountAmount;
+          inv.taxableAmount = freshBill.taxable;
+          inv.exemptAmount = freshBill.exemptAmount;
+          inv.cgst = 0;
+          inv.sgst = 0;
+          inv.totalGst = 0;
+          inv.serviceCharge = freshBill.serviceCharge;
+          inv.roundOff = freshBill.roundOff;
+          inv.total = freshBill.total;
+          inv.amountInWords = numberToWordsINR(freshBill.total);
+          showToast("🚫 GST excluded from invoice (Bill of Supply · Zero Tax).");
+          renderActiveInvoiceTab();
+        };
+      }
+
+      // Alternative Billing shortcut handlers (Split & Group)
+      body.querySelector("#modalOpenSplitBtn")?.addEventListener("click", () => {
+        closeModal("invoiceModal");
+        openSplitInvoiceModal();
+      });
+      body.querySelector("#modalOpenGroupBtn")?.addEventListener("click", () => {
+        closeModal("invoiceModal");
+        openGroupInvoiceModal();
+      });
     }
 
     renderActiveInvoiceTab();
@@ -13871,11 +14151,956 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
     openModal("invoiceModal");
   }
+
+  // =========================================================================
+  // 1. SPLIT-WISE INVOICING ENGINE
+  // =========================================================================
+  function openSplitInvoiceModal() {
+    if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
+      showToast("No active items in order to split!", "error");
+      return;
+    }
+    if (!validateCompulsoryGuestDetails()) return;
+
+    const session = currentOrderSession;
+    const bill = calculateOrderBill(session, session.items);
+    const totalToSplit = bill.total;
+    const tableLabel = session.shortcode || session.label || (session.tableName || "Counter");
+    const companyKey = session.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
+
+    // Initialize with 2 equal splits by default
+    const half1 = Math.floor(totalToSplit / 2);
+    const half2 = totalToSplit - half1;
+    let splits = [
+      {
+        name: session.customerName || "Guest 1",
+        phone: session.customerPhone || "",
+        amount: half1,
+        payMode: "Cash"
+      },
+      {
+        name: "Guest 2",
+        phone: "",
+        amount: half2,
+        payMode: "UPI"
+      }
+    ];
+
+    const modal = document.getElementById("splitInvoiceModal");
+    if (!modal) return;
+
+    const tableLabelEl = document.getElementById("splitTableLabelDisplay");
+    const grandTotalEl = document.getElementById("splitGrandTotalDisplay");
+    const codeBadgeEl = document.getElementById("splitOrderCodeBadge");
+    const cardsContainer = document.getElementById("splitCardsContainer");
+    const statusBar = document.getElementById("splitBalanceStatusBar");
+    const statusTitle = document.getElementById("splitBalanceStatusTitle");
+    const statusDesc = document.getElementById("splitBalanceStatusDesc");
+    const autoBalBtn = document.getElementById("btnAutoBalanceSplit");
+    const confirmBtn = document.getElementById("btnConfirmSplitSettlement");
+
+    if (tableLabelEl) tableLabelEl.textContent = `${tableLabel} · ${session.items.reduce((s,i) => s + i.qty, 0)} Items`;
+    if (grandTotalEl) grandTotalEl.textContent = `₹${totalToSplit.toFixed(2)}`;
+    if (codeBadgeEl) codeBadgeEl.textContent = session.orderId || "Active Order";
+
+    function updateSplitBalance() {
+      const allocated = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+      const diff = Math.round((totalToSplit - allocated) * 100) / 100;
+
+      if (Math.abs(diff) < 0.01) {
+        statusBar.style.background = "#ecfdf5";
+        statusBar.style.borderColor = "#10b981";
+        statusTitle.style.color = "#065f46";
+        statusTitle.textContent = `✓ Perfect Balance Match (₹${totalToSplit.toFixed(2)})`;
+        statusDesc.style.color = "#047857";
+        statusDesc.textContent = `All ${splits.length} splits exactly total to the order bill. Ready to settle.`;
+        autoBalBtn.style.display = "none";
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = "1";
+        confirmBtn.style.cursor = "pointer";
+      } else {
+        statusBar.style.background = "#fef2f2";
+        statusBar.style.borderColor = "#ef4444";
+        statusTitle.style.color = "#991b1b";
+        statusTitle.textContent = diff > 0 
+          ? `⚠️ ₹${diff.toFixed(2)} Remaining Unallocated` 
+          : `⚠️ ₹${Math.abs(diff).toFixed(2)} Over-allocated`;
+        statusDesc.style.color = "#b91c1c";
+        statusDesc.textContent = `Allocated ₹${allocated.toFixed(2)} of ₹${totalToSplit.toFixed(2)}. Sum must equal bill total.`;
+        autoBalBtn.style.display = "inline-block";
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = "0.5";
+        confirmBtn.style.cursor = "not-allowed";
+      }
+    }
+
+    function renderSplits() {
+      cardsContainer.innerHTML = "";
+      splits.forEach((split, idx) => {
+        const card = document.createElement("div");
+        card.className = "split-card-item";
+        card.style.cssText = "background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;";
+        
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;font-weight:900;background:var(--primary-tint);color:var(--primary);padding:2px 8px;border-radius:6px;">
+                Split #${idx + 1}
+              </span>
+              <span style="font-size:11px;font-weight:700;color:var(--ink-soft);" id="splitSharePct_${idx}">
+                (${totalToSplit > 0 ? ((split.amount / totalToSplit) * 100).toFixed(1) : 0}%)
+              </span>
+            </div>
+            ${splits.length > 2 ? `
+              <button type="button" class="btn btn-sm btn-del-split" data-del-idx="${idx}" style="font-size:11px;padding:2px 6px;color:#dc2626;border-color:#fca5a5;background:#fef2f2;border-radius:5px;cursor:pointer;" title="Remove this split">
+                ✕ Remove
+              </button>
+            ` : ''}
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div>
+              <label style="font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:3px;">Guest / Ref</label>
+              <input type="text" class="split-input-name" data-idx="${idx}" value="${split.name || ''}" placeholder="Guest ${idx + 1}" style="width:100%;height:32px;font-size:11.5px;padding:0 8px;border-radius:6px;border:1px solid var(--line);background:var(--paper);color:var(--ink);">
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:3px;">Mobile (Digital Bill)</label>
+              <input type="tel" class="split-input-phone" data-idx="${idx}" value="${split.phone || ''}" placeholder="10-digit mobile" style="width:100%;height:32px;font-size:11.5px;padding:0 8px;border-radius:6px;border:1px solid var(--line);background:var(--paper);color:var(--ink);">
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:3px;">Amount (₹)</label>
+              <input type="number" min="1" step="1" class="split-input-amt" data-idx="${idx}" value="${split.amount}" style="width:100%;height:32px;font-size:13px;font-weight:800;font-family:'JetBrains Mono',monospace;padding:0 8px;border-radius:6px;border:1.5px solid var(--primary);background:var(--paper);color:var(--ink);">
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:4px;">Payment Method</label>
+            <div style="display:flex;gap:6px;" class="split-pay-mode-group" data-idx="${idx}">
+              <button type="button" class="btn btn-sm split-pay-btn ${split.payMode === 'Cash' ? 'active' : ''}" data-pay-val="Cash" style="flex:1;font-size:11px;font-weight:700;padding:4px 6px;border-radius:6px;cursor:pointer;${split.payMode === 'Cash' ? 'background:#059669;color:#fff;border:none;' : 'background:var(--paper);border:1px solid var(--line);'}">
+                💵 Cash
+              </button>
+              <button type="button" class="btn btn-sm split-pay-btn ${split.payMode === 'UPI' ? 'active' : ''}" data-pay-val="UPI" style="flex:1;font-size:11px;font-weight:700;padding:4px 6px;border-radius:6px;cursor:pointer;${split.payMode === 'UPI' ? 'background:#0284c7;color:#fff;border:none;' : 'background:var(--paper);border:1px solid var(--line);'}">
+                📱 UPI
+              </button>
+              <button type="button" class="btn btn-sm split-pay-btn ${split.payMode === 'Card' ? 'active' : ''}" data-pay-val="Card" style="flex:1;font-size:11px;font-weight:700;padding:4px 6px;border-radius:6px;cursor:pointer;${split.payMode === 'Card' ? 'background:#6366f1;color:#fff;border:none;' : 'background:var(--paper);border:1px solid var(--line);'}">
+                💳 Card
+              </button>
+            </div>
+          </div>
+        `;
+
+        cardsContainer.appendChild(card);
+      });
+
+      // Wire input events
+      cardsContainer.querySelectorAll(".split-input-name").forEach(inp => {
+        inp.oninput = (e) => {
+          const i = parseInt(e.target.dataset.idx, 10);
+          splits[i].name = e.target.value;
+        };
+      });
+      cardsContainer.querySelectorAll(".split-input-phone").forEach(inp => {
+        inp.oninput = (e) => {
+          const i = parseInt(e.target.dataset.idx, 10);
+          splits[i].phone = e.target.value;
+        };
+      });
+      cardsContainer.querySelectorAll(".split-input-amt").forEach(inp => {
+        inp.oninput = (e) => {
+          const i = parseInt(e.target.dataset.idx, 10);
+          splits[i].amount = Number(e.target.value) || 0;
+          const shareSpan = document.getElementById(`splitSharePct_${i}`);
+          if (shareSpan && totalToSplit > 0) {
+            shareSpan.textContent = `(${((splits[i].amount / totalToSplit) * 100).toFixed(1)}%)`;
+          }
+          updateSplitBalance();
+        };
+      });
+      cardsContainer.querySelectorAll(".split-pay-btn").forEach(btn => {
+        btn.onclick = () => {
+          const group = btn.closest(".split-pay-mode-group");
+          const i = parseInt(group.dataset.idx, 10);
+          const val = btn.dataset.payVal;
+          splits[i].payMode = val;
+          renderSplits();
+        };
+      });
+      cardsContainer.querySelectorAll(".btn-del-split").forEach(btn => {
+        btn.onclick = () => {
+          const i = parseInt(btn.dataset.delIdx, 10);
+          splits.splice(i, 1);
+          renderSplits();
+          updateSplitBalance();
+        };
+      });
+
+      updateSplitBalance();
+    }
+
+    // Auto balance button
+    if (autoBalBtn) {
+      autoBalBtn.onclick = () => {
+        const allocatedOthers = splits.slice(0, -1).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+        const remaining = Math.max(0, Math.round((totalToSplit - allocatedOthers) * 100) / 100);
+        splits[splits.length - 1].amount = remaining;
+        renderSplits();
+        showToast(`⚖️ Balanced last split to ₹${remaining.toFixed(2)}.`);
+      };
+    }
+
+    // Equal Split Preset chips
+    document.querySelectorAll("#splitPresetChips [data-split-count]").forEach(btn => {
+      btn.onclick = () => {
+        const count = parseInt(btn.dataset.splitCount, 10) || 2;
+        const each = Math.floor(totalToSplit / count);
+        const rem = totalToSplit - (each * count);
+        splits = [];
+        const modes = ["Cash", "UPI", "Card", "UPI"];
+        for (let i = 0; i < count; i++) {
+          splits.push({
+            name: i === 0 ? (session.customerName || "Guest 1") : `Guest ${i + 1}`,
+            phone: i === 0 ? (session.customerPhone || "") : "",
+            amount: i === 0 ? (each + rem) : each,
+            payMode: modes[i % modes.length]
+          });
+        }
+        renderSplits();
+      };
+    });
+
+    // Add split card button
+    const addCardBtn = document.getElementById("btnAddSplitCardBtn");
+    if (addCardBtn) {
+      addCardBtn.onclick = () => {
+        const allocated = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+        const unallocated = Math.max(0, totalToSplit - allocated);
+        splits.push({
+          name: `Guest ${splits.length + 1}`,
+          phone: "",
+          amount: unallocated,
+          payMode: "Cash"
+        });
+        renderSplits();
+      };
+    }
+
+    // Confirm settlement handler
+    if (confirmBtn) {
+      confirmBtn.onclick = () => {
+        const allocated = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+        const diff = Math.round((totalToSplit - allocated) * 100) / 100;
+        if (Math.abs(diff) >= 0.01) {
+          showToast(`Cannot settle: Allocated amount (₹${allocated}) does not match order bill total (₹${totalToSplit})!`, "error");
+          return;
+        }
+
+        if (!validateCompulsoryGuestDetails()) {
+          closeModal("splitInvoiceModal");
+          return;
+        }
+
+        const generatedInvoices = [];
+        const now = new Date();
+        const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const isoDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        // Generate distinct sequential invoice for each split
+        splits.forEach((split, idx) => {
+          const committed = commitNextInvoiceNumber(companyKey);
+          const splitRatio = totalToSplit > 0 ? (split.amount / totalToSplit) : (1 / splits.length);
+
+          const splitInv = {
+            id: committed.invoiceId,
+            companySeries: companyKey,
+            orderCode: session.orderId,
+            tableLabel: tableLabel,
+            floorLabel: session.floor || "",
+            tokenNo: session.tokenNo || ("T-" + String(Date.now()).slice(-3)),
+            serverName: session.serverName || "Staff",
+            customerName: split.name || `Guest ${idx + 1}`,
+            customerPhone: split.phone || "",
+            dateFormatted,
+            isoDate,
+            time: timeStr,
+            subtotal: Math.round(bill.subtotal * splitRatio * 100) / 100,
+            discountAmount: Math.round(bill.discountAmount * splitRatio * 100) / 100,
+            taxableAmount: Math.round(bill.taxable * splitRatio * 100) / 100,
+            exemptAmount: Math.round((bill.exemptAmount || 0) * splitRatio * 100) / 100,
+            taxEnabled: bill.isTaxOn,
+            taxRate: session.taxRate || 5,
+            cgst: Math.round(bill.cgst * splitRatio * 100) / 100,
+            sgst: Math.round(bill.sgst * splitRatio * 100) / 100,
+            totalGst: Math.round(bill.totalGst * splitRatio * 100) / 100,
+            serviceCharge: Math.round((bill.serviceCharge || 0) * splitRatio * 100) / 100,
+            roundOff: 0,
+            total: Number(split.amount),
+            amountInWords: numberToWordsINR(split.amount),
+            paymentMode: split.payMode || "Cash",
+            status: "paid",
+            items: session.items.map(it => Object.assign({}, it)),
+            splitIndex: idx + 1,
+            totalSplits: splits.length,
+            isSplitInvoice: true
+          };
+
+          if (!invoices.find(x => x.id === splitInv.id)) {
+            invoices.unshift(splitInv);
+          }
+          generatedInvoices.push(splitInv);
+          apiClient.payInvoice(splitInv.id, splitInv.paymentMode);
+        });
+
+        // Dispatch KOT to kitchen if not already dispatched
+        if (session.items && session.items.length > 0) {
+          dispatchKotForOrder(session, true, `Split (${splits.map(s => s.payMode).join('/')})`);
+        }
+
+        // Free table and clear active order session
+        if (session.tableId) {
+          const tbl = tables.find(t => t.id === session.tableId);
+          if (tbl) {
+            tbl.status = "available";
+            tbl.isPending = false;
+            tbl.isServed = false;
+          }
+          apiClient.updateTableStatus(session.tableId, "available");
+          delete tableOrders[session.tableId];
+        } else {
+          takeawayOrders = takeawayOrders.filter(t => t.orderId !== session.orderId);
+        }
+
+        saveInvoicesState();
+        saveTableOrdersState();
+        saveTablesState();
+        saveTakeawayOrdersState();
+
+        currentOrderSession = null;
+        closeModal("splitInvoiceModal");
+        closeModal("invoiceModal");
+
+        showToast(`✓ Generated & settled ${generatedInvoices.length} split invoices!`);
+        updateGlobalStats();
+        renderTables();
+        renderBilling();
+
+        showMultiInvoiceSuccessModal(generatedInvoices, {
+          type: "Split-wise",
+          tableLabel
+        });
+      };
+    }
+
+    renderSplits();
+    openModal("splitInvoiceModal");
+  }
+
+  // =========================================================================
+  // 2. GROUP-WISE INVOICING ENGINE
+  // =========================================================================
+  function openGroupInvoiceModal() {
+    if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
+      showToast("No active items in order for group invoicing!", "error");
+      return;
+    }
+    if (!validateCompulsoryGuestDetails()) return;
+
+    const session = currentOrderSession;
+    const itemsList = session.items;
+    const tableLabel = session.shortcode || session.label || (session.tableName || "Counter");
+    const companyKey = session.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
+
+    // Setup initial groups
+    let activeGroups = [
+      { id: "g1", name: "Group 1", customerName: session.customerName || "Group 1", customerPhone: session.customerPhone || "", payMode: "Cash" },
+      { id: "g2", name: "Group 2", customerName: "Group 2", customerPhone: "", payMode: "UPI" }
+    ];
+
+    // Allocations: item index -> { [groupId]: qty }
+    let allocations = {};
+    itemsList.forEach((it, idx) => {
+      allocations[idx] = {};
+      if (idx < Math.ceil(itemsList.length / 2)) {
+        allocations[idx]["g1"] = it.qty;
+        allocations[idx]["g2"] = 0;
+      } else {
+        allocations[idx]["g1"] = 0;
+        allocations[idx]["g2"] = it.qty;
+      }
+    });
+
+    const modal = document.getElementById("groupInvoiceModal");
+    if (!modal) return;
+
+    const totalEl = document.getElementById("groupOrderTotalDisplay");
+    const codeBadgeEl = document.getElementById("groupOrderCodeBadge");
+    const allocCountEl = document.getElementById("groupItemsAllocatedCount");
+    const allocTable = document.getElementById("groupItemAllocationTable");
+    const groupsCardsCont = document.getElementById("groupsCardsContainer");
+    const statusBar = document.getElementById("groupAllocationStatusBar");
+    const statusTitle = document.getElementById("groupStatusTitle");
+    const statusDesc = document.getElementById("groupStatusDesc");
+    const confirmBtn = document.getElementById("btnConfirmGroupSettlement");
+
+    const fullOrderBill = calculateOrderBill(session, itemsList);
+    if (totalEl) totalEl.textContent = `₹${fullOrderBill.total.toFixed(2)}`;
+    if (codeBadgeEl) codeBadgeEl.textContent = `${tableLabel} · ${itemsList.length} Dishes`;
+
+    function renderGroupInvoiceUI() {
+      // 1. Render Item Allocation Table
+      allocTable.innerHTML = "";
+      let totalOrderedQty = 0;
+      let totalAssignedQty = 0;
+
+      itemsList.forEach((it, idx) => {
+        totalOrderedQty += it.qty;
+        const itemRow = document.createElement("div");
+        itemRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--paper);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap;";
+
+        const itemAlloc = allocations[idx] || {};
+        const sumItemAssigned = activeGroups.reduce((s, g) => s + (Number(itemAlloc[g.id]) || 0), 0);
+        totalAssignedQty += sumItemAssigned;
+        const isFullyAssigned = (sumItemAssigned === it.qty);
+
+        let groupInputsHtml = activeGroups.map(g => {
+          const val = Number(itemAlloc[g.id]) || 0;
+          return `
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-size:10.5px;font-weight:700;color:var(--ink-soft);">${g.name}:</span>
+              <input type="number" min="0" max="${it.qty}" step="1" class="group-qty-input" data-item-idx="${idx}" data-group-id="${g.id}" value="${val}" style="width:48px;height:28px;text-align:center;font-size:12px;font-weight:800;border:1.5px solid ${val > 0 ? 'var(--primary)' : 'var(--line)'};border-radius:5px;background:var(--panel);color:var(--ink);">
+            </div>
+          `;
+        }).join('');
+
+        itemRow.innerHTML = `
+          <div style="min-width:160px;flex:1;">
+            <div style="font-size:12.5px;font-weight:800;color:var(--ink);">${it.name}</div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:1px;">
+              ₹${Number(it.price).toFixed(2)} × ${it.qty} = <b>₹${(it.price * it.qty).toFixed(2)}</b>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${groupInputsHtml}
+            <span style="font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px;${isFullyAssigned ? 'background:#ecfdf5;color:#059669;' : 'background:#fef2f2;color:#dc2626;'}">
+              ${sumItemAssigned} / ${it.qty} ${isFullyAssigned ? '✓' : '⚠️'}
+            </span>
+          </div>
+        `;
+
+        allocTable.appendChild(itemRow);
+      });
+
+      if (allocCountEl) allocCountEl.textContent = `Allocated: ${totalAssignedQty} / ${totalOrderedQty}`;
+
+      // Wire allocation inputs
+      allocTable.querySelectorAll(".group-qty-input").forEach(inp => {
+        inp.oninput = (e) => {
+          const itemIdx = parseInt(e.target.dataset.itemIdx, 10);
+          const groupId = e.target.dataset.groupId;
+          const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+          if (!allocations[itemIdx]) allocations[itemIdx] = {};
+          allocations[itemIdx][groupId] = val;
+          renderGroupInvoiceUI();
+        };
+      });
+
+      // 2. Render Groups Breakdown Cards
+      groupsCardsCont.innerHTML = "";
+      let allGroupsBillsTotal = 0;
+
+      activeGroups.forEach((g, gIdx) => {
+        // Collect items for this group
+        const groupItems = [];
+        itemsList.forEach((it, idx) => {
+          const q = Number(allocations[idx]?.[g.id]) || 0;
+          if (q > 0) {
+            groupItems.push(Object.assign({}, it, { qty: q }));
+          }
+        });
+
+        const gBill = calculateOrderBill(session, groupItems);
+        allGroupsBillsTotal += gBill.total;
+
+        const card = document.createElement("div");
+        card.style.cssText = "background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;";
+
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <input type="text" class="group-title-input" data-group-idx="${gIdx}" value="${g.name}" style="font-size:12.5px;font-weight:800;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:2px 6px;width:130px;background:var(--panel);">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:14px;font-weight:900;color:var(--primary);font-family:'JetBrains Mono',monospace;">₹${gBill.total.toFixed(2)}</span>
+              ${activeGroups.length > 2 ? `
+                <button type="button" class="btn btn-sm btn-del-group" data-group-idx="${gIdx}" style="font-size:10px;padding:1px 5px;color:#dc2626;border-color:#fca5a5;background:#fef2f2;border-radius:4px;cursor:pointer;">✕</button>
+              ` : ''}
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <input type="text" class="group-cust-name" data-group-idx="${gIdx}" value="${g.customerName}" placeholder="Guest Name" style="height:28px;font-size:11px;padding:0 6px;border-radius:5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);">
+            <input type="tel" class="group-cust-phone" data-group-idx="${gIdx}" value="${g.customerPhone}" placeholder="Mobile" style="height:28px;font-size:11px;padding:0 6px;border-radius:5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);">
+          </div>
+
+          <div style="font-size:11px;color:var(--ink-soft);max-height:80px;overflow-y:auto;background:var(--surface-subtle);border-radius:6px;padding:6px;">
+            ${groupItems.length > 0 ? groupItems.map(i => `• ${i.qty}× ${i.name} (₹${(i.price * i.qty).toFixed(2)})`).join('<br>') : '<i style="color:#94a3b8;">No items assigned yet</i>'}
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:4px;">
+            <span>Taxable: ₹${gBill.taxable.toFixed(2)}</span>
+            <span>GST: ₹${gBill.totalGst.toFixed(2)}</span>
+          </div>
+
+          <div style="display:flex;gap:4px;" class="group-pay-mode-strip" data-group-idx="${gIdx}">
+            <button type="button" class="btn btn-sm group-pay-btn ${g.payMode === 'Cash' ? 'active' : ''}" data-pay="Cash" style="flex:1;font-size:10.5px;font-weight:700;padding:3px;border-radius:5px;cursor:pointer;${g.payMode === 'Cash' ? 'background:#059669;color:#fff;border:none;' : 'background:var(--panel);border:1px solid var(--line);'}">💵 Cash</button>
+            <button type="button" class="btn btn-sm group-pay-btn ${g.payMode === 'UPI' ? 'active' : ''}" data-pay="UPI" style="flex:1;font-size:10.5px;font-weight:700;padding:3px;border-radius:5px;cursor:pointer;${g.payMode === 'UPI' ? 'background:#0284c7;color:#fff;border:none;' : 'background:var(--panel);border:1px solid var(--line);'}">📱 UPI</button>
+            <button type="button" class="btn btn-sm group-pay-btn ${g.payMode === 'Card' ? 'active' : ''}" data-pay="Card" style="flex:1;font-size:10.5px;font-weight:700;padding:3px;border-radius:5px;cursor:pointer;${g.payMode === 'Card' ? 'background:#6366f1;color:#fff;border:none;' : 'background:var(--panel);border:1px solid var(--line);'}">💳 Card</button>
+          </div>
+        `;
+
+        groupsCardsCont.appendChild(card);
+      });
+
+      // Wire card inputs
+      groupsCardsCont.querySelectorAll(".group-title-input").forEach(inp => {
+        inp.oninput = (e) => {
+          const idx = parseInt(e.target.dataset.groupIdx, 10);
+          activeGroups[idx].name = e.target.value;
+        };
+      });
+      groupsCardsCont.querySelectorAll(".group-cust-name").forEach(inp => {
+        inp.oninput = (e) => {
+          const idx = parseInt(e.target.dataset.groupIdx, 10);
+          activeGroups[idx].customerName = e.target.value;
+        };
+      });
+      groupsCardsCont.querySelectorAll(".group-cust-phone").forEach(inp => {
+        inp.oninput = (e) => {
+          const idx = parseInt(e.target.dataset.groupIdx, 10);
+          activeGroups[idx].customerPhone = e.target.value;
+        };
+      });
+      groupsCardsCont.querySelectorAll(".group-pay-btn").forEach(btn => {
+        btn.onclick = () => {
+          const strip = btn.closest(".group-pay-mode-strip");
+          const idx = parseInt(strip.dataset.groupIdx, 10);
+          activeGroups[idx].payMode = btn.dataset.pay;
+          renderGroupInvoiceUI();
+        };
+      });
+      groupsCardsCont.querySelectorAll(".btn-del-group").forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.dataset.groupIdx, 10);
+          const delG = activeGroups[idx];
+          itemsList.forEach((_, iIdx) => {
+            if (allocations[iIdx] && allocations[iIdx][delG.id]) {
+              const q = allocations[iIdx][delG.id];
+              allocations[iIdx][activeGroups[0].id] = (allocations[iIdx][activeGroups[0].id] || 0) + q;
+              delete allocations[iIdx][delG.id];
+            }
+          });
+          activeGroups.splice(idx, 1);
+          renderGroupInvoiceUI();
+        };
+      });
+
+      // 3. Validation Status
+      const isEveryItemFull = itemsList.every((it, idx) => {
+        const sum = activeGroups.reduce((s, g) => s + (Number(allocations[idx]?.[g.id]) || 0), 0);
+        return sum === it.qty;
+      });
+
+      if (isEveryItemFull && totalAssignedQty === totalOrderedQty) {
+        statusBar.style.background = "#ecfdf5";
+        statusBar.style.borderColor = "#10b981";
+        statusTitle.style.color = "#065f46";
+        statusTitle.textContent = `✓ All Items Allocated (${totalAssignedQty} Items Across ${activeGroups.length} Groups)`;
+        statusDesc.style.color = "#047857";
+        statusDesc.textContent = `Total of group invoices: ₹${allGroupsBillsTotal.toFixed(2)}. Ready to generate invoices.`;
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = "1";
+        confirmBtn.style.cursor = "pointer";
+      } else {
+        statusBar.style.background = "#fef2f2";
+        statusBar.style.borderColor = "#ef4444";
+        statusTitle.style.color = "#991b1b";
+        statusTitle.textContent = `⚠️ Incomplete Item Allocation`;
+        statusDesc.style.color = "#b91c1c";
+        statusDesc.textContent = `Allocated ${totalAssignedQty} of ${totalOrderedQty} items. Every item in the order must be assigned to a group.`;
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = "0.5";
+        confirmBtn.style.cursor = "not-allowed";
+      }
+    }
+
+    // Auto Group By Category Button
+    const autoCatBtn = document.getElementById("btnAutoGroupByCat");
+    if (autoCatBtn) {
+      autoCatBtn.onclick = () => {
+        const catsMap = {};
+        itemsList.forEach((it) => {
+          let cat = (it.category || "").trim();
+          if (!cat) {
+            const n = it.name.toLowerCase();
+            if (n.includes("soda") || n.includes("juice") || n.includes("water") || n.includes("drink") || n.includes("shake") || n.includes("tea") || n.includes("coffee") || n.includes("lassi") || n.includes("beer")) {
+              cat = "Beverages";
+            } else if (n.includes("sweet") || n.includes("ice cream") || n.includes("halwa") || n.includes("gulab") || n.includes("dessert") || n.includes("pastry")) {
+              cat = "Desserts";
+            } else {
+              cat = "Food";
+            }
+          }
+          catsMap[cat] = true;
+        });
+
+        const uniqueCats = Object.keys(catsMap);
+        if (uniqueCats.length < 2) {
+          uniqueCats.push("Beverages / Bar");
+        }
+
+        activeGroups = uniqueCats.map((c, i) => ({
+          id: `g_${i + 1}`,
+          name: c,
+          customerName: `${c} Guests`,
+          customerPhone: "",
+          payMode: i === 0 ? "Cash" : (i === 1 ? "UPI" : "Card")
+        }));
+
+        allocations = {};
+        itemsList.forEach((it, idx) => {
+          allocations[idx] = {};
+          let matchedG = activeGroups[0];
+          const itCat = (it.category || "").toLowerCase();
+          const itName = it.name.toLowerCase();
+
+          for (const g of activeGroups) {
+            const gLower = g.name.toLowerCase();
+            if (itCat && (gLower.includes(itCat) || itCat.includes(gLower))) {
+              matchedG = g;
+              break;
+            }
+            if (gLower.includes("beverage") || gLower.includes("bar")) {
+              if (itName.includes("soda") || itName.includes("juice") || itName.includes("water") || itName.includes("drink") || itName.includes("shake") || itName.includes("tea") || itName.includes("coffee") || itName.includes("lassi")) {
+                matchedG = g;
+                break;
+              }
+            }
+            if (gLower.includes("dessert")) {
+              if (itName.includes("sweet") || itName.includes("ice cream") || itName.includes("halwa") || itName.includes("gulab") || itName.includes("dessert")) {
+                matchedG = g;
+                break;
+              }
+            }
+          }
+
+          activeGroups.forEach(g => {
+            allocations[idx][g.id] = (g.id === matchedG.id) ? it.qty : 0;
+          });
+        });
+
+        renderGroupInvoiceUI();
+        showToast(`⚡ Auto-grouped items into ${activeGroups.length} categories (${uniqueCats.join(', ')})!`);
+      };
+    }
+
+    // 2 Groups 50/50 Split shortcut
+    const splitTwoBtn = document.getElementById("btnSplitTwoGroups");
+    if (splitTwoBtn) {
+      splitTwoBtn.onclick = () => {
+        activeGroups = [
+          { id: "g1", name: "Group 1", customerName: session.customerName || "Group 1", customerPhone: session.customerPhone || "", payMode: "Cash" },
+          { id: "g2", name: "Group 2", customerName: "Group 2", customerPhone: "", payMode: "UPI" }
+        ];
+        allocations = {};
+        itemsList.forEach((it, idx) => {
+          allocations[idx] = {};
+          if (idx < Math.ceil(itemsList.length / 2)) {
+            allocations[idx]["g1"] = it.qty;
+            allocations[idx]["g2"] = 0;
+          } else {
+            allocations[idx]["g1"] = 0;
+            allocations[idx]["g2"] = it.qty;
+          }
+        });
+        renderGroupInvoiceUI();
+        showToast("⚖️ Reset to 2 groups with 50/50 item allocation.");
+      };
+    }
+
+    // Add Group Button
+    const addGrpBtn = document.getElementById("btnAddGroupBtn");
+    if (addGrpBtn) {
+      addGrpBtn.onclick = () => {
+        const nextNum = activeGroups.length + 1;
+        const newGId = `g_${Date.now()}`;
+        activeGroups.push({
+          id: newGId,
+          name: `Group ${nextNum}`,
+          customerName: `Group ${nextNum}`,
+          customerPhone: "",
+          payMode: "Cash"
+        });
+        itemsList.forEach((_, idx) => {
+          if (!allocations[idx]) allocations[idx] = {};
+          allocations[idx][newGId] = 0;
+        });
+        renderGroupInvoiceUI();
+      };
+    }
+
+    // Confirm Group Settlement
+    if (confirmBtn) {
+      confirmBtn.onclick = () => {
+        const isEveryItemFull = itemsList.every((it, idx) => {
+          const sum = activeGroups.reduce((s, g) => s + (Number(allocations[idx]?.[g.id]) || 0), 0);
+          return sum === it.qty;
+        });
+
+        if (!isEveryItemFull) {
+          showToast("Cannot settle: All order items must be fully allocated across groups!", "error");
+          return;
+        }
+
+        if (!validateCompulsoryGuestDetails()) {
+          closeModal("groupInvoiceModal");
+          return;
+        }
+
+        const generatedInvoices = [];
+        const now = new Date();
+        const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const isoDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        // Generate distinct sequential invoice for each group
+        activeGroups.forEach((group, gIdx) => {
+          const groupItems = [];
+          itemsList.forEach((it, idx) => {
+            const q = Number(allocations[idx]?.[group.id]) || 0;
+            if (q > 0) {
+              groupItems.push(Object.assign({}, it, { qty: q }));
+            }
+          });
+
+          if (groupItems.length === 0) return; // Skip empty groups
+
+          const gBill = calculateOrderBill(session, groupItems);
+          const committed = commitNextInvoiceNumber(companyKey);
+
+          const groupInv = {
+            id: committed.invoiceId,
+            companySeries: companyKey,
+            orderCode: session.orderId,
+            tableLabel: tableLabel,
+            floorLabel: session.floor || "",
+            tokenNo: session.tokenNo || ("T-" + String(Date.now()).slice(-3)),
+            serverName: session.serverName || "Staff",
+            customerName: group.customerName || group.name,
+            customerPhone: group.customerPhone || "",
+            dateFormatted,
+            isoDate,
+            time: timeStr,
+            subtotal: gBill.subtotal,
+            discountAmount: gBill.discountAmount,
+            taxableAmount: gBill.taxable,
+            exemptAmount: gBill.exemptAmount || 0,
+            taxEnabled: gBill.isTaxOn,
+            taxRate: session.taxRate || 5,
+            cgst: gBill.cgst,
+            sgst: gBill.sgst,
+            totalGst: gBill.totalGst,
+            serviceCharge: gBill.serviceCharge || 0,
+            roundOff: gBill.roundOff || 0,
+            total: gBill.total,
+            amountInWords: numberToWordsINR(gBill.total),
+            paymentMode: group.payMode || "Cash",
+            status: "paid",
+            items: groupItems,
+            groupName: group.name,
+            groupIndex: gIdx + 1,
+            totalGroups: activeGroups.length,
+            isGroupInvoice: true
+          };
+
+          if (!invoices.find(x => x.id === groupInv.id)) {
+            invoices.unshift(groupInv);
+          }
+          generatedInvoices.push(groupInv);
+          apiClient.payInvoice(groupInv.id, groupInv.paymentMode);
+        });
+
+        // Dispatch KOT to kitchen if not already dispatched
+        if (session.items && session.items.length > 0) {
+          dispatchKotForOrder(session, true, `Group (${activeGroups.map(g => g.name).join(', ')})`);
+        }
+
+        // Free table and clear active order session
+        if (session.tableId) {
+          const tbl = tables.find(t => t.id === session.tableId);
+          if (tbl) {
+            tbl.status = "available";
+            tbl.isPending = false;
+            tbl.isServed = false;
+          }
+          apiClient.updateTableStatus(session.tableId, "available");
+          delete tableOrders[session.tableId];
+        } else {
+          takeawayOrders = takeawayOrders.filter(t => t.orderId !== session.orderId);
+        }
+
+        saveInvoicesState();
+        saveTableOrdersState();
+        saveTablesState();
+        saveTakeawayOrdersState();
+
+        currentOrderSession = null;
+        closeModal("groupInvoiceModal");
+        closeModal("invoiceModal");
+
+        showToast(`✓ Generated & settled ${generatedInvoices.length} group invoices!`);
+        updateGlobalStats();
+        renderTables();
+        renderBilling();
+
+        showMultiInvoiceSuccessModal(generatedInvoices, {
+          type: "Group-wise",
+          tableLabel
+        });
+      };
+    }
+
+    renderGroupInvoiceUI();
+    openModal("groupInvoiceModal");
+  }
+
+  // =========================================================================
+  // 3. MULTI-INVOICE SUCCESS & BATCH PRINT MODAL
+  // =========================================================================
+  function showMultiInvoiceSuccessModal(generatedInvoices, orderContext = {}) {
+    const listCont = document.getElementById("multiInvoicesListContainer");
+    const subTitle = document.getElementById("multiInvoiceSuccessSub");
+    const printAllBtn = document.getElementById("btnPrintAllMultiInvoices");
+    const goBillingBtn = document.getElementById("btnMultiSuccessGoBilling");
+
+    if (subTitle) {
+      subTitle.textContent = `Generated ${generatedInvoices.length} ${orderContext.type || ''} Invoices for ${orderContext.tableLabel || 'Table'} (All Settled)`;
+    }
+
+    if (listCont) {
+      listCont.innerHTML = "";
+      generatedInvoices.forEach((inv, idx) => {
+        const itemRow = document.createElement("div");
+        itemRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;flex-wrap:wrap;";
+
+        const titleLabel = inv.groupName ? `Group: ${inv.groupName}` : (inv.splitIndex ? `Split #${inv.splitIndex} of ${inv.totalSplits}` : `Bill #${idx + 1}`);
+
+        itemRow.innerHTML = `
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:13.5px;font-weight:900;font-family:monospace;color:var(--primary);">${inv.id}</span>
+              <span style="font-size:10px;font-weight:800;background:var(--line-soft);color:var(--ink-soft);padding:1px 6px;border-radius:4px;">${titleLabel}</span>
+              <span style="font-size:10px;font-weight:800;background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;">${inv.paymentMode}</span>
+            </div>
+            <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">
+              Guest: <b>${inv.customerName || 'Walk-in Guest'}</b> · ${inv.customerPhone || 'No Phone'} · ${inv.items?.length || 0} items
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="text-align:right;margin-right:4px;">
+              <div style="font-size:16px;font-weight:900;color:var(--ink);font-family:'JetBrains Mono',monospace;">₹${Number(inv.total).toFixed(2)}</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-print-single-multi" data-inv-idx="${idx}" style="font-size:11px;font-weight:800;padding:5px 10px;border-radius:6px;background:var(--panel);border:1px solid var(--line);cursor:pointer;">
+              🖨️ Print
+            </button>
+            <button type="button" class="btn btn-sm btn-wa-single-multi" data-inv-idx="${idx}" style="font-size:11px;font-weight:800;padding:5px 10px;border-radius:6px;background:#25d366;color:#fff;border:none;cursor:pointer;">
+              🟢 WhatsApp
+            </button>
+          </div>
+        `;
+
+        listCont.appendChild(itemRow);
+      });
+
+      // Wire single print
+      listCont.querySelectorAll(".btn-print-single-multi").forEach(b => {
+        b.onclick = () => {
+          const idx = parseInt(b.dataset.invIdx, 10);
+          const targetInv = generatedInvoices[idx];
+          const slipHtml = generateDocumentSlipHtml(targetInv, "invoice", invoiceMasterConfig);
+          executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+          showToast(`🖨️ Printing slip for Invoice ${targetInv.id}...`);
+        };
+      });
+
+      // Wire single WhatsApp
+      listCont.querySelectorAll(".btn-wa-single-multi").forEach(b => {
+        b.onclick = () => {
+          const idx = parseInt(b.dataset.invIdx, 10);
+          const targetInv = generatedInvoices[idx];
+          let rawPhone = (targetInv.customerPhone || "").replace(/[^0-9]/g, "");
+          if (!rawPhone || rawPhone.length < 10) {
+            const promptPhone = prompt("Enter customer mobile number for WhatsApp receipt:", "");
+            if (!promptPhone) return;
+            rawPhone = promptPhone.replace(/[^0-9]/g, "");
+          }
+          if (rawPhone.length === 10) rawPhone = "91" + rawPhone;
+          const compConf = companySeriesConfig[targetInv.companySeries] || Object.values(companySeriesConfig)[0] || defaultCompanySeriesConfig.main;
+          const itemsText = (targetInv.items || []).map(i => `• ${i.name} × ${i.qty} - ₹${(i.price * i.qty).toFixed(2)}`).join("\n");
+          const waText = `🧾 *${compConf.name}*\n*Tax Invoice:* ${targetInv.id}\n*Date:* ${targetInv.dateFormatted} | *Tender:* ${targetInv.paymentMode}\n*Customer:* ${targetInv.customerName}\n━━━━━━━━━━━━━━━━━━\n${itemsText}\n━━━━━━━━━━━━━━━━━━\n*Bill Total:* ₹${targetInv.total.toFixed(2)}\n_${targetInv.amountInWords || numberToWordsINR(targetInv.total)}_\n🙏 *Thank you for dining with us!*`;
+          window.open(`https://api.whatsapp.com/send?phone=${rawPhone}&text=${encodeURIComponent(waText)}`, "_blank");
+        };
+      });
+    }
+
+    // Continuous thermal batch print for all generated invoices
+    if (printAllBtn) {
+      printAllBtn.onclick = () => {
+        const slips = generatedInvoices.map((inv, i) => {
+          const slip = generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig);
+          const divider = (i < generatedInvoices.length - 1) ? `
+            <div class="receipt-tear-divider" style="margin:16px 0 14px 0; padding:6px 0; border-top:2px dashed #000; border-bottom:2px dashed #000; text-align:center; font-family:monospace; font-size:11px; font-weight:900; background:#f8fafc; color:#000;">
+              ✂ - - - - - TEAR HERE · NEXT INVOICE (${generatedInvoices[i+1].id}) - - - - - ✂
+            </div>
+          ` : '';
+          return `
+            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+              ${slip}
+              ${divider}
+            </div>
+          `;
+        });
+        executeThermalPrint(slips.join("\n"), invoiceMasterConfig.paperFormat || "80mm");
+        showToast(`🖨️ Dispatched all ${generatedInvoices.length} slips to printer!`);
+      };
+    }
+
+    if (goBillingBtn) {
+      goBillingBtn.onclick = () => {
+        closeAllModals();
+        showView("billing");
+        renderBilling();
+      };
+    }
+
+    openModal("multiInvoiceSuccessModal");
+  }
+
+  // Wire cart panel buttons
+  document.getElementById("splitInvoiceBtn")?.addEventListener("click", () => {
+    openSplitInvoiceModal();
+  });
+  document.getElementById("groupInvoiceBtn")?.addEventListener("click", () => {
+    openGroupInvoiceModal();
+  });
+
+  window.openSplitInvoiceModal = openSplitInvoiceModal;
+  window.openGroupInvoiceModal = openGroupInvoiceModal;
+
   window.__pos = {
     getInvoices: () => invoices,
     getKots: () => kots,
     openDishCustomizationModal,
     showInvoiceModal,
+    openSplitInvoiceModal,
+    openGroupInvoiceModal,
     getCurrentSession: () => currentOrderSession,
     setCurrentSession: (s) => { currentOrderSession = s; },
     renderCart: () => renderCart(),
@@ -16053,7 +17278,7 @@ For any queries or updates, reply to this message.`;
       const invSubtotalNum = Number(inv.subtotal || inv.total || 0);
       
       const effectiveRegime = inv.taxRegime || cfg.taxRegime || (inv.isInterstate ? 'igst' : 'cgst_sgst');
-      const isCompositionOrNone = (effectiveRegime === 'composition_none' || effectiveRegime === 'none' || inv.isComposition);
+      const isCompositionOrNone = (effectiveRegime === 'composition_none' || effectiveRegime === 'none' || inv.isComposition || inv.excludeGst);
       const isIgstOnly = (effectiveRegime === 'igst' || inv.isInterstate || (inv.igst && inv.igst > 0));
       
       const invTaxableNum = isCompositionOrNone ? invSubtotalNum : Number(inv.taxableAmount || (invTotalNum * 100 / 105));
@@ -16063,7 +17288,7 @@ For any queries or updates, reply to this message.`;
       const invSgstNum = Number(inv.sgst !== undefined ? inv.sgst : (totalTaxAmt / 2));
       const invIgstNum = Number(inv.igst !== undefined ? inv.igst : totalTaxAmt);
 
-      const docHeaderTitle = cfg.documentTitle || (isCompositionOrNone ? 'BILL OF SUPPLY' : (inv.docTitle || 'TAX INVOICE'));
+      const docHeaderTitle = cfg.documentTitle || (isCompositionOrNone ? (inv.excludeGst ? 'BILL OF SUPPLY / EXEMPT' : 'BILL OF SUPPLY') : (inv.docTitle || 'TAX INVOICE'));
       const formatInr = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       const hasMeta = cfg.showInvoiceSeries || cfg.showCustomerDetails || cfg.showPaymentMode || (cfg.showTokenNumber && inv.tokenNo) || (cfg.showTableAndFloor && (inv.tableLabel || inv.floorLabel)) || (cfg.showServerName && inv.serverName);
