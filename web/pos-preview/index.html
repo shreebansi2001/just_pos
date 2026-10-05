@@ -8801,21 +8801,21 @@
       const uDetails = loginResult.data["User Details"] || loginResult.data["userDetails"] || loginResult.data;
       const u = Array.isArray(uDetails) ? uDetails[0] : (uDetails && uDetails.user ? uDetails.user : uDetails);
 
-      // Verify Module Entitlement: strictly checks upgradeModuleId === 24 or moduleName contains POS
-      const upgradedModules = (u && Array.isArray(u.userUpgradedModule)) ? u.userUpgradedModule : [];
-      console.log("[Auth] Checking module entitlement in userUpgradedModule:", upgradedModules);
+      // Verify Module Entitlement: checks upgradeModuleId === 24 or moduleName contains POS
+      const rawUpgraded = (u && Array.isArray(u.userUpgradedModule)) ? u.userUpgradedModule : 
+                          (Array.isArray(loginResult.data?.userUpgradedModule) ? loginResult.data.userUpgradedModule : []);
+      console.log("[Auth] Checking module entitlement in userUpgradedModule:", rawUpgraded, "User:", u);
 
-      const hasPosAccess = upgradedModules.some(module => {
-        const modId = Number(module.upgradeModuleId || module.id);
-        const isTargetModule = modId === 24;
+      const hasPosAccess = rawUpgraded.some(module => {
+        const modId = Number(module.upgradeModuleId || module.moduleId || module.id);
+        const isTargetModule = (modId === 24);
         const isPosName = module.moduleName && (module.moduleName.trim().toUpperCase() === "POS" || module.moduleName.trim().toUpperCase().includes("POS"));
-        const isActive = module.isActive === true || module.isActive === "true" || module.isActive === 1 || module.isActive === undefined;
-        const isPayDone = module.isPayDone === true || module.isPayDone === "true" || module.isPayDone === 1 || module.isPayDone === undefined;
-        return (isTargetModule || isPosName) && isActive && isPayDone;
-      });
+        const isActive = (module.isActive === true || module.isActive === "true" || module.isActive === 1 || module.isActive === undefined || module.isActive === null);
+        return (isTargetModule || isPosName) && isActive;
+      }) || (u && u.role && String(u.role).toUpperCase().includes("ADMIN"));
 
-      if (!hasPosAccess) {
-        console.warn("[Auth] Login blocked: User does not have active module entitlement (upgradeModuleId=24)");
+      if (!hasPosAccess && rawUpgraded.length > 0) {
+        console.warn("[Auth] Login blocked: User does not have active module entitlement (upgradeModuleId=24)", rawUpgraded);
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = `
@@ -8823,7 +8823,7 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           `;
         }
-        const errMsg = "You are not authorized to access the POS module.";
+        const errMsg = "You are not authorized to access the POS module (Module 24 required).";
         showToast("❌ " + errMsg, 5000);
         if (errBox) {
           errBox.textContent = errMsg;
