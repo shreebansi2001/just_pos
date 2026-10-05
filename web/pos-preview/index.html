@@ -4771,7 +4771,7 @@
             <label>Password / PIN</label>
             <div class="login-input-wrap">
               <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <input type="password" id="loginPassword" value="" required autocomplete="current-password" placeholder="••••••••">
+              <input type="password" id="loginPassword" value="" required minlength="4" autocomplete="current-password" placeholder="•••• (min. 4 digits or password)">
               <button type="button" class="password-toggle-btn" id="togglePasswordBtn" title="Password is obscured · Click to show" aria-label="Password is obscured · Click to show">
                 <!-- eyeOffIcon: shown when password is dots / obscured -->
                 <svg id="eyeOffIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
@@ -4780,7 +4780,7 @@
               </button>
             </div>
             <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">
-              💡 Staff can log in with Employee Code (or Email) and assigned PIN.
+              💡 Staff can log in with Employee Code (or Email) and assigned 4-digit PIN.
             </div>
           </div>
 
@@ -9268,6 +9268,12 @@
       if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
       return;
     }
+    if (passVal.length < 4) {
+      const errMsg = "Password or Staff PIN must be at least 4 digits/characters.";
+      showToast("⚠️ " + errMsg);
+      if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
+      return;
+    }
     if (!codeVal && !usernameVal && !emailVal) {
       const errMsg = "Please enter your User / Employee Code or Email.";
       showToast("⚠️ " + errMsg);
@@ -9328,7 +9334,30 @@
       return;
     }
 
-    // 2. Call real Auth Login API for central accounts sending softType: "jcx"
+    // 2. If password is under 6 characters (i.e. a 4 or 5 digit Staff PIN)
+    // DO NOT send to central cloud API which requires 6+ characters.
+    // Instead, give clean staff PIN feedback directly.
+    if (passVal.length < 6) {
+      resetSubmitBtn();
+      const staffTarget = currentStaff.find(s => {
+        if (!s) return false;
+        const sCode = (s.userCode || "").trim().toUpperCase();
+        const sEmail = (s.email || "").trim().toLowerCase();
+        const sName = (s.name || "").trim().toLowerCase();
+        return (codeVal && sCode === codeVal) ||
+               (usernameVal && sCode === usernameVal.toUpperCase()) ||
+               (emailVal && sEmail === emailVal) ||
+               (usernameVal && sName === usernameVal.toLowerCase());
+      });
+      const errMsg = staffTarget 
+        ? `Incorrect PIN for staff member '${staffTarget.name}' (${staffTarget.userCode || 'Staff'}). Please check your 4-digit PIN.`
+        : `Invalid credentials. Please verify your Employee Code / Email and 4-digit Staff PIN.`;
+      showToast("❌ " + errMsg, 4500);
+      if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
+      return;
+    }
+
+    // 3. Call real Auth Login API for central accounts sending softType: "jcx"
     const loginResult = await apiClient.login(emailVal || usernameVal, passVal, codeVal);
 
     if (loginResult && loginResult.success && loginResult.data) {
@@ -9517,7 +9546,12 @@
       if (staffWithId) {
         errMsg = `Incorrect PIN / Password for staff member '${staffWithId.name}' (${staffWithId.userCode || ''}).`;
       } else {
-        errMsg = (loginResult && loginResult.msg) ? loginResult.msg : "Authentication failed. Please verify employee code, email, and password.";
+        const rawBackendMsg = (loginResult && (loginResult.msg || loginResult.message)) || "";
+        if (rawBackendMsg.toLowerCase().includes("at least 6") || rawBackendMsg.toLowerCase().includes("6 character")) {
+          errMsg = "Invalid login credentials. Please check your Employee Code / Email and Password or 4-digit Staff PIN.";
+        } else {
+          errMsg = rawBackendMsg || "Authentication failed. Please verify employee code, email, and password.";
+        }
       }
       showToast("❌ " + errMsg, 4500);
       if (errBox) {
