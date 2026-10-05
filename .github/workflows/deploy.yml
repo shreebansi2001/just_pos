@@ -21,18 +21,34 @@ jobs:
         run: |
           python3 -c "
           import ftplib
+          import os
+
           ftp = ftplib.FTP()
+          ftp.set_debuglevel(1)
+          print('Connecting to FTP...')
           ftp.connect('pos.justcatering.in', 21, timeout=60)
           ftp.login('justcatering', 'Just@123_4')
+          ftp.set_pasv(True)
+          print('Logged in successfully!')
+
+          file_path = 'web/pos-preview/index.html'
           targets = [
               '/public_html/index.html',
               '/public_html/pos/index.html',
               '/public_html/pos.justcatering.in/index.html'
           ]
           for target in targets:
-              with open('web/pos-preview/index.html', 'rb') as f:
-                  ftp.storbinary(f'STOR {target}', f)
-                  print('Successfully deployed to:', target)
+              try:
+                  dir_path = os.path.dirname(target)
+                  try:
+                      ftp.cwd(dir_path)
+                  except Exception as ce:
+                      print('cwd error:', ce)
+                  with open(file_path, 'rb') as f:
+                      ftp.storbinary(f'STOR {target}', f)
+                      print('Successfully deployed to:', target)
+              except Exception as e:
+                  print('Upload error for', target, ':', e)
           ftp.quit()
-          print('Deployment finished successfully!')
+          print('Deployment finished!')
           "
