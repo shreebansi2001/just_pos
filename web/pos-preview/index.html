@@ -5565,13 +5565,30 @@
         </div>
       </div>
 
-      <!-- Section 2: Print Sets / Quantity -->
+      <!-- Section: Paper Format Choice -->
+      <div style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
+        <label style="font-weight:800;font-size:12.5px;color:var(--ink);display:block;margin-bottom:8px;">
+          2. Paper Format:
+        </label>
+        <div style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:2px solid var(--primary);border-radius:8px;background:rgba(1,122,156,0.06);cursor:pointer;font-size:12.5px;font-weight:800;" class="print-paper-card" id="card_paper_80mm">
+            <input type="radio" name="orderPrintPaperFormat" value="80mm" checked style="accent-color:var(--primary);width:16px;height:16px;">
+            <span>🧾 80mm Thermal Roll</span>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;font-size:12.5px;font-weight:700;" class="print-paper-card" id="card_paper_a4">
+            <input type="radio" name="orderPrintPaperFormat" value="a4" style="accent-color:var(--primary);width:16px;height:16px;">
+            <span>📄 A4 Full Sheet</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 3: Print Sets / Quantity -->
       <div style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <label style="font-weight:800;font-size:12.5px;color:var(--ink);margin:0;">
-            2. Print Quantity / Sets:
+            3. Print Quantity / Sets:
           </label>
-          <span style="font-size:11px;color:var(--ink-soft);">Default is 1 Set</span>
+          <span style="font-size:11px;color:#0284c7;font-weight:700;">1 Set = 1 Bill + 1 KOT (2 Slips)</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;">
@@ -12645,6 +12662,29 @@
     });
   });
 
+  document.querySelectorAll(".print-paper-card").forEach(c => {
+    c.addEventListener("click", () => {
+      const radio = c.querySelector('input[type="radio"]');
+      if (radio && !radio.checked) {
+        radio.checked = true;
+      }
+      document.querySelectorAll(".print-paper-card").forEach(card => {
+        const checked = card.querySelector('input')?.checked;
+        if (checked) {
+          card.style.borderColor = "var(--primary)";
+          card.style.background = "rgba(1,122,156,0.06)";
+          card.style.borderWidth = "2px";
+          card.style.fontWeight = "800";
+        } else {
+          card.style.borderColor = "var(--line)";
+          card.style.background = "var(--panel)";
+          card.style.borderWidth = "1.5px";
+          card.style.fontWeight = "700";
+        }
+      });
+    });
+  });
+
   document.querySelectorAll("[data-close-print-modal]").forEach(b => {
     b.addEventListener("click", (e) => {
       e.preventDefault();
@@ -12701,13 +12741,16 @@
         timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       };
 
+      const chosenPaperFormat = document.querySelector('input[name="orderPrintPaperFormat"]:checked')?.value || "80mm";
+      const cfgOverride = { paperFormat: chosenPaperFormat };
+
       const slips = [];
       for (let c = 1; c <= copies; c++) {
         const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
 
         if (mode === "with_kot" || mode === "without_kot") {
           // Official Customer Bill / Tax Invoice formatted strictly from Invoice Master
-          const billSlip = generateDocumentSlipHtml(tempInv, "invoice");
+          const billSlip = generateDocumentSlipHtml(tempInv, "invoice", cfgOverride);
           slips.push(`
             <div class="print-slip-cut">
               ${copyBadge}
@@ -12718,7 +12761,7 @@
 
         if (mode === "with_kot" || mode === "kot_only") {
           // Kitchen KOT Slip
-          const kotSlip = generateDocumentSlipHtml(tempInv, "kot");
+          const kotSlip = generateDocumentSlipHtml(tempInv, "kot", cfgOverride);
           slips.push(`
             <div class="print-slip-cut">
               ${copyBadge}
@@ -12732,9 +12775,8 @@
       // Close modal before opening print dialog
       closeModal("orderPrintOptionsModal");
 
-      // Trigger Print using the exact paper format configured in Invoice Master
-      const activeOutletCfg = getInvoiceConfigForOutlet(companyKey) || invoiceMasterConfig;
-      executeThermalPrint(combinedHtml, activeOutletCfg.paperFormat || "80mm");
+      // Trigger Print using the chosen paper format (80mm Thermal Roll or A4 Full Sheet)
+      executeThermalPrint(combinedHtml, chosenPaperFormat);
 
       // Optional dispatch to Kitchen KOT board
       if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
@@ -14998,12 +15040,10 @@ For any queries or updates, reply to this message.`;
           pageRule = "@page { size: A4 portrait !important; margin: 8mm !important; }";
         } else if (isA5) {
           pageRule = "@page { size: A5 portrait !important; margin: 6mm !important; }";
-        } else if (hasMultipleSlips) {
-          // For multi-slip printing: size roll width with auto height per slip
-          pageRule = `@page { size: ${rollWidthMm}mm auto !important; margin: 0mm auto !important; }`;
         } else {
-          const calculatedHeightMm = customHeightMm ? Number(customHeightMm) : Math.max(measuredHeightMm + 4, 25);
-          pageRule = `@page { size: ${rollWidthMm}mm ${calculatedHeightMm}mm !important; margin: 0mm auto !important; }`;
+          // Explicit 80mm thermal roll dimensions: 80mm width with dynamic or standard 200mm height
+          const slipHeightMm = Math.max(measuredHeightMm + 10, is58 ? 160 : 200);
+          pageRule = `@page { size: ${rollWidthMm}mm ${slipHeightMm}mm !important; margin: 0mm !important; }`;
         }
 
         const finalPrintCss = `
@@ -15024,10 +15064,10 @@ For any queries or updates, reply to this message.`;
             width: 100% !important;
           }
           #thermalSlipWrapper {
-            width: ${printableAreaMm}mm !important;
+            width: ${isA4 ? '190mm' : `${printableAreaMm}mm`} !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            padding: ${bodyPaddingMm}mm !important;
+            padding: ${isA4 ? '6mm' : `${bodyPaddingMm}mm`} !important;
             box-sizing: border-box !important;
             ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
           }
@@ -15047,6 +15087,7 @@ For any queries or updates, reply to this message.`;
           }
           .amoncar-invoice-box {
             margin: 0 auto !important;
+            width: 100% !important;
           }
           table {
             width: 100% !important;
