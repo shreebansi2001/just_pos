@@ -6378,7 +6378,48 @@
   }
   window.saveTablesState = saveTablesState;
 
-  let taxes = [];
+  let taxes = (() => {
+    try {
+      const raw = localStorage.getItem("pos_custom_taxes");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(t => ({
+            ...t,
+            percentage: t.percentage != null ? Number(t.percentage) : (Number(t.rate) || 0),
+            taxRate: t.percentage != null ? Number(t.percentage) : (Number(t.rate) || 0),
+            applicableOutlets: (t.applicableOutlets && t.applicableOutlets.length > 0) ? t.applicableOutlets : ["all"]
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load taxes from localStorage", e);
+    }
+    return [
+      { id: 1, taxName: "GST 5% (CGST 2.5% + SGST 2.5%)", percentage: 5.0, taxRate: 5.0, status: "active", applicableOutlets: ["all"] },
+      { id: 2, taxName: "GST 12% (CGST 6.0% + SGST 6.0%)", percentage: 12.0, taxRate: 12.0, status: "active", applicableOutlets: ["all"] },
+      { id: 3, taxName: "GST 18% (CGST 9.0% + SGST 9.0%)", percentage: 18.0, taxRate: 18.0, status: "active", applicableOutlets: ["all"] }
+    ];
+  })();
+
+  function saveTaxesState() {
+    try {
+      localStorage.setItem("pos_custom_taxes", JSON.stringify(taxes));
+    } catch (e) {
+      console.warn("Failed to persist taxes", e);
+    }
+  }
+  window.saveTaxesState = saveTaxesState;
+
+  function getDefaultTaxForOutlet(outletKey) {
+    if (!outletKey) outletKey = (typeof activeCompanySeries !== 'undefined' ? activeCompanySeries : "main");
+    const outletTax = taxes.find(t => t.status === "active" && t.applicableOutlets && (t.applicableOutlets.includes(outletKey) || t.applicableOutlets.includes(outletKey.toLowerCase())));
+    if (outletTax) return Number(outletTax.percentage);
+    const sharedTax = taxes.find(t => t.status === "active" && t.applicableOutlets && t.applicableOutlets.includes("all"));
+    if (sharedTax) return Number(sharedTax.percentage);
+    return (typeof masterTaxConfig !== 'undefined' && masterTaxConfig.defaultTaxRate !== undefined) ? Number(masterTaxConfig.defaultTaxRate) : 5;
+  }
+  window.getDefaultTaxForOutlet = getDefaultTaxForOutlet;
 
   // Master Tax & Invoice Rules (Global Outlet Configuration)
   let masterTaxConfig = {
@@ -7810,6 +7851,7 @@
           taxName: tName,
           percentage: pRate,
           status: tStatus,
+          applicableOutlets: (payload.applicableOutlets && payload.applicableOutlets.length > 0) ? payload.applicableOutlets : ["all"],
           userId: this.getUserId()
         };
         if (payload.id && Number(payload.id) > 0 && Number(payload.id) < 10000000000) {
@@ -8228,13 +8270,21 @@
           saveInvoicesState();
         }
         if (Array.isArray(txs) && txs.length > 0) {
-          taxes = txs.map(tx => ({
-            id: tx.id,
-            name: tx.taxName || tx.name,
-            rate: Number(tx.percentage) || Number(tx.rate) || 0,
-            taxType: tx.taxType || "percentage",
-            status: tx.status || "active"
-          }));
+          taxes = txs.map(tx => {
+            const ex = taxes.find(t => t.id === tx.id || t.taxName === (tx.taxName || tx.name));
+            return {
+              id: tx.id,
+              name: tx.taxName || tx.name,
+              taxName: tx.taxName || tx.name,
+              rate: Number(tx.percentage) || Number(tx.rate) || 0,
+              percentage: Number(tx.percentage) || Number(tx.rate) || 0,
+              taxRate: Number(tx.percentage) || Number(tx.rate) || 0,
+              taxType: tx.taxType || "percentage",
+              status: tx.status || "active",
+              applicableOutlets: (ex && ex.applicableOutlets && ex.applicableOutlets.length > 0) ? ex.applicableOutlets : ((tx.applicableOutlets && tx.applicableOutlets.length > 0) ? tx.applicableOutlets : ["all"])
+            };
+          });
+          saveTaxesState();
         }
         if (typeof renderBilling === "function") renderBilling();
         if (typeof renderBillingInvoices === "function") renderBillingInvoices();
@@ -8521,16 +8571,22 @@
           const txs = await this.getTaxes();
           if (Array.isArray(txs) && txs.length > 0) {
             txs.forEach(tx => {
+              const existingLocal = taxes.find(x => x.id === tx.id || x.taxName === (tx.taxName || tx.name));
               const mapped = {
                 id: tx.id,
                 taxName: tx.taxName || tx.name || "",
                 percentage: tx.percentage != null ? Number(tx.percentage) : (Number(tx.rate) || 0),
-                status: tx.status || (tx.active === false ? "inactive" : "active")
+                taxRate: tx.percentage != null ? Number(tx.percentage) : (Number(tx.rate) || 0),
+                status: tx.status || (tx.active === false ? "inactive" : "active"),
+                applicableOutlets: (existingLocal && existingLocal.applicableOutlets && existingLocal.applicableOutlets.length > 0) 
+                  ? existingLocal.applicableOutlets 
+                  : ((tx.applicableOutlets && tx.applicableOutlets.length > 0) ? tx.applicableOutlets : ["all"])
               };
               const exIdx = taxes.findIndex(x => x.id === tx.id || x.taxName === mapped.taxName);
               if (exIdx >= 0) taxes[exIdx] = { ...taxes[exIdx], ...mapped };
               else taxes.push(mapped);
             });
+            saveTaxesState();
           }
         }
         if (typeof renderMasters === "function") renderMasters();
@@ -11774,8 +11830,26 @@
     const payableSubEl = document.getElementById("cartPayableItemSubtext");
 
     if (taxCheck && document.activeElement !== taxCheck) taxCheck.checked = currentOrderSession.taxEnabled !== false;
-    if (taxSlab && document.activeElement !== taxSlab) taxSlab.value = String(taxRate);
     if (scCheck && document.activeElement !== scCheck) scCheck.checked = isScOn;
+
+    if (taxSlab) {
+      const activeOutlet = (activeCompanySeries || "main").toLowerCase();
+      if (taxSlab.dataset.renderedOutlet !== activeOutlet || taxSlab.options.length <= 1) {
+        const applicableTaxes = taxes.filter(t => {
+          if (t.status === "inactive") return false;
+          const outs = (t.applicableOutlets && t.applicableOutlets.length > 0) ? t.applicableOutlets : ["all"];
+          return outs.includes("all") || outs.some(x => String(x).toLowerCase() === activeOutlet);
+        });
+        const optionsHtml = (applicableTaxes.length > 0 ? applicableTaxes.map(t => `<option value="${t.percentage}">${t.percentage}% (${t.taxName})</option>`).join("") : `
+          <option value="5">5% GST</option>
+          <option value="12">12% GST</option>
+          <option value="18">18% GST</option>
+        `) + `<option value="0">0% (Exempt)</option>`;
+        taxSlab.innerHTML = optionsHtml;
+        taxSlab.dataset.renderedOutlet = activeOutlet;
+      }
+      if (document.activeElement !== taxSlab) taxSlab.value = String(taxRate);
+    }
 
     const totalAppliedTax = isTaxOn ? (cgstVal + sgstVal) : 0;
     if (taxPreviewEl) taxPreviewEl.textContent = money(totalAppliedTax);
@@ -14469,10 +14543,17 @@ For any queries or updates, reply to this message.`;
           <div>
             <label style="font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">Default POS GST Slab</label>
             <select id="m_defaultTaxSlab" style="width:100%; padding:6px 8px; font-size:11.5px; font-weight:600; border:1px solid var(--line); border-radius:6px; background:var(--panel);">
-              <option value="5" ${masterTaxConfig.defaultTaxRate === 5 ? 'selected' : ''}>5% GST (2.5% CGST + 2.5% SGST)</option>
-              <option value="12" ${masterTaxConfig.defaultTaxRate === 12 ? 'selected' : ''}>12% GST (6.0% CGST + 6.0% SGST)</option>
-              <option value="18" ${masterTaxConfig.defaultTaxRate === 18 ? 'selected' : ''}>18% GST (9.0% CGST + 9.0% SGST)</option>
-              <option value="0" ${masterTaxConfig.defaultTaxRate === 0 ? 'selected' : ''}>0% (Tax Exempt Default)</option>
+              ${taxes.filter(t => t.status === 'active').map(t => {
+                const outInfo = (t.applicableOutlets && !t.applicableOutlets.includes('all')) 
+                  ? ` [${t.applicableOutlets.map(k => (companySeriesConfig[k]?.prefix || k.toUpperCase())).join(', ')}]` 
+                  : ' (All Outlets)';
+                return `<option value="${t.percentage}" ${Number(masterTaxConfig.defaultTaxRate) === Number(t.percentage) ? 'selected' : ''}>${t.taxName} (${t.percentage}%)${outInfo}</option>`;
+              }).join("") || `
+                <option value="5" ${masterTaxConfig.defaultTaxRate === 5 ? 'selected' : ''}>5% GST (2.5% CGST + 2.5% SGST)</option>
+                <option value="12" ${masterTaxConfig.defaultTaxRate === 12 ? 'selected' : ''}>12% GST (6.0% CGST + 6.0% SGST)</option>
+                <option value="18" ${masterTaxConfig.defaultTaxRate === 18 ? 'selected' : ''}>18% GST (9.0% CGST + 9.0% SGST)</option>
+              `}
+              <option value="0" ${Number(masterTaxConfig.defaultTaxRate) === 0 ? 'selected' : ''}>0% (Tax Exempt Default)</option>
             </select>
           </div>
 
@@ -17464,7 +17545,7 @@ For any queries or updates, reply to this message.`;
         </select>
       `;
       document.getElementById("masterOutletModeFilter")?.addEventListener("change", renderMasterTable);
-    } else if (activeMasterTab === "categories") {
+    } else if (activeMasterTab === "categories" || activeMasterTab === "taxes") {
       customContainer.innerHTML = `
         <select id="masterOutletFilter" class="master-select-filter">
           ${outletOptionsHtml}
@@ -17927,10 +18008,13 @@ For any queries or updates, reply to this message.`;
 
     // 5. TAXES
     else if (activeMasterTab === "taxes") {
+      const outletFilter = document.getElementById("masterOutletFilter") ? document.getElementById("masterOutletFilter").value : "";
       const filtered = taxes.filter(tx => {
-        const matchQ = tx.taxName.toLowerCase().includes(query);
+        const matchQ = (tx.taxName || "").toLowerCase().includes(query);
         const matchS = statusFilter ? tx.status === statusFilter : true;
-        return matchQ && matchS;
+        const txOutlets = (tx.applicableOutlets && tx.applicableOutlets.length > 0) ? tx.applicableOutlets : ["all"];
+        const matchO = !outletFilter ? true : (outletFilter === "all" ? txOutlets.includes("all") : (txOutlets.includes("all") || txOutlets.includes(outletFilter)));
+        return matchQ && matchS && matchO;
       });
 
       tableEl.innerHTML = `
@@ -17938,18 +18022,36 @@ For any queries or updates, reply to this message.`;
           <tr>
             <th style="width:70px;">SR. NO.</th>
             <th>TAX NAME</th>
-            <th>PERCENTAGE</th>
+            <th style="width:110px;">PERCENTAGE</th>
+            <th>APPLICABLE OUTLETS</th>
             <th style="width:130px;">STATUS</th>
             <th style="text-align:right;width:120px;">ACTIONS</th>
           </tr>
         </thead>
         <tbody>
-          ${filtered.length === 0 ? `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-soft);">No taxes found.</td></tr>` : ''}
-          ${filtered.map((tx, i) => `
+          ${filtered.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--ink-soft);">No taxes found matching filter.</td></tr>` : ''}
+          ${filtered.map((tx, i) => {
+            const txOut = (tx.applicableOutlets && tx.applicableOutlets.length > 0) ? tx.applicableOutlets : ["all"];
+            const isAll = txOut.includes("all");
+            return `
             <tr>
               <td><span style="font-weight:700;color:var(--ink-soft);">${String(i + 1).padStart(2, '0')}</span></td>
               <td><b>${tx.taxName}</b></td>
-              <td><span class="var-badge" style="background:#fef2f2;color:#b91c1c;">${tx.percentage}%</span></td>
+              <td><span class="var-badge" style="background:#fef2f2;color:#b91c1c;font-weight:700;">${tx.percentage}%</span></td>
+              <td>
+                ${isAll ? `
+                  <span class="cog-badge" style="font-size:10px;padding:2px 7px;background:rgba(1,122,156,0.1);color:var(--primary);border:1px solid rgba(1,122,156,0.25);font-weight:700;">
+                    🌐 All Outlets
+                  </span>
+                ` : txOut.map(k => {
+                  const conf = companySeriesConfig[k] || companySeriesConfig[k.toLowerCase()] || Object.values(companySeriesConfig).find(o => (o.key && o.key.toLowerCase() === k.toLowerCase()) || (o.code && o.code.toLowerCase() === k.toLowerCase()) || (o.prefix && o.prefix.toLowerCase() === k.toLowerCase()));
+                  return `
+                    <span class="cog-badge" style="font-size:10px;padding:2px 7px;background:rgba(99,102,241,0.1);color:#4338ca;border:1px solid rgba(99,102,241,0.25);font-weight:700;">
+                      🏢 ${conf ? (conf.prefix || conf.code || conf.shortName) : k.toUpperCase()}
+                    </span>
+                  `;
+                }).join(" ")}
+              </td>
               <td>
                 <label class="switch-row" data-action="toggle-status" data-type="taxes" data-id="${tx.id}">
                   <span class="switch">
@@ -17969,7 +18071,8 @@ For any queries or updates, reply to this message.`;
                 </div>
               </td>
             </tr>
-          `).join("")}
+          `;
+          }).join("")}
         </tbody>
       `;
     }
@@ -18167,7 +18270,7 @@ For any queries or updates, reply to this message.`;
           if (rec) { rec.masterStatus = nextStatus; apiClient.saveTable(rec); }
         } else if (type === "taxes") {
           const rec = taxes.find(t => t.id === id);
-          if (rec) { rec.status = nextStatus; apiClient.saveTax(rec); }
+          if (rec) { rec.status = nextStatus; saveTaxesState(); apiClient.saveTax(rec); }
         } else if (type === "roles") {
           const rec = roles.find(r => r.id === id);
           if (rec && !rec.isSystem) rec.status = nextStatus;
@@ -18253,7 +18356,7 @@ For any queries or updates, reply to this message.`;
           else if (type === "items") { items = items.filter(i => i.id !== id); apiClient.deleteItem(id); }
           else if (type === "floors") { floors = floors.filter(f => f.id !== id); apiClient.deleteFloor(id); }
           else if (type === "tables") { tables = tables.filter(t => t.id !== id); apiClient.deleteTable(id); }
-          else if (type === "taxes") { taxes = taxes.filter(t => t.id !== id); apiClient.deleteTax(id); }
+          else if (type === "taxes") { taxes = taxes.filter(t => t.id !== id); saveTaxesState(); apiClient.deleteTax(id); }
           else if (type === "roles") {
             const role = roles.find(r => r.id === id);
             if (role && role.isSystem) {
@@ -18402,19 +18505,20 @@ For any queries or updates, reply to this message.`;
       name: "Taxes",
       filename: "taxes_import_template.csv",
       requiredCols: ["taxName", "taxRate"],
-      optionalCols: ["taxType", "isDefault", "status"],
+      optionalCols: ["taxType", "isDefault", "applicableOutlets", "status"],
       colDescriptions: {
         taxName: "Tax slab name (e.g. GST 5%)",
         taxRate: "Percentage or fixed rate (e.g. 5)",
         taxType: "'percentage' or 'fixed'",
         isDefault: "'yes' or 'no'",
+        applicableOutlets: "Semicolon separated outlet codes or 'all' (e.g. all, inv;kta)",
         status: "'active' or 'inactive'"
       },
-      headers: ["taxName", "taxRate", "taxType", "isDefault", "status"],
+      headers: ["taxName", "taxRate", "taxType", "isDefault", "applicableOutlets", "status"],
       sampleRows: [
-        ["GST 5%", "5", "percentage", "yes", "active"],
-        ["GST 18%", "18", "percentage", "no", "active"],
-        ["Takeaway Packaging Fee", "20", "fixed", "no", "active"]
+        ["GST 5%", "5", "percentage", "yes", "all", "active"],
+        ["GST 18%", "18", "percentage", "no", "inv", "active"],
+        ["Takeaway Packaging Fee", "20", "fixed", "no", "all", "active"]
       ]
     },
     users: {
@@ -18696,8 +18800,8 @@ For any queries or updates, reply to this message.`;
       headers = ["ID", "Floor Name", "Description", "Status"];
       rows = floors.map(f => [f.id, f.floorName, f.floorDescription || '', f.status || 'active']);
     } else if (type === "taxes") {
-      headers = ["ID", "Tax Name", "Rate %", "Type", "Is Default", "Status"];
-      rows = taxes.map(tx => [tx.id, tx.taxName, tx.taxRate, tx.taxType || 'percentage', tx.isDefault ? 'yes' : 'no', tx.status || 'active']);
+      headers = ["ID", "Tax Name", "Rate %", "Applicable Outlets", "Status"];
+      rows = taxes.map(tx => [tx.id, tx.taxName, tx.percentage != null ? tx.percentage : tx.taxRate, (tx.applicableOutlets || ['all']).join(";"), tx.status || 'active']);
     } else if (type === "users") {
       headers = ["ID", "Name", "User Code", "Role", "Email", "Phone", "Status"];
       rows = staffUsers.map(u => {
@@ -18923,15 +19027,17 @@ For any queries or updates, reply to this message.`;
         }
       } else if (targetType === "taxes") {
         const taxName = getRowProp(r, "taxName", "name", "tax");
-        const taxRate = parseFloat(getRowProp(r, "taxRate", "rate", "percent") || "5");
+        const taxRate = parseFloat(getRowProp(r, "taxRate", "rate", "percent", "percentage") || "5");
         const taxType = getRowProp(r, "taxType", "type") || "percentage";
         const isDefault = (getRowProp(r, "isDefault", "default") || "").toLowerCase().startsWith("y");
+        const outRaw = (getRowProp(r, "applicableOutlets", "outlets") || "all").trim().toLowerCase();
+        const effectiveOutlets = (outRaw === "all" || !outRaw) ? ["all"] : outRaw.split(/[;,]/).map(s => s.trim().toLowerCase()).filter(Boolean);
 
         if (!taxName || isNaN(taxRate)) {
           item.valid = false;
           item.error = "Invalid tax name or rate";
         } else {
-          item.data = { taxName, taxRate, taxType, isDefault };
+          item.data = { taxName, taxRate, taxType, isDefault, applicableOutlets: effectiveOutlets };
         }
       } else if (targetType === "users") {
         const name = getRowProp(r, "name", "staffname", "username");
@@ -19229,6 +19335,33 @@ For any queries or updates, reply to this message.`;
         inserted++;
       });
       localStorage.setItem("pos_custom_floors", JSON.stringify(floors));
+    } else if (targetType === "taxes") {
+      validRows.forEach(v => {
+        const d = v.data;
+        if (v.action === "update" && duplicatePolicy === "skip") { skipped++; return; }
+        if (v.action === "update" && duplicatePolicy === "upsert") {
+          const ex = taxes.find(t => t.id === v.existingId || t.taxName.toLowerCase() === d.taxName.toLowerCase());
+          if (ex) {
+            ex.taxName = d.taxName;
+            ex.percentage = d.taxRate;
+            ex.taxRate = d.taxRate;
+            ex.applicableOutlets = d.applicableOutlets || ["all"];
+            updated++;
+            return;
+          }
+        }
+        const newId = (taxes.length > 0 ? Math.max(...taxes.map(t => t.id)) : 0) + 1;
+        taxes.push({
+          id: newId,
+          taxName: d.taxName,
+          percentage: d.taxRate,
+          taxRate: d.taxRate,
+          status: "active",
+          applicableOutlets: d.applicableOutlets || ["all"]
+        });
+        inserted++;
+      });
+      saveTaxesState();
     }
 
     closeModal("bulkImportModal");
@@ -20543,13 +20676,16 @@ For any queries or updates, reply to this message.`;
       document.getElementById("btnQuickAddFloor")?.addEventListener("click", () => openQuickAddModal("floor", "m_tblFloor"));
       document.getElementById("btnQuickAddFloorIcon")?.addEventListener("click", () => openQuickAddModal("floor", "m_tblFloor"));
     } else if (type === "taxes") {
-      const rec = isEdit ? taxes.find(tx => tx.id === id) : { taxName: "", percentage: 5.0, status: "active" };
+      const rec = isEdit ? taxes.find(tx => tx.id === id) : { taxName: "", percentage: 5.0, status: "active", applicableOutlets: ["all"] };
+      const currentOutlets = (rec.applicableOutlets && rec.applicableOutlets.length > 0) ? rec.applicableOutlets : ["all"];
+      const isAllSelected = !currentOutlets || currentOutlets.length === 0 || currentOutlets.some(x => String(x).toLowerCase() === 'all');
+
       formBody.innerHTML = `
         <div class="form-group">
           <label>Tax Name *</label>
-          <input type="text" id="m_taxName" value="${rec.taxName}" required placeholder="e.g. CGST, SGST">
+          <input type="text" id="m_taxName" value="${rec.taxName}" required placeholder="e.g. CGST, SGST, VAT">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
           <div class="form-group">
             <label>Tax Percentage (%) *</label>
             <input type="number" id="m_taxPct" value="${rec.percentage}" required min="0" max="100" step="0.1">
@@ -20562,7 +20698,44 @@ For any queries or updates, reply to this message.`;
             </select>
           </div>
         </div>
+        <div class="form-group" style="background:var(--surface-subtle);border:1.5px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label style="font-weight:700;font-size:12px;color:var(--ink);margin:0;">🏢 Applicable Outlets / Stations</label>
+            <span style="font-size:10px;color:var(--ink-soft);">Select which outlets apply this tax rule</span>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;font-size:11.5px;">
+              <input type="checkbox" id="m_taxOutletAll" ${isAllSelected ? 'checked' : ''}>
+              <span>🌐 All Outlets (Shared Tax Rule)</span>
+            </label>
+            ${Object.values(companySeriesConfig).filter(o => o.status !== 'inactive').map(o => {
+              const isChecked = !isAllSelected && currentOutlets.some(x => String(x).toLowerCase() === String(o.key).toLowerCase() || String(x).toLowerCase() === String(o.code).toLowerCase() || String(x).toLowerCase() === String(o.prefix).toLowerCase());
+              return `
+                <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;font-weight:600;">
+                  <input type="checkbox" class="m_taxOutletCheckbox" value="${o.key}" ${isChecked ? 'checked' : ''}>
+                  <span>🏢 ${o.prefix || o.code} (${o.shortName || o.name})</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </div>
       `;
+
+      const taxAllBox = document.getElementById("m_taxOutletAll");
+      const taxSubBoxes = document.querySelectorAll(".m_taxOutletCheckbox");
+      if (taxAllBox) {
+        taxAllBox.addEventListener("change", () => {
+          if (taxAllBox.checked) {
+            taxSubBoxes.forEach(b => b.checked = false);
+          }
+        });
+        taxSubBoxes.forEach(b => {
+          b.addEventListener("change", () => {
+            if (b.checked) taxAllBox.checked = false;
+            else if (!Array.from(taxSubBoxes).some(x => x.checked)) taxAllBox.checked = true;
+          });
+        });
+      }
     } else if (type === "roles") {
       const rec = isEdit ? roles.find(r => r.id === id) : {
         roleName: "",
@@ -21172,17 +21345,36 @@ For any queries or updates, reply to this message.`;
       const name = document.getElementById("m_taxName").value.trim();
       const pct = Number(document.getElementById("m_taxPct").value);
       const status = document.getElementById("m_taxStatus").value;
+      const isAllOutlets = document.getElementById("m_taxOutletAll") ? document.getElementById("m_taxOutletAll").checked : true;
+      let taxOutlets = ["all"];
+      if (!isAllOutlets) {
+        const checkedBoxes = Array.from(document.querySelectorAll(".m_taxOutletCheckbox:checked")).map(b => b.value);
+        taxOutlets = checkedBoxes.length > 0 ? checkedBoxes : ["all"];
+      }
 
       if (isEdit) {
         const tx = taxes.find(x => x.id === editingRecordId);
         if (tx) {
-          tx.taxName = name; tx.percentage = pct; tx.status = status;
+          tx.taxName = name;
+          tx.percentage = pct;
+          tx.taxRate = pct;
+          tx.status = status;
+          tx.applicableOutlets = taxOutlets;
+          saveTaxesState();
           apiClient.saveTax(tx);
         }
         showToast(`Tax '${name}' updated!`);
       } else {
-        const newTax = { id: Date.now(), taxName: name, percentage: pct, status };
+        const newTax = {
+          id: Date.now(),
+          taxName: name,
+          percentage: pct,
+          taxRate: pct,
+          status,
+          applicableOutlets: taxOutlets
+        };
         taxes.push(newTax);
+        saveTaxesState();
         apiClient.saveTax(newTax);
         showToast(`Tax '${name}' (${pct}%) saved to backend!`);
       }
@@ -21437,10 +21629,18 @@ For any queries or updates, reply to this message.`;
       `;
     } else if (type === "taxes") {
       const rec = taxes.find(t => t.id === id);
+      const txOut = (rec.applicableOutlets && rec.applicableOutlets.length > 0) ? rec.applicableOutlets : ["all"];
+      const isAll = txOut.includes("all");
+      const outletLabels = isAll ? "🌐 All Outlets (Shared Tax Rule)" : txOut.map(k => {
+        const conf = companySeriesConfig[k] || companySeriesConfig[k.toLowerCase()] || Object.values(companySeriesConfig).find(o => (o.key && o.key.toLowerCase() === k.toLowerCase()) || (o.code && o.code.toLowerCase() === k.toLowerCase()) || (o.prefix && o.prefix.toLowerCase() === k.toLowerCase()));
+        return `🏢 ${conf ? (conf.prefix || conf.code || conf.shortName) : k.toUpperCase()}`;
+      }).join(", ");
+
       body.innerHTML = `
         <div style="font-size:14px;line-height:1.7;">
           <div><b>Tax Name:</b> ${rec.taxName}</div>
           <div><b>Percentage:</b> ${rec.percentage}%</div>
+          <div><b>Applicable Outlets:</b> <span style="color:var(--primary);font-weight:600;">${outletLabels}</span></div>
           <div><b>Status:</b> <span class="table-status ${rec.status === 'active' ? 'status-available' : 'status-occupied'}">${rec.status.toUpperCase()}</span></div>
         </div>
       `;
