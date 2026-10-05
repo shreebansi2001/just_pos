@@ -6140,10 +6140,55 @@
   // =========================================================================
   // DATA MODELS
   // =========================================================================
-  // 100% Dynamic User-Driven Data Models (No Pre-filled Sample Data)
-  let categories = [];
-  let items = [];
-  let floors = [];
+  // 100% Dynamic User-Driven Data Models (Persistent across refreshes)
+  let categories = (() => {
+    try {
+      const raw = localStorage.getItem("pos_custom_categories");
+      return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+  })();
+
+  function saveCategoriesState() {
+    try {
+      localStorage.setItem("pos_custom_categories", JSON.stringify(categories));
+    } catch(e) {
+      console.warn("Failed to persist categories", e);
+    }
+  }
+  window.saveCategoriesState = saveCategoriesState;
+
+  let items = (() => {
+    try {
+      const raw = localStorage.getItem("pos_custom_items");
+      return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+  })();
+
+  function saveItemsState() {
+    try {
+      localStorage.setItem("pos_custom_items", JSON.stringify(items));
+    } catch(e) {
+      console.warn("Failed to persist items", e);
+    }
+  }
+  window.saveItemsState = saveItemsState;
+
+  let floors = (() => {
+    try {
+      const raw = localStorage.getItem("pos_custom_floors");
+      return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+  })();
+
+  function saveFloorsState() {
+    try {
+      localStorage.setItem("pos_custom_floors", JSON.stringify(floors));
+    } catch(e) {
+      console.warn("Failed to persist floors", e);
+    }
+  }
+  window.saveFloorsState = saveFloorsState;
+
   const defaultTables = [];
 
   const CAT_META_KEY = "pos_custom_category_meta";
@@ -7140,10 +7185,7 @@
     const raw = localStorage.getItem("pos_custom_company_series_config");
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Discard legacy demo outlets (Cheerag / Amoncar / KTA) if found
-      if (parsed && (parsed.cheerag || parsed.amoncar || parsed.kta)) {
-        localStorage.removeItem("pos_custom_company_series_config");
-      } else if (parsed && Object.keys(parsed).length > 0) {
+      if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
         savedCompanySeriesConfig = parsed;
       }
     }
@@ -7879,30 +7921,47 @@
           this.getFloors(),
           this.getTables()
         ]);
-        floors = Array.isArray(fls) ? fls.map(f => ({
-          id: f.floorId || f.id,
-          floorName: f.name || f.floorName,
-          shortcode: f.shortcode || "",
-          sortOrder: f.sortOrder || 1,
-          status: (f.active === false || f.status === "inactive") ? "inactive" : "active"
-        })) : [];
+        if (Array.isArray(fls) && fls.length > 0) {
+          fls.forEach(f => {
+            const fId = f.floorId || f.id;
+            const mapped = {
+              id: fId,
+              floorName: f.name || f.floorName,
+              name: f.name || f.floorName,
+              shortcode: f.shortcode || "",
+              sortOrder: f.sortOrder || 1,
+              status: (f.active === false || f.status === "inactive") ? "inactive" : "active"
+            };
+            const exIdx = floors.findIndex(x => x.id === fId || x.floorName === mapped.floorName);
+            if (exIdx >= 0) floors[exIdx] = { ...floors[exIdx], ...mapped };
+            else floors.push(mapped);
+          });
+          saveFloorsState();
+        }
 
-        tables = Array.isArray(tbls) ? tbls.map(t => {
-          const sc = t.shortcode || t.name || ("T-" + (t.id || t.tableId));
-          const tn = t.tableName || t.name || ("Table " + sc);
-          return {
-            id: t.tableId || t.id,
-            tableName: tn,
-            shortcode: sc,
-            tableNumber: t.tableNumber || t.name || tn,
-            capacity: Number(t.capacity) || 4,
-            floorId: Number(t.floorId) || 1,
-            shape: t.shape || "square",
-            status: t.status || "available",
-            activeOrderId: t.currentOrderId || t.activeOrderId || null,
-            masterStatus: (t.active === false || t.masterStatus === "inactive" || t.status === "inactive") ? "inactive" : "active"
-          };
-        }) : [];
+        if (Array.isArray(tbls) && tbls.length > 0) {
+          tbls.forEach(t => {
+            const sc = t.shortcode || t.name || ("T-" + (t.id || t.tableId));
+            const tn = t.tableName || t.name || ("Table " + sc);
+            const tId = t.tableId || t.id;
+            const mapped = {
+              id: tId,
+              tableName: tn,
+              shortcode: sc,
+              tableNumber: t.tableNumber || t.name || tn,
+              capacity: Number(t.capacity) || 4,
+              floorId: Number(t.floorId) || 1,
+              shape: t.shape || "square",
+              status: t.status || "available",
+              activeOrderId: t.currentOrderId || t.activeOrderId || null,
+              masterStatus: (t.active === false || t.masterStatus === "inactive" || t.status === "inactive") ? "inactive" : "active"
+            };
+            const exIdx = tables.findIndex(x => x.id === tId || x.shortcode === mapped.shortcode);
+            if (exIdx >= 0) tables[exIdx] = { ...tables[exIdx], ...mapped };
+            else tables.push(mapped);
+          });
+          saveTablesState();
+        }
         if (typeof renderTables === "function") renderTables();
         if (typeof updateGlobalStats === "function") updateGlobalStats();
       } catch (e) {
@@ -8109,62 +8168,80 @@
           this.getCategories(),
           this.getItems()
         ]);
-        categories = Array.isArray(cats) ? cats.map(c => {
-          const catId = c.categoryId || c.id;
-          const meta = getCategoryMeta(catId);
-          let applicableOutlets = (meta.applicableOutlets && meta.applicableOutlets.length > 0) ? meta.applicableOutlets : null;
-          if (!applicableOutlets) {
-            if (c.tag && c.tag.includes("OUTLETS:")) {
-              applicableOutlets = c.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
-            } else if (c.description && c.description.includes("[OUTLETS:")) {
-              const m = c.description.match(/\[OUTLETS:([^\]]+)\]/);
-              if (m && m[1]) applicableOutlets = m[1].split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+        if (Array.isArray(cats) && cats.length > 0) {
+          cats.forEach(c => {
+            const catId = c.categoryId || c.id;
+            const meta = getCategoryMeta(catId);
+            let applicableOutlets = (meta.applicableOutlets && meta.applicableOutlets.length > 0) ? meta.applicableOutlets : null;
+            if (!applicableOutlets) {
+              if (c.tag && c.tag.includes("OUTLETS:")) {
+                applicableOutlets = c.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+              } else if (c.description && c.description.includes("[OUTLETS:")) {
+                const m = c.description.match(/\[OUTLETS:([^\]]+)\]/);
+                if (m && m[1]) applicableOutlets = m[1].split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+              }
             }
-          }
-          if (!applicableOutlets || applicableOutlets.length === 0) applicableOutlets = ["all"];
+            if (!applicableOutlets || applicableOutlets.length === 0) applicableOutlets = ["all"];
 
-          const desc = (meta.description !== undefined && meta.description !== null) 
-            ? meta.description 
-            : (c.description || c.categoryDescription || "").replace(/\[OUTLETS:[^\]]+\]/g, "").trim();
+            const desc = (meta.description !== undefined && meta.description !== null) 
+              ? meta.description 
+              : (c.description || c.categoryDescription || "").replace(/\[OUTLETS:[^\]]+\]/g, "").trim();
 
-          const code = meta.code || deriveShortCode(c.name || c.categoryName, c.code || c.shortcode);
+            const code = meta.code || deriveShortCode(c.name || c.categoryName, c.code || c.shortcode);
 
-          return {
-            id: catId,
-            categoryName: c.name || c.categoryName,
-            code: code,
-            shortcode: code,
-            categoryDescription: desc,
-            sortOrder: c.sortOrder || 1,
-            applicableOutlets: applicableOutlets,
-            status: (c.active === false || c.status === "inactive") ? "inactive" : "active"
-          };
-        }) : [];
+            const mapped = {
+              id: catId,
+              categoryName: c.name || c.categoryName,
+              name: c.name || c.categoryName,
+              code: code,
+              shortcode: code,
+              categoryDescription: desc,
+              sortOrder: c.sortOrder || 1,
+              applicableOutlets: applicableOutlets,
+              status: (c.active === false || c.status === "inactive") ? "inactive" : "active"
+            };
+            const exIdx = categories.findIndex(x => x.id === catId || x.categoryName === mapped.categoryName);
+            if (exIdx >= 0) categories[exIdx] = { ...categories[exIdx], ...mapped };
+            else categories.push(mapped);
+          });
+          saveCategoriesState();
+        }
 
-        items = Array.isArray(its) ? its.map(it => {
-          let applicableOutlets = ["all"];
-          if (it.tag && it.tag.includes("OUTLETS:")) {
-            applicableOutlets = it.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
-          }
-          return {
-            id: it.itemId || it.id,
-            foodType: (it.veg === false) ? "non-veg" : (it.foodType || "veg"),
-            itemName: it.name || it.itemName,
-            shortcode: it.shortcode || it.code || "",
-            categoryId: it.categoryId || (categories[0] ? categories[0].id : 1),
-            price: Number(it.price) || 0,
-            pricePerKg: (it.pricingType === 'kg' || it.pricingType === 'both') ? (Number(it.pricePerKg) || 0) : null,
-            portionWeightGrams: it.portionWeightGrams || 300,
-            pricingType: it.pricingType || "portion",
-            taxType: it.taxType || "inclusive",
-            gstRate: it.gstRate != null ? Number(it.gstRate) : 5,
-            itemDescription: it.description || "",
-            station: it.station || "Kitchen",
-            applicableOutlets: applicableOutlets.length > 0 ? applicableOutlets : ["all"],
-            status: (it.active === false || it.status === "inactive") ? "inactive" : "active",
-            optionGroups: it.variants || it.optionGroups || []
-          };
-        }) : [];
+        if (Array.isArray(its) && its.length > 0) {
+          its.forEach(it => {
+            const itId = it.itemId || it.id;
+            let applicableOutlets = ["all"];
+            if (it.tag && it.tag.includes("OUTLETS:")) {
+              applicableOutlets = it.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+            }
+            const pricingType = (it.pricingType || (it.sellingMode === "both" ? "both" : (it.sellingMode === "kg" ? "kg" : "portion")) || "portion").toLowerCase();
+            const priceVal = Number(it.price || it.unitPrice || 0);
+            const mapped = {
+              id: itId,
+              foodType: (it.veg === false) ? "non-veg" : (it.foodType || "veg"),
+              itemName: it.name || it.itemName,
+              name: it.name || it.itemName,
+              shortcode: it.shortcode || it.code || "",
+              categoryId: it.categoryId || (categories[0] ? categories[0].id : 1),
+              price: priceVal,
+              pricePerKg: (pricingType === 'kg' || pricingType === 'both') ? (Number(it.pricePerKg) || priceVal) : null,
+              portionWeightGrams: it.portionWeightGrams || 300,
+              pricingType: pricingType,
+              unitLabel: it.unitLabel || (pricingType === 'kg' ? 'KG' : 'Plate'),
+              taxType: it.taxType || "inclusive",
+              gstRate: it.gstRate != null ? Number(it.gstRate) : 5,
+              itemDescription: it.description || "",
+              station: it.station || "Kitchen",
+              applicableOutlets: applicableOutlets.length > 0 ? applicableOutlets : ["all"],
+              status: (it.active === false || it.status === "inactive") ? "inactive" : "active",
+              optionGroups: it.variants || it.optionGroups || []
+            };
+            const exIdx = items.findIndex(x => x.id === itId || x.name === mapped.name);
+            if (exIdx >= 0) items[exIdx] = { ...items[exIdx], ...mapped };
+            else items.push(mapped);
+          });
+          saveItemsState();
+        }
 
         if (typeof renderPos === "function") renderPos();
         if (typeof renderPosMenu === "function") renderPosMenu();
@@ -8178,139 +8255,177 @@
         console.log(`[API:Masters] Syncing master tab '${tabName}' for userId=${this.getUserId()}...`);
         if (tabName === "categories") {
           const cats = await this.getCategories();
-          categories = Array.isArray(cats) ? cats.map(c => {
-            const catId = c.categoryId || c.id;
-            const meta = getCategoryMeta(catId);
-            let applicableOutlets = (meta.applicableOutlets && meta.applicableOutlets.length > 0) ? meta.applicableOutlets : null;
-            if (!applicableOutlets) {
-              if (c.tag && c.tag.includes("OUTLETS:")) {
-                applicableOutlets = c.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
-              } else if (c.description && c.description.includes("[OUTLETS:")) {
-                const m = c.description.match(/\[OUTLETS:([^\]]+)\]/);
-                if (m && m[1]) applicableOutlets = m[1].split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+          if (Array.isArray(cats) && cats.length > 0) {
+            cats.forEach(c => {
+              const catId = c.categoryId || c.id;
+              const meta = getCategoryMeta(catId);
+              let applicableOutlets = (meta.applicableOutlets && meta.applicableOutlets.length > 0) ? meta.applicableOutlets : null;
+              if (!applicableOutlets) {
+                if (c.tag && c.tag.includes("OUTLETS:")) {
+                  applicableOutlets = c.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+                } else if (c.description && c.description.includes("[OUTLETS:")) {
+                  const m = c.description.match(/\[OUTLETS:([^\]]+)\]/);
+                  if (m && m[1]) applicableOutlets = m[1].split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+                }
               }
-            }
-            if (!applicableOutlets || applicableOutlets.length === 0) applicableOutlets = ["all"];
+              if (!applicableOutlets || applicableOutlets.length === 0) applicableOutlets = ["all"];
 
-            const desc = (meta.description !== undefined && meta.description !== null) 
-              ? meta.description 
-              : (c.description || c.categoryDescription || "").replace(/\[OUTLETS:[^\]]+\]/g, "").trim();
+              const desc = (meta.description !== undefined && meta.description !== null) 
+                ? meta.description 
+                : (c.description || c.categoryDescription || "").replace(/\[OUTLETS:[^\]]+\]/g, "").trim();
 
-            const code = meta.code || deriveShortCode(c.name || c.categoryName, c.code || c.shortcode);
+              const code = meta.code || deriveShortCode(c.name || c.categoryName, c.code || c.shortcode);
 
-            return {
-              id: catId,
-              categoryName: c.name || c.categoryName,
-              code: code,
-              shortcode: code,
-              categoryDescription: desc,
-              sortOrder: c.sortOrder || 1,
-              applicableOutlets: applicableOutlets,
-              status: (c.active === false || c.status === "inactive") ? "inactive" : "active"
-            };
-          }) : [];
+              const mapped = {
+                id: catId,
+                categoryName: c.name || c.categoryName,
+                name: c.name || c.categoryName,
+                code: code,
+                shortcode: code,
+                categoryDescription: desc,
+                sortOrder: c.sortOrder || 1,
+                applicableOutlets: applicableOutlets,
+                status: (c.active === false || c.status === "inactive") ? "inactive" : "active"
+              };
+              const exIdx = categories.findIndex(x => x.id === catId || x.categoryName === mapped.categoryName);
+              if (exIdx >= 0) categories[exIdx] = { ...categories[exIdx], ...mapped };
+              else categories.push(mapped);
+            });
+            saveCategoriesState();
+          }
         } else if (tabName === "items") {
           const [its, cats] = await Promise.all([this.getItems(), this.getCategories()]);
-          categories = Array.isArray(cats) ? cats.map(c => {
-            const catId = c.categoryId || c.id;
-            const meta = getCategoryMeta(catId);
-            let applicableOutlets = (meta.applicableOutlets && meta.applicableOutlets.length > 0) ? meta.applicableOutlets : null;
-            if (!applicableOutlets) {
-              if (c.tag && c.tag.includes("OUTLETS:")) {
-                applicableOutlets = c.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
-              } else if (c.description && c.description.includes("[OUTLETS:")) {
-                const m = c.description.match(/\[OUTLETS:([^\]]+)\]/);
-                if (m && m[1]) applicableOutlets = m[1].split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+          if (Array.isArray(cats) && cats.length > 0) {
+            cats.forEach(c => {
+              const catId = c.categoryId || c.id;
+              const mapped = {
+                id: catId,
+                categoryName: c.name || c.categoryName,
+                name: c.name || c.categoryName,
+                code: deriveShortCode(c.name || c.categoryName, c.code || c.shortcode),
+                sortOrder: c.sortOrder || 1,
+                status: (c.active === false || c.status === "inactive") ? "inactive" : "active"
+              };
+              const exIdx = categories.findIndex(x => x.id === catId || x.categoryName === mapped.categoryName);
+              if (exIdx >= 0) categories[exIdx] = { ...categories[exIdx], ...mapped };
+              else categories.push(mapped);
+            });
+            saveCategoriesState();
+          }
+          if (Array.isArray(its) && its.length > 0) {
+            its.forEach(it => {
+              const itId = it.itemId || it.id;
+              let applicableOutlets = ["all"];
+              if (it.tag && it.tag.includes("OUTLETS:")) {
+                const rawOutlets = it.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+                const activeOutKeys = Object.keys(companySeriesConfig);
+                const validOutlets = rawOutlets.filter(k => k === 'all' || activeOutKeys.includes(k));
+                applicableOutlets = (validOutlets.length > 0 && !validOutlets.includes('all')) ? validOutlets : ["all"];
               }
-            }
-            if (!applicableOutlets || applicableOutlets.length === 0) applicableOutlets = ["all"];
-
-            const desc = (meta.description !== undefined && meta.description !== null) 
-              ? meta.description 
-              : (c.description || c.categoryDescription || "").replace(/\[OUTLETS:[^\]]+\]/g, "").trim();
-
-            const code = meta.code || deriveShortCode(c.name || c.categoryName, c.code || c.shortcode);
-
-            return {
-              id: catId,
-              categoryName: c.name || c.categoryName,
-              code: code,
-              shortcode: code,
-              categoryDescription: desc,
-              sortOrder: c.sortOrder || 1,
-              applicableOutlets: applicableOutlets,
-              status: (c.active === false || c.status === "inactive") ? "inactive" : "active"
-            };
-          }) : [];
-          items = Array.isArray(its) ? its.map(it => {
-            let applicableOutlets = ["all"];
-            if (it.tag && it.tag.includes("OUTLETS:")) {
-              const rawOutlets = it.tag.split("OUTLETS:")[1].split(";")[0].trim().split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
-              const activeOutKeys = Object.keys(companySeriesConfig);
-              const validOutlets = rawOutlets.filter(k => k === 'all' || activeOutKeys.includes(k));
-              applicableOutlets = (validOutlets.length > 0 && !validOutlets.includes('all')) ? validOutlets : ["all"];
-            }
-            return {
-              id: it.itemId || it.id,
-              foodType: (it.veg === false) ? "non-veg" : (it.foodType || "veg"),
-              itemName: it.name || it.itemName,
-              shortcode: it.shortcode || it.code || "",
-              categoryId: it.categoryId || (categories[0] ? categories[0].id : 1),
-              price: Number(it.price) || 0,
-              pricePerKg: (it.pricingType === 'kg' || it.pricingType === 'both') ? (Number(it.pricePerKg) || 0) : null,
-              portionWeightGrams: it.portionWeightGrams || 300,
-              pricingType: it.pricingType || "portion",
-              taxType: it.taxType || "inclusive",
-              gstRate: it.gstRate != null ? Number(it.gstRate) : 5,
-              itemDescription: it.description || "",
-              station: it.station || "Kitchen",
-              applicableOutlets: applicableOutlets.length > 0 ? applicableOutlets : ["all"],
-              status: (it.active === false || it.status === "inactive") ? "inactive" : "active",
-              optionGroups: it.variants || it.optionGroups || []
-            };
-          }) : [];
+              const pricingType = (it.pricingType || (it.sellingMode === "both" ? "both" : (it.sellingMode === "kg" ? "kg" : "portion")) || "portion").toLowerCase();
+              const priceVal = Number(it.price || it.unitPrice || 0);
+              const mapped = {
+                id: itId,
+                foodType: (it.veg === false) ? "non-veg" : (it.foodType || "veg"),
+                itemName: it.name || it.itemName,
+                name: it.name || it.itemName,
+                shortcode: it.shortcode || it.code || "",
+                categoryId: it.categoryId || (categories[0] ? categories[0].id : 1),
+                price: priceVal,
+                pricePerKg: (pricingType === 'kg' || pricingType === 'both') ? (Number(it.pricePerKg) || priceVal) : null,
+                portionWeightGrams: it.portionWeightGrams || 300,
+                pricingType: pricingType,
+                unitLabel: it.unitLabel || (pricingType === 'kg' ? 'KG' : 'Plate'),
+                taxType: it.taxType || "inclusive",
+                gstRate: it.gstRate != null ? Number(it.gstRate) : 5,
+                itemDescription: it.description || "",
+                station: it.station || "Kitchen",
+                applicableOutlets: applicableOutlets.length > 0 ? applicableOutlets : ["all"],
+                status: (it.active === false || it.status === "inactive") ? "inactive" : "active",
+                optionGroups: it.variants || it.optionGroups || []
+              };
+              const exIdx = items.findIndex(x => x.id === itId || x.name === mapped.name);
+              if (exIdx >= 0) items[exIdx] = { ...items[exIdx], ...mapped };
+              else items.push(mapped);
+            });
+            saveItemsState();
+          }
         } else if (tabName === "floors") {
           const fls = await this.getFloors();
-          floors = Array.isArray(fls) ? fls.map(f => ({
-            id: f.floorId || f.id,
-            floorName: f.name || f.floorName,
-            shortcode: f.shortcode || "",
-            sortOrder: f.sortOrder || 1,
-            status: (f.active === false || f.status === "inactive") ? "inactive" : "active"
-          })) : [];
+          if (Array.isArray(fls) && fls.length > 0) {
+            fls.forEach(f => {
+              const fId = f.floorId || f.id;
+              const mapped = {
+                id: fId,
+                floorName: f.name || f.floorName,
+                name: f.name || f.floorName,
+                shortcode: f.shortcode || "",
+                sortOrder: f.sortOrder || 1,
+                status: (f.active === false || f.status === "inactive") ? "inactive" : "active"
+              };
+              const exIdx = floors.findIndex(x => x.id === fId || x.floorName === mapped.floorName);
+              if (exIdx >= 0) floors[exIdx] = { ...floors[exIdx], ...mapped };
+              else floors.push(mapped);
+            });
+            saveFloorsState();
+          }
         } else if (tabName === "tables") {
           const [tbls, fls] = await Promise.all([this.getTables(), this.getFloors()]);
-          floors = Array.isArray(fls) ? fls.map(f => ({
-            id: f.floorId || f.id,
-            floorName: f.name || f.floorName,
-            shortcode: f.shortcode || "",
-            sortOrder: f.sortOrder || 1,
-            status: (f.active === false || f.status === "inactive") ? "inactive" : "active"
-          })) : [];
-          tables = Array.isArray(tbls) ? tbls.map(t => {
-            const sc = t.shortcode || t.name || ("T-" + (t.id || t.tableId));
-            const tn = t.tableName || t.name || ("Table " + sc);
-            return {
-              id: t.tableId || t.id,
-              tableName: tn,
-              shortcode: sc,
-              tableNumber: t.tableNumber || t.name || tn,
-              capacity: Number(t.capacity) || 4,
-              floorId: Number(t.floorId) || 1,
-              shape: t.shape || "square",
-              status: t.status || "available",
-              activeOrderId: t.currentOrderId || t.activeOrderId || null,
-              masterStatus: (t.active === false || t.masterStatus === "inactive" || t.status === "inactive") ? "inactive" : "active"
-            };
-          }) : [];
+          if (Array.isArray(fls) && fls.length > 0) {
+            fls.forEach(f => {
+              const fId = f.floorId || f.id;
+              const mapped = {
+                id: fId,
+                floorName: f.name || f.floorName,
+                name: f.name || f.floorName,
+                shortcode: f.shortcode || "",
+                sortOrder: f.sortOrder || 1,
+                status: (f.active === false || f.status === "inactive") ? "inactive" : "active"
+              };
+              const exIdx = floors.findIndex(x => x.id === fId || x.floorName === mapped.floorName);
+              if (exIdx >= 0) floors[exIdx] = { ...floors[exIdx], ...mapped };
+              else floors.push(mapped);
+            });
+            saveFloorsState();
+          }
+          if (Array.isArray(tbls) && tbls.length > 0) {
+            tbls.forEach(t => {
+              const sc = t.shortcode || t.name || ("T-" + (t.id || t.tableId));
+              const tn = t.tableName || t.name || ("Table " + sc);
+              const tId = t.tableId || t.id;
+              const mapped = {
+                id: tId,
+                tableName: tn,
+                shortcode: sc,
+                tableNumber: t.tableNumber || t.name || tn,
+                capacity: Number(t.capacity) || 4,
+                floorId: Number(t.floorId) || 1,
+                shape: t.shape || "square",
+                status: t.status || "available",
+                activeOrderId: t.currentOrderId || t.activeOrderId || null,
+                masterStatus: (t.active === false || t.masterStatus === "inactive" || t.status === "inactive") ? "inactive" : "active"
+              };
+              const exIdx = tables.findIndex(x => x.id === tId || x.shortcode === mapped.shortcode);
+              if (exIdx >= 0) tables[exIdx] = { ...tables[exIdx], ...mapped };
+              else tables.push(mapped);
+            });
+            saveTablesState();
+          }
         } else if (tabName === "taxes") {
           const txs = await this.getTaxes();
-          taxes = Array.isArray(txs) ? txs.map(tx => ({
-            id: tx.id,
-            taxName: tx.taxName || tx.name || "",
-            percentage: tx.percentage != null ? Number(tx.percentage) : (Number(tx.rate) || 0),
-            status: tx.status || (tx.active === false ? "inactive" : "active")
-          })) : [];
+          if (Array.isArray(txs) && txs.length > 0) {
+            txs.forEach(tx => {
+              const mapped = {
+                id: tx.id,
+                taxName: tx.taxName || tx.name || "",
+                percentage: tx.percentage != null ? Number(tx.percentage) : (Number(tx.rate) || 0),
+                status: tx.status || (tx.active === false ? "inactive" : "active")
+              };
+              const exIdx = taxes.findIndex(x => x.id === tx.id || x.taxName === mapped.taxName);
+              if (exIdx >= 0) taxes[exIdx] = { ...taxes[exIdx], ...mapped };
+              else taxes.push(mapped);
+            });
+          }
         }
         if (typeof renderMasters === "function") renderMasters();
       } catch (e) {
@@ -8698,30 +8813,47 @@
         role: jwtPayload.role || "ADMIN"
       }));
 
-      // Setup outlet company series
-      companySeriesConfig = {
-        main: {
-          key: "main",
-          code: "POS",
-          name: compName,
-          shortName: compName,
-          outletType: "Fine Dining & Takeaway",
-          sellingMode: "both",
-          seriesFormat: "INV/00/26-27",
-          prefix: "INV",
-          fy: "26-27",
-          padDigits: 2,
-          address: (jwtPayload.userBasicDetails && jwtPayload.userBasicDetails.address) || "",
-          phone: (jwtPayload.userBasicDetails && jwtPayload.userBasicDetails.officeNo) || jwtPayload.contactNo || "",
-          gstin: jwtPayload.gstNumber || "",
-          pan: jwtPayload.panNumber || "",
-          tagline: "Restaurant Billing",
-          status: "active"
+      // Setup outlet company series (PRESERVE custom outlets if already configured)
+      const existingOutletsRaw = localStorage.getItem("pos_custom_company_series_config");
+      let existingOutlets = null;
+      try {
+        existingOutlets = existingOutletsRaw ? JSON.parse(existingOutletsRaw) : null;
+      } catch (e) {}
+
+      if (existingOutlets && typeof existingOutlets === "object" && Object.keys(existingOutlets).length > 0) {
+        companySeriesConfig = existingOutlets;
+        if (companySeriesConfig.main) {
+          if (!companySeriesConfig.main.name || companySeriesConfig.main.name === "Main Dining & Billing") {
+            companySeriesConfig.main.name = compName;
+            companySeriesConfig.main.shortName = compName;
+          }
         }
-      };
-      activeCompanySeries = "main";
+      } else {
+        companySeriesConfig = {
+          main: {
+            key: "main",
+            code: "POS",
+            name: compName,
+            shortName: compName,
+            outletType: "Fine Dining & Takeaway",
+            sellingMode: "both",
+            seriesFormat: "INV/00/26-27",
+            prefix: "INV",
+            fy: "26-27",
+            padDigits: 2,
+            address: (jwtPayload.userBasicDetails && jwtPayload.userBasicDetails.address) || "",
+            phone: (jwtPayload.userBasicDetails && jwtPayload.userBasicDetails.officeNo) || jwtPayload.contactNo || "",
+            gstin: jwtPayload.gstNumber || "",
+            pan: jwtPayload.panNumber || "",
+            tagline: "Restaurant Billing",
+            status: "active"
+          }
+        };
+      }
+      activeCompanySeries = localStorage.getItem("pos_active_company_series") || Object.keys(companySeriesConfig)[0] || "main";
+      if (!companySeriesConfig[activeCompanySeries]) activeCompanySeries = Object.keys(companySeriesConfig)[0] || "main";
       localStorage.setItem("pos_custom_company_series_config", JSON.stringify(companySeriesConfig));
-      localStorage.setItem("pos_active_company_series", "main");
+      localStorage.setItem("pos_active_company_series", activeCompanySeries);
 
       invoiceMasterConfig.restaurantName = compName;
       localStorage.setItem("pos_invoice_master_config", JSON.stringify(invoiceMasterConfig));
@@ -9091,29 +9223,50 @@
       const compGst = u.gstNumber || "";
       const compPan = u.panNumber || "";
 
-      companySeriesConfig = {
-        main: {
-          key: "main",
-          code: "POS",
-          name: compName,
-          shortName: compName,
-          outletType: "Fine Dining & Takeaway",
-          sellingMode: "both",
-          seriesFormat: "INV/00/26-27",
-          prefix: "INV",
-          fy: "26-27",
-          padDigits: 2,
-          address: compAddr,
-          phone: compPhone,
-          gstin: compGst,
-          pan: compPan,
-          tagline: "Restaurant Billing",
-          status: "active"
+      const existingOutletsRaw = localStorage.getItem("pos_custom_company_series_config");
+      let existingOutlets = null;
+      try {
+        existingOutlets = existingOutletsRaw ? JSON.parse(existingOutletsRaw) : null;
+      } catch (e) {}
+
+      if (existingOutlets && typeof existingOutlets === "object" && Object.keys(existingOutlets).length > 0) {
+        companySeriesConfig = existingOutlets;
+        if (companySeriesConfig.main) {
+          if (!companySeriesConfig.main.name || companySeriesConfig.main.name === "Main Dining & Billing") {
+            companySeriesConfig.main.name = compName;
+            companySeriesConfig.main.shortName = compName;
+            companySeriesConfig.main.address = compAddr || companySeriesConfig.main.address;
+            companySeriesConfig.main.phone = compPhone || companySeriesConfig.main.phone;
+            companySeriesConfig.main.gstin = compGst || companySeriesConfig.main.gstin;
+            companySeriesConfig.main.pan = compPan || companySeriesConfig.main.pan;
+          }
         }
-      };
-      activeCompanySeries = "main";
+      } else {
+        companySeriesConfig = {
+          main: {
+            key: "main",
+            code: "POS",
+            name: compName,
+            shortName: compName,
+            outletType: "Fine Dining & Takeaway",
+            sellingMode: "both",
+            seriesFormat: "INV/00/26-27",
+            prefix: "INV",
+            fy: "26-27",
+            padDigits: 2,
+            address: compAddr,
+            phone: compPhone,
+            gstin: compGst,
+            pan: compPan,
+            tagline: "Restaurant Billing",
+            status: "active"
+          }
+        };
+      }
+      activeCompanySeries = localStorage.getItem("pos_active_company_series") || Object.keys(companySeriesConfig)[0] || "main";
+      if (!companySeriesConfig[activeCompanySeries]) activeCompanySeries = Object.keys(companySeriesConfig)[0] || "main";
       localStorage.setItem("pos_custom_company_series_config", JSON.stringify(companySeriesConfig));
-      localStorage.setItem("pos_active_company_series", "main");
+      localStorage.setItem("pos_active_company_series", activeCompanySeries);
 
       invoiceMasterConfig.restaurantName = compName;
       invoiceMasterConfig.address = compAddr;
@@ -20177,12 +20330,15 @@ For any queries or updates, reply to this message.`;
           item.status = status;
           item.applicableOutlets = catOutlets;
           setCategoryMeta(item.id, { description: desc, applicableOutlets: catOutlets, code: code });
+          saveCategoriesState();
           apiClient.saveCategory(item);
         }
         showToast(`Category '${name}' [${code}] updated!`);
       } else {
         const sort = categories.length + 1;
-        const newCat = { categoryName: name, name: name, code: code, shortcode: code, categoryDescription: desc, applicableOutlets: catOutlets, sortOrder: sort, status };
+        const newCat = { id: Date.now(), categoryName: name, name: name, code: code, shortcode: code, categoryDescription: desc, applicableOutlets: catOutlets, sortOrder: sort, status };
+        categories.push(newCat);
+        saveCategoriesState();
         apiClient.saveCategory(newCat);
         showToast(`Category '${name}' [${code}] created & saved to backend!`);
       }
@@ -20254,6 +20410,7 @@ For any queries or updates, reply to this message.`;
             status, 
             optionGroups: cleanOptionGroups 
           });
+          saveItemsState();
           apiClient.saveItem(it);
         }
         showToast(`Item '${name}' updated (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()} [${unitLabel}])!`);
@@ -20279,6 +20436,7 @@ For any queries or updates, reply to this message.`;
           optionGroups: cleanOptionGroups 
         };
         items.push(newItem);
+        saveItemsState();
         apiClient.saveItem(newItem);
         showToast(`Item '${name}' added (${taxType === 'inclusive' ? 'Tax Incl.' : '+GST Extra'}, ${pricingType.toUpperCase()} [${unitLabel}])!`);
       }
@@ -20296,11 +20454,14 @@ For any queries or updates, reply to this message.`;
         const f = floors.find(x => x.id === editingRecordId);
         if (f) {
           f.floorName = name; f.name = name; f.sortOrder = sort; f.status = status;
+          saveFloorsState();
           apiClient.saveFloor(f);
         }
         showToast(`Floor '${name}' updated!`);
       } else {
-        const newFlr = { floorName: name, name: name, sortOrder: sort, status };
+        const newFlr = { id: Date.now(), floorName: name, name: name, sortOrder: sort, status };
+        floors.push(newFlr);
+        saveFloorsState();
         apiClient.saveFloor(newFlr);
         showToast(`Floor '${name}' added & saved to backend!`);
       }
@@ -20316,11 +20477,14 @@ For any queries or updates, reply to this message.`;
         const t = tables.find(x => x.id === editingRecordId);
         if (t) {
           Object.assign(t, { tableName: name, shortcode: short, tableNumber: name, floorId, capacity: cap, masterStatus: status });
+          saveTablesState();
           apiClient.saveTable(t);
         }
         showToast(`Table '${short}' updated!`);
       } else {
-        const newTbl = { tableName: name, shortcode: short, tableNumber: name, floorId, capacity: cap, status: "available", masterStatus: status };
+        const newTbl = { id: Date.now(), tableName: name, shortcode: short, tableNumber: name, floorId, capacity: cap, status: "available", masterStatus: status };
+        tables.push(newTbl);
+        saveTablesState();
         apiClient.saveTable(newTbl);
         showToast(`Table '${short}' added & saved to backend!`);
       }
@@ -20337,7 +20501,8 @@ For any queries or updates, reply to this message.`;
         }
         showToast(`Tax '${name}' updated!`);
       } else {
-        const newTax = { taxName: name, percentage: pct, status };
+        const newTax = { id: Date.now(), taxName: name, percentage: pct, status };
+        taxes.push(newTax);
         apiClient.saveTax(newTax);
         showToast(`Tax '${name}' (${pct}%) saved to backend!`);
       }
