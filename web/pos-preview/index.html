@@ -18127,7 +18127,7 @@ For any queries or updates, reply to this message.`;
                 <td>
                   <label class="switch-row" data-action="toggle-status" data-type="roles" data-id="${r.id}">
                     <span class="switch">
-                      <input type="checkbox" ${r.status === 'active' ? 'checked' : ''} ${r.isSystem ? 'disabled title="System role cannot be deactivated"' : ''}>
+                      <input type="checkbox" ${r.status === 'active' ? 'checked' : ''} ${r.roleCode === 'ADMIN' ? 'disabled title="Primary Admin role cannot be deactivated"' : ''}>
                       <span class="slider"></span>
                     </span>
                     <span class="switch-label ${r.status === 'active' ? 'active' : 'inactive'}">
@@ -18138,7 +18138,10 @@ For any queries or updates, reply to this message.`;
                 <td style="text-align:right;">
                   <div class="action-btn-group" style="justify-content:flex-end;">
                     <button class="action-icon-btn edit" data-action="edit" data-type="roles" data-id="${r.id}" title="Edit Role &amp; Permissions">✏️</button>
-                    ${!r.isSystem ? `<button class="action-icon-btn delete" data-action="delete" data-type="roles" data-id="${r.id}" title="Delete Role">🗑️</button>` : `<span style="font-size:11px;color:var(--ink-soft);padding:0 4px;" title="System Default Role">🔒</span>`}
+                    ${r.roleCode === "ADMIN" 
+                      ? `<span style="font-size:11px;color:var(--ink-soft);padding:0 4px;" title="Primary Admin Role (Protected)">🔒</span>` 
+                      : `<button class="action-icon-btn delete" data-action="delete" data-type="roles" data-id="${r.id}" title="Delete Role">🗑️</button>`
+                    }
                   </div>
                 </td>
               </tr>
@@ -18267,7 +18270,10 @@ For any queries or updates, reply to this message.`;
           if (rec) { rec.status = nextStatus; saveTaxesState(); apiClient.saveTax(rec); }
         } else if (type === "roles") {
           const rec = roles.find(r => r.id === id);
-          if (rec && !rec.isSystem) rec.status = nextStatus;
+          if (rec && rec.roleCode !== "ADMIN") {
+            rec.status = nextStatus;
+            try { localStorage.setItem("pos_roles", JSON.stringify(roles)); } catch(e) {}
+          }
           enforceRoleAccess();
         } else if (type === "users") {
           const rec = staffUsers.find(u => u.id === id);
@@ -18353,13 +18359,19 @@ For any queries or updates, reply to this message.`;
           else if (type === "taxes") { taxes = taxes.filter(t => t.id !== id); saveTaxesState(); apiClient.deleteTax(id); }
           else if (type === "roles") {
             const role = roles.find(r => r.id === id);
-            if (role && role.isSystem) {
-              alert("System built-in roles cannot be deleted.");
+            if (role && role.roleCode === "ADMIN") {
+              alert("The Primary Admin role cannot be deleted as it is required for administrative access.");
+              return;
+            }
+            const assignedStaff = (typeof staffUsers !== "undefined" && Array.isArray(staffUsers)) ? staffUsers.filter(u => u.roleId === id) : [];
+            if (assignedStaff.length > 0) {
+              const names = assignedStaff.map(u => u.name).join(", ");
+              alert(`Cannot delete role '${role ? role.roleName : id}' because staff member(s) (${names}) are currently assigned to it. Please reassign them in Staff Master first.`);
               return;
             }
             roles = roles.filter(r => r.id !== id);
             try { localStorage.setItem("pos_roles", JSON.stringify(roles)); } catch(e) {}
-            showToast("Role removed!");
+            showToast(`Role '${role ? role.roleName : id}' removed!`);
             enforceRoleAccess();
           } else if (type === "users") {
             staffUsers = staffUsers.filter(u => u.id !== id);
