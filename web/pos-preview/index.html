@@ -5588,7 +5588,7 @@
           <label style="font-weight:800;font-size:12.5px;color:var(--ink);margin:0;">
             3. Print Quantity / Sets:
           </label>
-          <span style="font-size:11px;color:#0284c7;font-weight:700;">1 Set = 1 Bill + 1 KOT (2 Slips)</span>
+          <span id="orderPrintSetHint" style="font-size:11px;color:#0284c7;font-weight:700;">1 Set = 1 Bill + 1 KOT (Printed together on roll)</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;">
@@ -5614,7 +5614,7 @@
 
       <!-- Live Preview Summary -->
       <div id="orderPrintSummaryText" style="font-size:13px;color:#15803d;font-weight:800;background:#dcfce7;border:1.5px solid #86efac;padding:12px 14px;border-radius:8px;display:flex;align-items:center;gap:8px;">
-        📄 <span>Ready to Print: Exactly 2 Slips (Page 1: Customer Bill · Page 2: Kitchen KOT)</span>
+        🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">1 Set (Customer Bill + Kitchen KOT)</b> · Both slips together on continuous roll</span>
       </div>
 
     </div>
@@ -12545,7 +12545,10 @@
     const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
     const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
     const summaryEl = document.getElementById("orderPrintSummaryText");
+    const setHintEl = document.getElementById("orderPrintSetHint");
     const dispatchBox = document.getElementById("printDispatchKotOption");
+    const paperVal = document.querySelector('input[name="orderPrintPaperFormat"]:checked')?.value || "80mm";
+    const paperLabel = paperVal === "a4" ? "A4 Sheet" : "80mm Roll";
 
     // Highlight active card
     document.querySelectorAll(".print-mode-card").forEach(c => {
@@ -12581,18 +12584,30 @@
       dispatchBox.style.display = (mode === "without_kot") ? "none" : "block";
     }
 
+    if (setHintEl) {
+      if (mode === "with_kot") {
+        setHintEl.textContent = "1 Set = 1 Bill + 1 KOT (Printed together on roll)";
+        setHintEl.style.color = "#0284c7";
+      } else if (mode === "without_kot") {
+        setHintEl.textContent = "1 Copy = 1 Customer Bill Only";
+        setHintEl.style.color = "#475569";
+      } else {
+        setHintEl.textContent = "1 Copy = 1 Kitchen KOT Ticket Only";
+        setHintEl.style.color = "#16a34a";
+      }
+    }
+
     if (summaryEl) {
       if (mode === "with_kot") {
-        const totalSlips = copies * 2;
         if (copies === 1) {
-          summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">Exactly 2 Slips</b> (Page 1: Customer Bill · Page 2: Kitchen KOT)</span>`;
+          summaryEl.innerHTML = `🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">1 Set (Customer Bill + Kitchen KOT)</b> · Both slips printed together on ${paperLabel}</span>`;
         } else {
-          summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">${totalSlips} Slips</b> (${copies}× Customer Bill + ${copies}× Kitchen KOT)</span>`;
+          summaryEl.innerHTML = `🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">${copies} Sets (${copies * 2} Slips Total)</b> · Customer Bill + Kitchen KOT on ${paperLabel}</span>`;
         }
       } else if (mode === "without_kot") {
-        summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">${copies} ${copies === 1 ? 'Slip' : 'Slips'}</b> (Customer Bill Only · No Kitchen Slip)</span>`;
+        summaryEl.innerHTML = `🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">${copies} ${copies === 1 ? 'Copy' : 'Copies'}</b> · Customer Bill Only on ${paperLabel}</span>`;
       } else {
-        summaryEl.innerHTML = `📄 <span>Ready to Print: <b style="font-size:14px;color:#166534;">${copies} ${copies === 1 ? 'Slip' : 'Slips'}</b> (Kitchen KOT Only · No Customer Bill)</span>`;
+        summaryEl.innerHTML = `🍳 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">${copies} ${copies === 1 ? 'Copy' : 'Copies'}</b> · Kitchen KOT Only on ${paperLabel}</span>`;
       }
     }
   }
@@ -12615,6 +12630,24 @@
 
     const radioWithKot = document.getElementById("card_print_with_kot")?.querySelector('input');
     if (radioWithKot) radioWithKot.checked = true;
+
+    // Reset paper format selection back to 80mm
+    const radio80 = document.getElementById("card_paper_80mm")?.querySelector('input');
+    if (radio80) radio80.checked = true;
+    document.querySelectorAll(".print-paper-card").forEach(card => {
+      const checked = card.querySelector('input')?.checked;
+      if (checked) {
+        card.style.borderColor = "var(--primary)";
+        card.style.background = "rgba(1,122,156,0.06)";
+        card.style.borderWidth = "2px";
+        card.style.fontWeight = "800";
+      } else {
+        card.style.borderColor = "var(--line)";
+        card.style.background = "var(--panel)";
+        card.style.borderWidth = "1.5px";
+        card.style.fontWeight = "700";
+      }
+    });
 
     updateOrderPrintSummary();
     openModal("orderPrintOptionsModal");
@@ -12682,6 +12715,7 @@
           card.style.fontWeight = "700";
         }
       });
+      updateOrderPrintSummary();
     });
   });
 
@@ -12746,24 +12780,57 @@
 
       const slips = [];
       for (let c = 1; c <= copies; c++) {
-        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
+        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** SET ${c} OF ${copies} ***</div>` : '';
 
-        if (mode === "with_kot" || mode === "without_kot") {
-          // Official Customer Bill / Tax Invoice formatted strictly from Invoice Master
+        if (mode === "with_kot") {
+          // Generate both slips strictly from Invoice Master
+          const billSlip = generateDocumentSlipHtml(tempInv, "invoice", cfgOverride);
+          const kotSlip = generateDocumentSlipHtml(tempInv, "kot", cfgOverride);
+
+          if (chosenPaperFormat === "a4") {
+            // Realistic A4 layout: Side-by-side presentation on single A4 sheet with tear divider
+            slips.push(`
+              <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+                ${copyBadge}
+                <div style="display:flex; gap:16mm; align-items:flex-start; width:100%; box-sizing:border-box;">
+                  <div style="flex:1.15; border:2px solid #000; padding:12px 14px; background:#fff; border-radius:4px; box-sizing:border-box;">
+                    <div style="font-size:10px; font-weight:800; color:#475569; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">🧾 Customer Bill / Tax Invoice</div>
+                    ${billSlip}
+                  </div>
+                  <div style="flex:0.85; border:2px dashed #000; padding:12px 14px; background:#fafafa; border-radius:4px; box-sizing:border-box;">
+                    <div style="font-size:10px; font-weight:900; color:#b91c1c; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
+                      ✂ TEAR HERE · KITCHEN KOT TICKET
+                    </div>
+                    ${kotSlip}
+                  </div>
+                </div>
+              </div>
+            `);
+          } else {
+            // Standard 80mm / 58mm Thermal continuous roll: Customer Bill + Perforated Tear Line + Kitchen KOT in ONE continuous slip!
+            slips.push(`
+              <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+                ${copyBadge}
+                ${billSlip}
+                <div class="receipt-tear-divider" style="margin:16px 0 14px 0; padding:6px 0; border-top:2px dashed #000; border-bottom:2px dashed #000; text-align:center; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; font-size:11px; font-weight:900; letter-spacing:0.5px; background:#f8fafc; color:#000;">
+                  ✂ - - - - - TEAR HERE · KITCHEN KOT - - - - - ✂
+                </div>
+                ${kotSlip}
+              </div>
+            `);
+          }
+        } else if (mode === "without_kot") {
           const billSlip = generateDocumentSlipHtml(tempInv, "invoice", cfgOverride);
           slips.push(`
-            <div class="print-slip-cut">
+            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
               ${copyBadge}
               ${billSlip}
             </div>
           `);
-        }
-
-        if (mode === "with_kot" || mode === "kot_only") {
-          // Kitchen KOT Slip
+        } else if (mode === "kot_only") {
           const kotSlip = generateDocumentSlipHtml(tempInv, "kot", cfgOverride);
           slips.push(`
-            <div class="print-slip-cut">
+            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
               ${copyBadge}
               ${kotSlip}
             </div>
@@ -15001,7 +15068,7 @@ For any queries or updates, reply to this message.`;
             #thermalSlipWrapper {
               width: ${printableAreaMm}mm !important;
               max-width: ${printableAreaMm}mm !important;
-              margin: 0 auto !important;
+              margin: 4mm auto 8mm auto !important;
               padding: ${bodyPaddingMm}mm !important;
               box-sizing: border-box !important;
               ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
@@ -15037,13 +15104,14 @@ For any queries or updates, reply to this message.`;
 
         let pageRule = "";
         if (isA4) {
-          pageRule = "@page { size: A4 portrait !important; margin: 8mm !important; }";
+          pageRule = "@page { size: A4 portrait !important; margin: 10mm 10mm !important; }";
         } else if (isA5) {
-          pageRule = "@page { size: A5 portrait !important; margin: 6mm !important; }";
+          pageRule = "@page { size: A5 portrait !important; margin: 8mm 8mm !important; }";
         } else {
-          // Explicit 80mm thermal roll dimensions: 80mm width with dynamic or standard 200mm height
-          const slipHeightMm = Math.max(measuredHeightMm + 10, is58 ? 160 : 200);
-          pageRule = `@page { size: ${rollWidthMm}mm ${slipHeightMm}mm !important; margin: 0mm !important; }`;
+          // Explicit 80mm/58mm thermal roll dimensions:
+          // Give realistic 6mm top margin and 8mm bottom margin so it doesn't hug y=0 or get sliced by the cutter!
+          const slipHeightMm = Math.max(measuredHeightMm + 24, is58 ? 160 : 210);
+          pageRule = `@page { size: ${rollWidthMm}mm ${slipHeightMm}mm !important; margin: 6mm 2mm 8mm 2mm !important; }`;
         }
 
         const finalPrintCss = `
@@ -15066,8 +15134,8 @@ For any queries or updates, reply to this message.`;
           #thermalSlipWrapper {
             width: ${isA4 ? '190mm' : `${printableAreaMm}mm`} !important;
             max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: ${isA4 ? '6mm' : `${bodyPaddingMm}mm`} !important;
+            margin: 4mm auto 8mm auto !important;
+            padding: ${isA4 ? '4mm' : (is58 ? '3mm 2mm' : '4mm 3mm 8mm 3mm')} !important;
             box-sizing: border-box !important;
             ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
           }
@@ -15081,9 +15149,9 @@ For any queries or updates, reply to this message.`;
           .print-slip-cut:not(:last-child) {
             page-break-after: always !important;
             break-after: page !important;
-            padding-bottom: 6mm !important;
-            margin-bottom: 6mm !important;
-            border-bottom: 1.5px dashed #000 !important;
+            padding-bottom: 8mm !important;
+            margin-bottom: 8mm !important;
+            border-bottom: 2px dashed #000 !important;
           }
           .amoncar-invoice-box {
             margin: 0 auto !important;
