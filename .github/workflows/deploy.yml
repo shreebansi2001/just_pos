@@ -23,13 +23,28 @@ jobs:
           import ftplib
           import os
 
-          ftp = ftplib.FTP()
-          ftp.set_debuglevel(1)
-          print('Connecting to FTP...')
-          ftp.connect('pos.justcatering.in', 21, timeout=60)
-          ftp.login('justcatering', 'Just@123_4')
-          ftp.set_pasv(True)
-          print('Logged in successfully!')
+          cred_combos = [
+              ('justcatering', 'Just@123_4'),
+              ('justcatering@justcatering.in', 'Just@123_4'),
+              ('justcatering@pos.justcatering.in', 'Just@123_4')
+          ]
+
+          ftp = None
+          for user, pwd in cred_combos:
+              try:
+                  print(f'Attempting login as {user}...')
+                  test_ftp = ftplib.FTP()
+                  test_ftp.connect('pos.justcatering.in', 21, timeout=30)
+                  test_ftp.login(user, pwd)
+                  test_ftp.set_pasv(True)
+                  print(f'Successfully authenticated as {user}!')
+                  ftp = test_ftp
+                  break
+              except Exception as e:
+                  print(f'Auth failed for {user}: {e}')
+
+          if not ftp:
+              raise SystemExit('All authentication combinations failed.')
 
           file_path = 'web/pos-preview/index.html'
           targets = [
@@ -39,16 +54,11 @@ jobs:
           ]
           for target in targets:
               try:
-                  dir_path = os.path.dirname(target)
-                  try:
-                      ftp.cwd(dir_path)
-                  except Exception as ce:
-                      print('cwd error:', ce)
                   with open(file_path, 'rb') as f:
                       ftp.storbinary(f'STOR {target}', f)
                       print('Successfully deployed to:', target)
               except Exception as e:
                   print('Upload error for', target, ':', e)
           ftp.quit()
-          print('Deployment finished!')
+          print('Deployment finished successfully!')
           "
