@@ -12674,10 +12674,14 @@
       const bill = calculateOrderBill(currentOrderSession, currentOrderSession.items);
       const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
       const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
+      const invNum = currentOrderSession.orderId || peekNextInvoiceNumber(companyKey);
+      const totalTax = (Number(bill.cgst) || 0) + (Number(bill.sgst) || 0);
+
       const tempInv = {
-        id: currentOrderSession.orderId || ("ORD-" + Date.now().toString().slice(-6)),
+        id: invNum,
         companySeries: companyKey,
         tableLabel: currentOrderSession.shortcode || currentOrderSession.label || "Counter",
+        floorLabel: currentOrderSession.floor || "",
         tokenNo: currentOrderSession.tokenNo || ("T-" + String(Date.now()).slice(-3)),
         serverName: currentOrderSession.serverName || (activeUser ? activeUser.name : "Staff"),
         customerName: currentOrderSession.customerName || (document.getElementById("orderCustName")?.value.trim()) || "Walk-in Guest",
@@ -12688,9 +12692,11 @@
         taxableAmount: bill.taxable,
         cgst: bill.cgst,
         sgst: bill.sgst,
+        totalGst: totalTax,
         total: bill.total,
-        paymentMode: "Pending / Bill Review",
-        status: "estimate",
+        amountInWords: typeof numberToWordsINR === 'function' ? numberToWordsINR(bill.total) : '',
+        paymentMode: "Pending / Cash",
+        status: "pending",
         dateFormatted: new Date().toLocaleDateString('en-GB'),
         timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       };
@@ -12700,8 +12706,8 @@
         const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
 
         if (mode === "with_kot" || mode === "without_kot") {
-          // Customer Bill / Estimate Slip
-          const billSlip = generateDocumentSlipHtml(tempInv, "interim");
+          // Official Customer Bill / Tax Invoice formatted strictly from Invoice Master
+          const billSlip = generateDocumentSlipHtml(tempInv, "invoice");
           slips.push(`
             <div class="print-slip-cut">
               ${copyBadge}
@@ -12726,8 +12732,9 @@
       // Close modal before opening print dialog
       closeModal("orderPrintOptionsModal");
 
-      // Trigger Print
-      executeThermalPrint(combinedHtml, invoiceMasterConfig.paperFormat || "80mm");
+      // Trigger Print using the exact paper format configured in Invoice Master
+      const activeOutletCfg = getInvoiceConfigForOutlet(companyKey) || invoiceMasterConfig;
+      executeThermalPrint(combinedHtml, activeOutletCfg.paperFormat || "80mm");
 
       // Optional dispatch to Kitchen KOT board
       if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
