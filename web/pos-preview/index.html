@@ -6037,15 +6037,9 @@
     localStorage.setItem("pos_backend_base", urlParamBackend.replace(/\/+$/, ""));
   }
 
-  const isCloudTunnel = window.location.hostname.includes("trycloudflare.com") ||
-                        window.location.hostname.includes("localhost.run") ||
-                        window.location.hostname.includes("ngrok") ||
-                        window.location.hostname.includes("loca.lt");
   const BACKEND_BASE = window.__BACKEND_BASE__ ||
                        localStorage.getItem("pos_backend_base") ||
-                       ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || isCloudTunnel)
-                         ? (window.location.port === "5173" || isCloudTunnel ? "" : "http://103.1.101.244:5101")
-                         : "https://www.justcatering.in/JCPortal");
+                       "https://www.justcatering.in/JCPortal";
 
   const API_BASE = `${BACKEND_BASE}/v1/api/pos`;
   const AUTH_API_BASE = `${BACKEND_BASE}/v1/api/auth`;
