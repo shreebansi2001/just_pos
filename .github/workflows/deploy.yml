@@ -1,0 +1,38 @@
+name: Deploy to Live POS
+
+on:
+  push:
+    branches:
+      - feature/setup
+      - main
+    paths:
+      - 'web/pos-preview/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Upload to FTP
+        run: |
+          python3 -c "
+          import ftplib
+          ftp = ftplib.FTP()
+          ftp.connect('pos.justcatering.in', 21, timeout=60)
+          ftp.login('justcatering', 'Just@123_4')
+          targets = [
+              '/public_html/index.html',
+              '/public_html/pos/index.html',
+              '/public_html/pos.justcatering.in/index.html'
+          ]
+          for target in targets:
+              with open('web/pos-preview/index.html', 'rb') as f:
+                  ftp.storbinary(f'STOR {target}', f)
+                  print('Successfully deployed to:', target)
+          ftp.quit()
+          print('Deployment finished successfully!')
+          "
