@@ -2829,25 +2829,42 @@
   .pos-cust-mini-box {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     flex: 1;
-    max-width: 250px;
+    max-width: 320px;
   }
   .pos-cust-mini-box input {
     width: 100%;
-    height: 23px;
-    padding: 0 6px;
-    font-size: 10.5px;
-    font-weight: 600;
-    border: 1px solid var(--line);
-    border-radius: 4px;
+    height: 27px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
     background: var(--panel);
     color: var(--ink);
     outline: none;
+    transition: all 0.15s ease;
   }
-  .pos-cust-mini-box input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 1.5px var(--primary-tint);
+  .pos-cust-mini-box input:focus,
+  .cart-guest-strip input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px var(--primary-tint) !important;
+  }
+  .pos-cust-mini-box input.input-compulsory-error,
+  .cart-guest-strip input.input-compulsory-error {
+    border-color: #dc2626 !important;
+    background-color: #fff1f2 !important;
+    box-shadow: 0 0 0 2.5px rgba(220, 38, 38, 0.35) !important;
+    animation: shakeCompulsory 0.35s ease-in-out;
+  }
+  @keyframes shakeCompulsory {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+  .cart-guest-strip input {
+    color: var(--ink);
   }
 
   /* 3. Items List Container - Maximized space, silky smooth */
@@ -4994,9 +5011,9 @@
           <div class="pos-series-switcher-mini" id="posCartSeriesSwitcher">
             <button type="button" class="btn-series-toggle active" data-series="main" title="Main Invoice Series">INV</button>
           </div>
-          <div class="pos-cust-mini-box">
-            <input type="text" id="orderCustName" placeholder="👤 Guest" autocomplete="off">
-            <input type="tel" id="orderCustPhone" placeholder="📞 Mobile" autocomplete="off">
+          <div class="pos-cust-mini-box" title="Guest Details (Compulsory for KOT &amp; Billing)">
+            <input type="text" id="orderCustName" placeholder="👤 Guest Name *" autocomplete="off" required title="Guest Name (Compulsory)">
+            <input type="tel" id="orderCustPhone" placeholder="📞 Mobile (10 digits) *" maxlength="10" autocomplete="off" required title="Mobile Number (Compulsory, 10 digits)">
           </div>
           <button class="btn btn-sm" id="backToOrdersBtn" style="font-weight:700;background:var(--panel);">📋 Orders</button>
         </div>
@@ -5048,6 +5065,16 @@
               <span class="cart-slip-count-tag" id="cartMeta">0 items</span>
             </div>
             <button class="btn-clear-slip" id="clearCartBtn" title="Clear only unsent items">Clear New</button>
+          </div>
+
+          <!-- Compulsory Guest Info Strip inside Cart -->
+          <div class="cart-guest-strip" style="padding:6px 10px;background:var(--surface-subtle);border-bottom:1.5px solid var(--line);display:flex;gap:6px;align-items:center;" title="Guest Details (Compulsory for KOT &amp; Billing)">
+            <div style="flex:1.1;position:relative;">
+              <input type="text" id="cartCustName" placeholder="👤 Guest Name *" style="width:100%;height:27px;font-size:11px;font-weight:700;border-radius:6px;border:1.5px solid var(--line);background:var(--panel);padding:0 8px;color:var(--ink);outline:none;transition:all .15s ease;" autocomplete="off" title="Guest Name (Compulsory)">
+            </div>
+            <div style="flex:0.9;position:relative;">
+              <input type="tel" id="cartCustPhone" placeholder="📞 Mobile (10-digit) *" maxlength="10" style="width:100%;height:27px;font-size:11px;font-weight:700;border-radius:6px;border:1.5px solid var(--line);background:var(--panel);padding:0 8px;color:var(--ink);outline:none;transition:all .15s ease;" autocomplete="off" title="Mobile Number (Compulsory, 10 digits)">
+            </div>
           </div>
 
           <!-- Item rows (shows previous KOT sent items + newly added items) -->
@@ -10673,17 +10700,38 @@
       shiftBtn.style.display = "none";
     }
 
-    // Prefill Customer Details (Input IDs orderCustName & orderCustPhone)
+    // Prefill Customer Details (Top Bar: orderCustName & orderCustPhone, Cart Strip: cartCustName & cartCustPhone)
     const nameInp = document.getElementById("orderCustName");
     const phoneInp = document.getElementById("orderCustPhone");
-    if (nameInp) {
-      nameInp.value = currentOrderSession.customerName || "";
-      nameInp.oninput = () => { currentOrderSession.customerName = nameInp.value.trim(); };
-    }
-    if (phoneInp) {
-      phoneInp.value = currentOrderSession.customerPhone || "";
-      phoneInp.oninput = () => { currentOrderSession.customerPhone = phoneInp.value.trim(); };
-    }
+    const cartNameInp = document.getElementById("cartCustName");
+    const cartPhoneInp = document.getElementById("cartCustPhone");
+
+    const curName = (currentOrderSession.customerName && currentOrderSession.customerName !== "Walk-in Guest") ? currentOrderSession.customerName : "";
+    const curPhone = currentOrderSession.customerPhone || "";
+
+    if (nameInp) nameInp.value = curName;
+    if (cartNameInp) cartNameInp.value = curName;
+    if (phoneInp) phoneInp.value = curPhone;
+    if (cartPhoneInp) cartPhoneInp.value = curPhone;
+
+    const syncName = (val) => {
+      const cleanName = (val || "").trim();
+      if (nameInp && nameInp.value !== val) nameInp.value = val;
+      if (cartNameInp && cartNameInp.value !== val) cartNameInp.value = val;
+      if (currentOrderSession) currentOrderSession.customerName = cleanName;
+    };
+
+    const syncPhone = (val) => {
+      const cleanDigits = (val || "").replace(/\D/g, '').slice(0, 10);
+      if (phoneInp && phoneInp.value !== cleanDigits) phoneInp.value = cleanDigits;
+      if (cartPhoneInp && cartPhoneInp.value !== cleanDigits) cartPhoneInp.value = cleanDigits;
+      if (currentOrderSession) currentOrderSession.customerPhone = cleanDigits;
+    };
+
+    if (nameInp) nameInp.oninput = (e) => syncName(e.target.value);
+    if (cartNameInp) cartNameInp.oninput = (e) => syncName(e.target.value);
+    if (phoneInp) phoneInp.oninput = (e) => syncPhone(e.target.value);
+    if (cartPhoneInp) cartPhoneInp.oninput = (e) => syncPhone(e.target.value);
 
     const noteInp = document.getElementById("orderKitchenNote");
     if (noteInp) {
@@ -12352,6 +12400,9 @@
         if (paymentMode) existingActiveKot.paymentMode = paymentMode;
       }
 
+      if (session.customerName) existingActiveKot.customerName = session.customerName;
+      if (session.customerPhone) existingActiveKot.customerPhone = session.customerPhone;
+
       if (existingActiveKot.status === 'ready') {
         existingActiveKot.status = 'preparing';
       }
@@ -12377,6 +12428,8 @@
         kot: `${newKotNum}`,
         orderId: session.orderId,
         tableId: session.tableId,
+        customerName: session.customerName || "",
+        customerPhone: session.customerPhone || "",
         time: timeNow,
         table: tableLabel,
         floor: session.floorName || "Ground Floor",
@@ -12466,11 +12519,91 @@
   }
   window.dispatchKotForOrder = dispatchKotForOrder;
 
+  // =========================================================================
+  // COMPULSORY GUEST DETAILS VALIDATOR (NAME + 10-DIGIT MOBILE)
+  // =========================================================================
+  function validateCompulsoryGuestDetails(showToastAlert = true) {
+    const nameInp = document.getElementById("orderCustName");
+    const cartNameInp = document.getElementById("cartCustName");
+    const phoneInp = document.getElementById("orderCustPhone");
+    const cartPhoneInp = document.getElementById("cartCustPhone");
+
+    let nameVal = (nameInp?.value || cartNameInp?.value || currentOrderSession?.customerName || "").trim();
+    let phoneVal = (phoneInp?.value || cartPhoneInp?.value || currentOrderSession?.customerPhone || "").trim();
+    phoneVal = phoneVal.replace(/\D/g, '');
+
+    // 1. Validate Guest Name (Compulsory)
+    if (!nameVal || nameVal.toLowerCase() === "walk-in guest" || nameVal.length < 2) {
+      if (showToastAlert) {
+        showToast("⚠️ Guest Name is compulsory! Please enter Guest Name.", "warning");
+      }
+      [nameInp, cartNameInp].forEach(el => {
+        if (el) {
+          el.classList.add("input-compulsory-error");
+          setTimeout(() => el.classList.remove("input-compulsory-error"), 2500);
+        }
+      });
+      if (cartNameInp && window.innerWidth <= 768) {
+        cartNameInp.focus();
+      } else if (nameInp) {
+        nameInp.focus();
+      }
+      return false;
+    }
+
+    // 2. Validate Mobile Number (Compulsory 10 digits)
+    if (!phoneVal) {
+      if (showToastAlert) {
+        showToast("⚠️ Mobile Number is compulsory! Please enter 10-digit Mobile Number.", "warning");
+      }
+      [phoneInp, cartPhoneInp].forEach(el => {
+        if (el) {
+          el.classList.add("input-compulsory-error");
+          setTimeout(() => el.classList.remove("input-compulsory-error"), 2500);
+        }
+      });
+      if (cartPhoneInp && window.innerWidth <= 768) {
+        cartPhoneInp.focus();
+      } else if (phoneInp) {
+        phoneInp.focus();
+      }
+      return false;
+    }
+
+    if (phoneVal.length < 10) {
+      if (showToastAlert) {
+        showToast("⚠️ Mobile Number must be exactly 10 digits! (e.g. 9876543210)", "warning");
+      }
+      [phoneInp, cartPhoneInp].forEach(el => {
+        if (el) {
+          el.classList.add("input-compulsory-error");
+          setTimeout(() => el.classList.remove("input-compulsory-error"), 2500);
+        }
+      });
+      if (cartPhoneInp && window.innerWidth <= 768) {
+        cartPhoneInp.focus();
+      } else if (phoneInp) {
+        phoneInp.focus();
+      }
+      return false;
+    }
+
+    // Sync to current session
+    if (currentOrderSession) {
+      currentOrderSession.customerName = nameVal;
+      currentOrderSession.customerPhone = phoneVal;
+    }
+    return true;
+  }
+  window.validateCompulsoryGuestDetails = validateCompulsoryGuestDetails;
+
   document.getElementById("sendKotBtn").addEventListener("click", () => {
     if (!currentOrderSession || currentOrderSession.items.length === 0) {
       showToast("Order is empty! Please add dishes to send KOT.", "error");
       return;
     }
+
+    if (!validateCompulsoryGuestDetails()) return;
 
     const unsentItems = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
     if (unsentItems.length === 0) {
@@ -12520,6 +12653,8 @@
       showToast("Order is empty! Please add dishes before saving as Pending.", "error");
       return;
     }
+
+    if (!validateCompulsoryGuestDetails()) return;
 
     currentOrderSession.status = "pending";
     currentOrderSession.isPending = true;
@@ -12663,6 +12798,8 @@
       return;
     }
 
+    if (!validateCompulsoryGuestDetails()) return;
+
     const tableLabel = currentOrderSession.shortcode || currentOrderSession.label || "Counter / Takeaway";
     const ordId = currentOrderSession.orderId || "NEW";
     const subtitle = document.getElementById("orderPrintModalSubtitle");
@@ -12782,6 +12919,11 @@
     try {
       if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
         showToast("Order is empty!", "error");
+        closeModal("orderPrintOptionsModal");
+        return;
+      }
+
+      if (!validateCompulsoryGuestDetails()) {
         closeModal("orderPrintOptionsModal");
         return;
       }
@@ -12916,6 +13058,8 @@
       showToast("No items in order to bill!", "error");
       return;
     }
+
+    if (!validateCompulsoryGuestDetails()) return;
 
     const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
     const invId = peekNextInvoiceNumber(companyKey);
@@ -13307,6 +13451,10 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
       const payBtn = foot.querySelector("#payInvoiceBtn");
       payBtn.onclick = () => {
+        if (!validateCompulsoryGuestDetails()) {
+          closeAllModals();
+          return;
+        }
         const mode = body.querySelector("input[name='payMode']:checked")?.value || "Cash";
         // Commit sequential invoice number for the selected company
         const committed = commitNextInvoiceNumber(inv.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main");
