@@ -15064,12 +15064,14 @@ For any queries or updates, reply to this message.`;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace, sans-serif;
               font-size: ${fontSize} !important;
               line-height: 1.35 !important;
+              height: auto !important;
+              min-height: 0 !important;
             }
             #thermalSlipWrapper {
               width: ${printableAreaMm}mm !important;
               max-width: ${printableAreaMm}mm !important;
-              margin: 4mm auto 8mm auto !important;
-              padding: ${bodyPaddingMm}mm !important;
+              margin: 0 auto !important;
+              padding: 0 !important;
               box-sizing: border-box !important;
               ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
             }
@@ -15098,20 +15100,30 @@ For any queries or updates, reply to this message.`;
     setTimeout(() => {
       try {
         const wrap = doc.getElementById("thermalSlipWrapper") || doc.body;
-        const scrollHPx = Math.max(wrap.scrollHeight, wrap.offsetHeight, doc.body.scrollHeight, 60);
-        const measuredHeightMm = Math.ceil((scrollHPx * (zoomScale || 1) * 25.4) / 96);
-        const hasMultipleSlips = contentHtml.includes("print-slip-cut");
+        const slips = doc.querySelectorAll(".print-slip-cut");
+        let maxSlipPx = 0;
+        if (slips && slips.length > 0) {
+          slips.forEach(s => {
+            const h = Math.max(s.scrollHeight || 0, s.offsetHeight || 0, s.clientHeight || 0);
+            if (h > maxSlipPx) maxSlipPx = h;
+          });
+        }
+        if (!maxSlipPx || maxSlipPx < 40) {
+          maxSlipPx = Math.max(wrap.scrollHeight, wrap.offsetHeight, 60);
+        }
+
+        const measuredHeightMm = Math.ceil((maxSlipPx * (zoomScale || 1) * 25.4) / 96);
 
         let pageRule = "";
         if (isA4) {
-          pageRule = "@page { size: A4 portrait !important; margin: 10mm 10mm !important; }";
+          pageRule = "@page { size: A4 portrait !important; margin: 8mm !important; }";
         } else if (isA5) {
-          pageRule = "@page { size: A5 portrait !important; margin: 8mm 8mm !important; }";
+          pageRule = "@page { size: A5 portrait !important; margin: 6mm !important; }";
         } else {
-          // Explicit 80mm/58mm thermal roll dimensions:
-          // Give realistic 6mm top margin and 8mm bottom margin so it doesn't hug y=0 or get sliced by the cutter!
-          const slipHeightMm = Math.max(measuredHeightMm + 24, is58 ? 160 : 210);
-          pageRule = `@page { size: ${rollWidthMm}mm ${slipHeightMm}mm !important; margin: 6mm 2mm 8mm 2mm !important; }`;
+          // Precise 80mm/58mm thermal roll dimensions:
+          // Strictly match content height + 8mm bottom feed margin so there is ZERO trailing blank white space after KOT!
+          const slipHeightMm = Math.max(measuredHeightMm + 8, is58 ? 40 : 50);
+          pageRule = `@page { size: ${rollWidthMm}mm ${slipHeightMm}mm !important; margin: 4mm 2mm 4mm 2mm !important; }`;
         }
 
         const finalPrintCss = `
@@ -15130,12 +15142,14 @@ For any queries or updates, reply to this message.`;
             font-size: ${fontSize} !important;
             line-height: 1.35 !important;
             width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
           }
           #thermalSlipWrapper {
             width: ${isA4 ? '190mm' : `${printableAreaMm}mm`} !important;
             max-width: 100% !important;
-            margin: 4mm auto 8mm auto !important;
-            padding: ${isA4 ? '4mm' : (is58 ? '3mm 2mm' : '4mm 3mm 8mm 3mm')} !important;
+            margin: 0 auto !important;
+            padding: ${isA4 ? '4mm' : (is58 ? '2mm 1mm' : '3mm 2mm')} !important;
             box-sizing: border-box !important;
             ${zoomScale !== 1 ? `transform: scale(${zoomScale}); transform-origin: top center;` : ''}
           }
@@ -15145,13 +15159,13 @@ For any queries or updates, reply to this message.`;
             box-sizing: border-box !important;
             width: 100% !important;
             margin: 0 auto !important;
+            padding: 0 !important;
           }
           .print-slip-cut:not(:last-child) {
             page-break-after: always !important;
             break-after: page !important;
-            padding-bottom: 8mm !important;
-            margin-bottom: 8mm !important;
-            border-bottom: 2px dashed #000 !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
           }
           .amoncar-invoice-box {
             margin: 0 auto !important;
