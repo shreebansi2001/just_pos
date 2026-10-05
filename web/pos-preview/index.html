@@ -5501,7 +5501,7 @@
 </div>
 
 <!-- Order Print Options Modal -->
-<div class="modal-backdrop" id="orderPrintOptionsModal" style="z-index:10040;background:rgba(0,0,0,0.65);">
+<div class="modal-backdrop" id="orderPrintOptionsModal" style="z-index:200000 !important;background:rgba(0,0,0,0.65);">
   <div class="modal" style="max-width:480px;box-shadow:0 20px 45px rgba(0,0,0,0.35);border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
     <div class="modal-head" style="background:var(--surface-subtle);border-bottom:1.5px solid var(--line);padding:14px 18px;">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -5590,7 +5590,7 @@
 </div>
 
 <!-- Quick Add Modal (Nested overlay for adding Category, Floor, Station, Role on the fly) -->
-<div class="modal-backdrop" id="quickAddModal" style="z-index:10050;background:rgba(0,0,0,0.65);">
+<div class="modal-backdrop" id="quickAddModal" style="z-index:200000 !important;background:rgba(0,0,0,0.65);">
   <div class="modal" style="max-width:440px;box-shadow:0 20px 45px rgba(0,0,0,0.35);border:2px solid var(--primary-light);border-radius:12px;overflow:hidden;">
     <div class="modal-head" style="background:var(--surface-subtle);border-bottom:1.5px solid var(--line);padding:14px 18px;">
       <div style="display:flex;align-items:center;gap:8px;">
@@ -19634,6 +19634,7 @@ For any queries or updates, reply to this message.`;
     if (modal) {
       modal.classList.add("active");
       modal.style.display = "flex";
+      modal.style.zIndex = "200000";
     }
   }
   window.openQuickAddModal = openQuickAddModal;
@@ -20089,17 +20090,12 @@ For any queries or updates, reply to this message.`;
             <input type="text" id="m_itShort" value="${rec.shortcode || ''}" placeholder="e.g. PBM (Auto-generated if empty)" maxlength="10" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;">
           </div>
           <div class="form-group">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-              <label style="margin:0;">Category *</label>
-              <button type="button" id="btnQuickAddCat" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;" title="Quick Add Category">
-                <span>➕ New</span>
-              </button>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <select id="m_itCat" required style="flex:1;">
+            <label style="display:block;margin-bottom:4px;font-weight:700;">Category *</label>
+            <div style="display:flex;gap:6px;align-items:center;width:100%;">
+              <select id="m_itCat" required style="width:calc(100% - 46px);flex:1;min-width:0;height:40px;margin:0;">
                 ${categories.map(c => `<option value="${c.id}" ${rec.categoryId === c.id ? 'selected' : ''}>${c.categoryName}</option>`).join("")}
               </select>
-              <button type="button" id="btnQuickAddCatIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Category">
+              <button type="button" id="btnQuickAddCat" class="btn" style="width:40px;min-width:40px;height:40px;padding:0;border-radius:8px;border:1.5px solid var(--primary);background:var(--primary-subtle);color:var(--primary);font-size:22px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-sizing:border-box;" title="Quick Add Category">
                 +
               </button>
             </div>
@@ -20184,21 +20180,16 @@ For any queries or updates, reply to this message.`;
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-              <label style="margin:0;">Kitchen Station</label>
-              <button type="button" id="btnQuickAddStation" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;" title="Quick Add Kitchen Station">
-                <span>➕ New</span>
-              </button>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <select id="m_itStation" style="flex:1;">
+            <label style="display:block;margin-bottom:4px;font-weight:700;">Kitchen Station</label>
+            <div style="display:flex;gap:6px;align-items:center;width:100%;">
+              <select id="m_itStation" style="width:calc(100% - 46px);flex:1;min-width:0;height:40px;margin:0;">
                 <option value="Kitchen" ${rec.station === 'Kitchen' ? 'selected' : ''}>Kitchen</option>
                 <option value="Bar" ${rec.station === 'Bar' ? 'selected' : ''}>Bar / Beverage</option>
                 <option value="Live Counter" ${rec.station === 'Live Counter' ? 'selected' : ''}>Live Counter</option>
                 <option value="Dessert Counter" ${rec.station === 'Dessert Counter' ? 'selected' : ''}>Dessert Counter</option>
                 ${(rec.station && !['Kitchen','Bar','Live Counter','Dessert Counter'].includes(rec.station)) ? `<option value="${rec.station}" selected>${rec.station}</option>` : ''}
               </select>
-              <button type="button" id="btnQuickAddStationIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Kitchen Station">
+              <button type="button" id="btnQuickAddStation" class="btn" style="width:40px;min-width:40px;height:40px;padding:0;border-radius:8px;border:1.5px solid var(--primary);background:var(--primary-subtle);color:var(--primary);font-size:22px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-sizing:border-box;" title="Add Custom Kitchen Station">
                 +
               </button>
             </div>
@@ -20485,17 +20476,12 @@ For any queries or updates, reply to this message.`;
             <input type="text" id="m_tblShort" value="${curShort}" placeholder="e.g. GF01 (Auto-generated)" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase;">
           </div>
           <div class="form-group">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-              <label style="margin:0;">Assigned Floor *</label>
-              <button type="button" id="btnQuickAddFloor" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;" title="Quick Add Floor">
-                <span>➕ New</span>
-              </button>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <select id="m_tblFloor" required style="flex:1;">
+            <label style="display:block;margin-bottom:4px;font-weight:700;">Assigned Floor *</label>
+            <div style="display:flex;gap:6px;align-items:center;width:100%;">
+              <select id="m_tblFloor" required style="width:calc(100% - 46px);flex:1;min-width:0;height:40px;margin:0;">
                 ${floors.map(f => `<option value="${f.id}" ${rec.floorId == f.id ? 'selected' : ''}>${f.floorName}</option>`).join("")}
               </select>
-              <button type="button" id="btnQuickAddFloorIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Floor">
+              <button type="button" id="btnQuickAddFloor" class="btn" style="width:40px;min-width:40px;height:40px;padding:0;border-radius:8px;border:1.5px solid var(--primary);background:var(--primary-subtle);color:var(--primary);font-size:22px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-sizing:border-box;" title="Quick Add Floor">
                 +
               </button>
             </div>
@@ -20745,21 +20731,16 @@ For any queries or updates, reply to this message.`;
         </div>
 
         <div class="form-group">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-            <label style="margin:0;">Assigned Role (Permissions Profile) *</label>
-            <button type="button" id="btnQuickAddRole" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:padding:0;" title="Quick Add Role">
-              <span>➕ New</span>
-            </button>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <select id="m_userRoleId" required style="font-weight:700;font-size:12.5px;flex:1;">
+          <label style="display:block;margin-bottom:4px;font-weight:700;">Assigned Role (Permissions Profile) *</label>
+          <div style="display:flex;gap:6px;align-items:center;width:100%;">
+            <select id="m_userRoleId" required style="font-weight:700;font-size:12.5px;width:calc(100% - 46px);flex:1;min-width:0;height:40px;margin:0;">
               ${roles.filter(r => r.status === 'active').map(r => `
                 <option value="${r.id}" ${rec.roleId === r.id ? 'selected' : ''}>
                   ${r.roleName} (${r.roleCode}) — ${r.permissions.length} rights
                 </option>
               `).join("")}
             </select>
-            <button type="button" id="btnQuickAddRoleIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Role">
+            <button type="button" id="btnQuickAddRole" class="btn" style="width:40px;min-width:40px;height:40px;padding:0;border-radius:8px;border:1.5px solid var(--primary);background:var(--primary-subtle);color:var(--primary);font-size:22px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-sizing:border-box;" title="Quick Add Role">
               +
             </button>
           </div>
