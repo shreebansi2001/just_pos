@@ -4749,23 +4749,23 @@
 
         <form id="posLoginForm">
           <div class="form-group">
-            <label>Code</label>
+            <label>Station / Employee Code</label>
             <div class="login-input-wrap">
               <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
-              <input type="text" id="loginUserCode" value="" required placeholder="e.g. JCX679025">
+              <input type="text" id="loginUserCode" value="" placeholder="e.g. JCX-KIT-01 or Company Code">
             </div>
           </div>
 
           <div class="form-group">
-            <label>Email</label>
+            <label>Email or Staff Username</label>
             <div class="login-input-wrap">
               <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <input type="email" id="loginUsername" value="" required placeholder="e.g. name@company.com">
+              <input type="text" id="loginUsername" value="" placeholder="e.g. name@company.com or Staff Code">
             </div>
           </div>
 
           <div class="form-group">
-            <label>Password</label>
+            <label>Password / PIN</label>
             <div class="login-input-wrap">
               <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <input type="password" id="loginPassword" value="" required autocomplete="current-password" placeholder="••••••••">
@@ -4775,6 +4775,9 @@
                 <!-- eyeIcon: shown when password is clear text / visible -->
                 <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
+            </div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">
+              💡 Staff can log in with Employee Code (or Email) and assigned PIN.
             </div>
           </div>
 
@@ -6915,7 +6918,7 @@
     { id: "can_modify_masters", label: "Modify Master Rules", category: "Operational Rights", desc: "Add/edit items, tax slabs, roles, and staff records" }
   ];
 
-  let roles = [
+  const DEFAULT_ROLES = [
     {
       id: 1,
       roleName: "Admin / Owner",
@@ -6976,6 +6979,14 @@
     }
   ];
 
+  let roles = (() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("pos_roles") || "null");
+      if (Array.isArray(saved) && saved.length > 0) return saved;
+    } catch(e) {}
+    return DEFAULT_ROLES;
+  })();
+
   let staffUsers = (() => {
     try {
       const saved = JSON.parse(localStorage.getItem("pos_staff_users") || "null");
@@ -6987,23 +6998,48 @@
   let currentUserId = Number(sessionStorage.getItem("pos_user_id")) || Number(localStorage.getItem("pos_user_id")) || Number(localStorage.getItem("userId")) || null;
 
   function getCurrentUser() {
-    let u = staffUsers.find(x => x.id === currentUserId) || staffUsers[0];
-    if (!u) {
-      // Fallback: build minimal user from localStorage session data
-      try {
-        const stored = JSON.parse(localStorage.getItem("pos_user") || "null");
-        if (stored) return { ...stored, roleId: 1, assignedOutlets: ["all"], status: "active" };
-      } catch(e) {}
-      return { id: currentUserId || 0, name: "Operator", roleId: 1, assignedOutlets: ["all"], status: "active" };
+    try {
+      const saved = JSON.parse(localStorage.getItem("pos_staff_users") || "null");
+      if (Array.isArray(saved) && saved.length > 0) staffUsers = saved;
+    } catch(e) {}
+
+    if (currentUserId !== null && currentUserId !== undefined) {
+      const matched = staffUsers.find(x => String(x.id) === String(currentUserId));
+      if (matched) {
+        if (!matched.assignedOutlets) matched.assignedOutlets = ["all"];
+        return matched;
+      }
     }
-    if (!u.assignedOutlets) u.assignedOutlets = ["all"];
-    return u;
+
+    try {
+      const stored = JSON.parse(localStorage.getItem("pos_user") || "null");
+      if (stored) {
+        let rId = Number(stored.roleId);
+        if (!rId || isNaN(rId)) {
+          const matchR = roles.find(r => r.roleCode === stored.role);
+          rId = matchR ? matchR.id : 1;
+        }
+        return {
+          ...stored,
+          roleId: rId,
+          assignedOutlets: stored.assignedOutlets || ["all"],
+          status: stored.status || "active"
+        };
+      }
+    } catch(e) {}
+
+    return { id: currentUserId || 0, name: "Admin", roleId: 1, role: "ADMIN", assignedOutlets: ["all"], status: "active" };
   }
 
   function getCurrentRole() {
     const user = getCurrentUser();
     if (!user) return roles[0];
-    return roles.find(r => r.id === user.roleId) || roles[0];
+    const roleId = Number(user.roleId);
+    let r = roles.find(role => role.id === roleId);
+    if (!r && user.role) {
+      r = roles.find(role => role.roleCode === user.role);
+    }
+    return r || roles[0];
   }
 
   function hasPermission(permId) {
@@ -7289,21 +7325,25 @@
 
   const apiClient = {
     getUserId() {
+      // 1. Primary restaurant account ID for all API endpoints (categories, tables, items, KOTs)
+      const storeOwnerId = localStorage.getItem("pos_store_owner_id") || localStorage.getItem("mainId");
+      if (storeOwnerId && !isNaN(Number(storeOwnerId))) {
+        return Number(storeOwnerId);
+      }
       if (typeof currentUserId !== 'undefined' && currentUserId && !isNaN(Number(currentUserId))) {
         return Number(currentUserId);
       }
       const stored = sessionStorage.getItem("pos_user_id") || localStorage.getItem("pos_user_id") || localStorage.getItem("userId");
       if (stored && !isNaN(Number(stored))) {
-        currentUserId = Number(stored);
-        return currentUserId;
+        return Number(stored);
       }
-      return currentUserId || "";
+      return "";
     },
     getHeaders() {
       const h = { "Content-Type": "application/json" };
-      let token = localStorage.getItem("userToken") || localStorage.getItem("pos_token") || localStorage.getItem("token");
+      let token = localStorage.getItem("userToken") || localStorage.getItem("pos_token") || localStorage.getItem("token") || localStorage.getItem("pos_store_token");
       if (!token || token.startsWith("pos_session_")) {
-        token = DEFAULT_JWT_TOKEN;
+        token = localStorage.getItem("pos_store_token") || DEFAULT_JWT_TOKEN;
         localStorage.setItem("userToken", token);
         localStorage.setItem("pos_token", token);
       }
@@ -8238,8 +8278,10 @@
     if (!hasPermission(permKey)) {
       const allowed = getAllowedViews();
       if (allowed.length > 0 && !allowed.includes(viewId)) {
-        showToast(`⚠️ Access Restricted: '${getCurrentRole().roleName}' cannot access ${viewId.toUpperCase()}`);
-        showView(allowed[0]);
+        const curRole = getCurrentRole();
+        const fallback = (curRole.roleCode === "KITCHEN" && allowed.includes("kot")) ? "kot" : (allowed.includes("tables") ? "tables" : allowed[0]);
+        showToast(`⚠️ Access Restricted: '${curRole.roleName}' cannot access ${viewId.toUpperCase()}`);
+        showView(fallback);
         return;
       }
     }
@@ -8333,14 +8375,7 @@
     const role = getCurrentRole();
 
     // 1. Update Topbar Operator display
-    const opNameEl = document.getElementById("topbarOperatorName");
-    if (opNameEl) opNameEl.textContent = user.name.split(" ")[0];
-
-    const opBadge = document.getElementById("topbarRoleBadge");
-    if (opBadge) {
-      opBadge.textContent = role.roleCode || role.roleName.toUpperCase();
-      opBadge.className = `op-role-pill ${role.roleCode.toLowerCase()}`;
-    }
+    updateUserDisplay();
 
     // 2. Dynamically show/hide sidebar buttons according to permissions
     document.querySelectorAll(".nav-btn[data-view]").forEach(btn => {
@@ -8353,23 +8388,77 @@
       }
     });
 
-    // 3. Check active view - if unauthorized, redirect immediately
+    // 3. Topbar Stat Chips visibility based on role permissions
+    const chipTables = document.getElementById("statTablesFree")?.closest(".stat-chip");
+    if (chipTables) chipTables.style.display = hasPermission("view_tables") ? "" : "none";
+
+    const chipKots = document.getElementById("statActiveKots")?.closest(".stat-chip");
+    if (chipKots) chipKots.style.display = hasPermission("view_kot") ? "" : "none";
+
+    const chipSales = document.getElementById("statTodaySales")?.closest(".stat-chip");
+    if (chipSales) chipSales.style.display = hasPermission("view_billing") ? "" : "none";
+
+    // 4. Quick Action buttons on Floor Tables view
+    const btnTakeaway = document.getElementById("startTakeaway");
+    if (btnTakeaway) btnTakeaway.style.display = hasPermission("view_pos") ? "" : "none";
+
+    const btnReservations = document.getElementById("startReservations");
+    if (btnReservations) btnReservations.style.display = hasPermission("view_reservations") ? "" : "none";
+
+    const btnDelivery = document.getElementById("startDelivery");
+    if (btnDelivery) btnDelivery.style.display = hasPermission("view_pos") ? "" : "none";
+
+    // 5. Masters Management Rights
+    const addMasterBtn = document.getElementById("openAddMasterModalBtn");
+    if (addMasterBtn) addMasterBtn.style.display = hasPermission("can_modify_masters") ? "" : "none";
+
+    // 6. Check active view - if unauthorized, redirect immediately
     const allowed = getAllowedViews();
     if (allowed.length > 0 && !allowed.includes(activeView)) {
-      const targetView = (role.roleCode === "KITCHEN" && allowed.includes("kot")) ? "kot" : allowed[0];
+      let targetView = allowed[0];
+      if (role.roleCode === "KITCHEN" && allowed.includes("kot")) {
+        targetView = "kot";
+      } else if (role.roleCode === "CASHIER" && allowed.includes("billing")) {
+        targetView = "billing";
+      } else if (allowed.includes("tables")) {
+        targetView = "tables";
+      }
       showView(targetView);
     }
 
-    // 4. Cart Discount & Tax Permissions
+    // 7. Cart Discount & Tax Permissions
     const discRow = document.getElementById("discountDeductionRow");
-    if (discRow && !hasPermission("can_apply_discount")) {
-      discRow.style.opacity = "0.4";
-      discRow.title = "Discount permission disabled for this role";
+    if (discRow) {
+      if (hasPermission("can_apply_discount")) {
+        discRow.style.opacity = "1";
+        discRow.style.pointerEvents = "auto";
+        discRow.removeAttribute("title");
+      } else {
+        discRow.style.opacity = "0.4";
+        discRow.style.pointerEvents = "none";
+        discRow.title = "Discount permission disabled for this role";
+      }
     }
 
     renderOperatorDropdown();
   }
   window.enforceRoleAccess = enforceRoleAccess;
+
+  function updateUserDisplay() {
+    const user = getCurrentUser();
+    const role = getCurrentRole();
+    const opNameEl = document.getElementById("topbarOperatorName");
+    if (opNameEl) {
+      opNameEl.textContent = (user && user.name) ? user.name.split(" ")[0] : "Operator";
+      opNameEl.title = `${user.name || "Staff"} (${user.userCode || ""})`;
+    }
+    const opBadge = document.getElementById("topbarRoleBadge");
+    if (opBadge) {
+      opBadge.textContent = role.roleCode || (role.roleName || "ADMIN").toUpperCase();
+      opBadge.className = `op-role-pill ${(role.roleCode || "admin").toLowerCase()}`;
+    }
+  }
+  window.updateUserDisplay = updateUserDisplay;
 
   function renderOperatorDropdown() {
     // Topbar role switching dropdown disabled; dashboard strictly locked to Admin role
@@ -8778,20 +8867,89 @@
       errBox.textContent = "";
     }
     const submitBtn = document.getElementById("loginSubmitBtn");
+    const resetSubmitBtn = () => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <span>Enter POS Floor Desk</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        `;
+      }
+    };
+
+    const codeVal = (document.getElementById("loginUserCode")?.value || "").trim().toUpperCase();
+    const usernameVal = (document.getElementById("loginUsername")?.value || "").trim();
+    const emailVal = usernameVal.toLowerCase();
+    const passVal = (document.getElementById("loginPassword")?.value || "").trim();
+
+    if (!passVal) {
+      const errMsg = "Please enter your password or staff PIN.";
+      showToast("⚠️ " + errMsg);
+      if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
+      return;
+    }
+    if (!codeVal && !usernameVal) {
+      const errMsg = "Please enter your User / Employee Code or Email.";
+      showToast("⚠️ " + errMsg);
+      if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
+      return;
+    }
+
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.innerHTML = `
         <svg class="login-spinner" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5" style="animation:spin .7s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        <span>Authenticating with Server...</span>
+        <span>Authenticating...</span>
       `;
     }
 
-    const codeVal = document.getElementById("loginUserCode").value.trim().toUpperCase();
-    const emailVal = document.getElementById("loginUsername").value.trim().toLowerCase();
-    const passVal = document.getElementById("loginPassword").value.trim();
+    // 1. Check local Staff Master users first
+    let currentStaff = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem("pos_staff_users") || "null");
+      if (Array.isArray(saved) && saved.length > 0) {
+        currentStaff = saved;
+        staffUsers = saved;
+      }
+    } catch (e) {}
+    if (currentStaff.length === 0 && Array.isArray(staffUsers)) {
+      currentStaff = staffUsers;
+    }
 
-    // Call real Auth Login API sending softType: "jcx"
-    const loginResult = await apiClient.login(emailVal, passVal, codeVal);
+    const matchedStaff = currentStaff.find(staff => {
+      if (!staff) return false;
+      const sPin = String(staff.pin || staff.password || "").trim();
+      if (sPin !== passVal) return false;
+
+      const sCode = (staff.userCode || "").trim().toUpperCase();
+      const sEmail = (staff.email || "").trim().toLowerCase();
+      const sName = (staff.name || "").trim().toLowerCase();
+
+      // Flexible matching
+      if (codeVal && sCode && sCode === codeVal) return true;
+      if (usernameVal && sCode && sCode === usernameVal.toUpperCase()) return true;
+      if (emailVal && sEmail && sEmail === emailVal) return true;
+      if (codeVal && sEmail && sEmail.toUpperCase() === codeVal) return true;
+      if (usernameVal && sName && sName === usernameVal.toLowerCase()) return true;
+      if (usernameVal && (sCode === usernameVal.toUpperCase() || sEmail === emailVal)) return true;
+      return false;
+    });
+
+    if (matchedStaff) {
+      if (matchedStaff.status === "inactive") {
+        const errMsg = `Staff account for '${matchedStaff.name}' (${matchedStaff.userCode || 'Staff'}) is inactive. Please contact your manager.`;
+        showToast("❌ " + errMsg, 4500);
+        if (errBox) { errBox.textContent = errMsg; errBox.classList.remove("hidden"); errBox.style.display = "block"; }
+        resetSubmitBtn();
+        return;
+      }
+
+      await performStaffLogin(matchedStaff);
+      return;
+    }
+
+    // 2. Call real Auth Login API for central accounts sending softType: "jcx"
+    const loginResult = await apiClient.login(usernameVal || emailVal, passVal, codeVal);
 
     if (loginResult && loginResult.success && loginResult.data) {
       const uDetails = loginResult.data["User Details"] || loginResult.data["userDetails"] || loginResult.data;
@@ -8812,13 +8970,7 @@
 
       if (!hasPosAccess && rawUpgraded.length > 0) {
         console.warn("[Auth] Login blocked: User does not have active module entitlement (upgradeModuleId=24)", rawUpgraded);
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = `
-            <span>Enter POS Floor Desk</span>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          `;
-        }
+        resetSubmitBtn();
         const errMsg = "You are not authorized to access the POS module (Module 24 required).";
         showToast("❌ " + errMsg, 5000);
         if (errBox) {
@@ -8841,6 +8993,8 @@
       localStorage.setItem('lang', 'en');
       localStorage.setItem('userId', dynamicUserId.toString());
       localStorage.setItem('mainId', u.id.toString());
+      localStorage.setItem('pos_store_owner_id', dynamicUserId.toString());
+      localStorage.setItem('pos_store_token', u.token || "");
       localStorage.setItem('pos_user_id', dynamicUserId.toString());
       sessionStorage.setItem('pos_user_id', dynamicUserId.toString());
       currentUserId = dynamicUserId;
@@ -8851,25 +9005,23 @@
         name: displayName,
         email: u?.email || emailVal,
         userCode: u?.userCode || codeVal,
+        roleId: 1,
         role: "ADMIN"
       }));
 
       sessionStorage.setItem("pos_authenticated_session", "true");
       localStorage.setItem("pos_is_authenticated", "true");
-      if (currentUserId) {
-        localStorage.setItem("pos_user_id", String(dynamicUserId));
-        sessionStorage.setItem("pos_user_id", String(dynamicUserId));
-        localStorage.setItem("userId", String(dynamicUserId));
-      }
 
-      document.getElementById("loginScreen").classList.add("hidden");
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `
-          <span>Enter POS Floor Desk</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        `;
+      const loginScreen = document.getElementById("loginScreen");
+      if (loginScreen) {
+        loginScreen.classList.add("hidden");
+        loginScreen.style.display = "none";
       }
+      const appEl = document.querySelector(".app");
+      if (appEl) {
+        appEl.style.display = "flex";
+      }
+      resetSubmitBtn();
 
       // Purge all legacy demo mock data from localStorage so the client starts 100% clean
       localStorage.removeItem("pos_custom_tables");
@@ -8945,15 +9097,25 @@
       ]);
       return;
     } else {
-      // Login failed on server
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `
-          <span>Enter POS Floor Desk</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        `;
+      // Login failed on server - check if a local staff member was intended
+      resetSubmitBtn();
+      const staffWithId = currentStaff.find(staff => {
+        if (!staff) return false;
+        const sCode = (staff.userCode || "").trim().toUpperCase();
+        const sEmail = (staff.email || "").trim().toLowerCase();
+        const sName = (staff.name || "").trim().toLowerCase();
+        return (codeVal && sCode === codeVal) ||
+               (usernameVal && sCode === usernameVal.toUpperCase()) ||
+               (emailVal && sEmail === emailVal) ||
+               (usernameVal && sName === usernameVal.toLowerCase());
+      });
+
+      let errMsg = "";
+      if (staffWithId) {
+        errMsg = `Incorrect PIN / Password for staff member '${staffWithId.name}' (${staffWithId.userCode || ''}).`;
+      } else {
+        errMsg = (loginResult && loginResult.msg) ? loginResult.msg : "Authentication failed. Please verify employee code, email, and password.";
       }
-      const errMsg = (loginResult && loginResult.msg) ? loginResult.msg : "Authentication failed. Please verify user code, email, and password.";
       showToast("❌ " + errMsg, 4500);
       if (errBox) {
         errBox.textContent = errMsg;
@@ -8962,6 +9124,103 @@
       }
     }
   });
+
+  async function performStaffLogin(staff) {
+    currentUserId = staff.id;
+    sessionStorage.setItem("pos_authenticated_session", "true");
+    localStorage.setItem("pos_is_authenticated", "true");
+    localStorage.setItem("pos_user_id", String(staff.id));
+    sessionStorage.setItem("pos_user_id", String(staff.id));
+    localStorage.setItem("userId", String(staff.id));
+
+    // Ensure staff token or store token is in place
+    if (!localStorage.getItem("pos_token") || localStorage.getItem("pos_token").startsWith("pos_session_")) {
+      const storeToken = localStorage.getItem("pos_store_token") || DEFAULT_JWT_TOKEN;
+      localStorage.setItem("pos_token", storeToken);
+      localStorage.setItem("userToken", storeToken);
+    }
+    if (staff.storeOwnerId && !localStorage.getItem("pos_store_owner_id")) {
+      localStorage.setItem("pos_store_owner_id", String(staff.storeOwnerId));
+    }
+
+    // Role mapping
+    const staffRole = roles.find(r => r.id === Number(staff.roleId)) ||
+                      roles.find(r => r.roleCode === staff.role) ||
+                      roles[0];
+
+    const userObj = {
+      id: staff.id,
+      name: staff.name,
+      email: staff.email || "",
+      userCode: staff.userCode || "",
+      roleId: staffRole.id,
+      role: staffRole.roleCode,
+      roleName: staffRole.roleName,
+      assignedOutlets: staff.assignedOutlets || ["all"],
+      status: staff.status || "active"
+    };
+    localStorage.setItem("pos_user", JSON.stringify(userObj));
+
+    // Hide login screen, show app
+    const loginScreen = document.getElementById("loginScreen");
+    if (loginScreen) {
+      loginScreen.classList.add("hidden");
+      loginScreen.style.display = "none";
+    }
+    const appEl = document.querySelector(".app");
+    if (appEl) {
+      appEl.style.display = "flex";
+    }
+
+    const submitBtn = document.getElementById("loginSubmitBtn");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <span>Enter POS Floor Desk</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      `;
+    }
+
+    // Outlet station check
+    if (typeof getStaffAllowedOutlets === "function") {
+      const allowed = getStaffAllowedOutlets(staff);
+      if (allowed.length > 0 && !allowed.some(o => o.key === activeCompanySeries)) {
+        activeCompanySeries = allowed[0].key;
+        localStorage.setItem("pos_active_company_series", activeCompanySeries);
+      }
+    }
+
+    // Enforce role-based views and rights
+    enforceRoleAccess();
+    updateUserDisplay();
+    if (typeof renderTopbarSeriesSwitcher === "function") renderTopbarSeriesSwitcher();
+
+    // Determine initial view based on role permissions
+    const allowed = getAllowedViews();
+    let targetView = allowed[0] || "tables";
+    if (staffRole.roleCode === "KITCHEN" && allowed.includes("kot")) {
+      targetView = "kot";
+    } else if (staffRole.roleCode === "CASHIER" && allowed.includes("billing")) {
+      targetView = "billing";
+    } else if (allowed.includes("tables")) {
+      targetView = "tables";
+    }
+    showView(targetView);
+
+    showToast(`✓ Welcome ${staff.name}! Logged in as ${staffRole.roleName}`);
+    if (typeof refreshLucideIcons === "function") refreshLucideIcons();
+
+    // Background sync of tables, menu & stats
+    try {
+      await Promise.all([
+        apiClient.syncTables(),
+        apiClient.syncPosDesk(),
+        apiClient.syncStats()
+      ]);
+    } catch(e) {
+      console.warn("[Auth] Background sync error:", e);
+    }
+  }
 
 
   function updateGlobalStats() {
@@ -17263,6 +17522,13 @@ For any queries or updates, reply to this message.`;
       });
     });
 
+    const canModifyMasters = hasPermission("can_modify_masters");
+    if (!canModifyMasters) {
+      tableEl.querySelectorAll("[data-action='edit'], [data-action='delete'], [data-action='edit-outlet'], [data-action='delete-outlet']").forEach(btn => {
+        btn.style.display = "none";
+      });
+    }
+
     tableEl.querySelectorAll("[data-action='view']").forEach(btn => {
       btn.addEventListener("click", () => openMasterViewModal(btn.dataset.type, Number(btn.dataset.id)));
     });
@@ -17289,10 +17555,12 @@ For any queries or updates, reply to this message.`;
               return;
             }
             roles = roles.filter(r => r.id !== id);
+            try { localStorage.setItem("pos_roles", JSON.stringify(roles)); } catch(e) {}
             showToast("Role removed!");
             enforceRoleAccess();
           } else if (type === "users") {
             staffUsers = staffUsers.filter(u => u.id !== id);
+            try { localStorage.setItem("pos_staff_users", JSON.stringify(staffUsers)); } catch(e) {}
             showToast("Staff user removed!");
             enforceRoleAccess();
           }
@@ -19917,6 +20185,9 @@ For any queries or updates, reply to this message.`;
         roles.push(newRole);
         showToast(`Role '${name}' (${code}) created successfully!`);
       }
+      try {
+        localStorage.setItem("pos_roles", JSON.stringify(roles));
+      } catch(e) {}
       enforceRoleAccess();
     } else if (type === "users") {
       const name = document.getElementById("m_userName").value.trim();
@@ -19933,6 +20204,7 @@ For any queries or updates, reply to this message.`;
         document.querySelectorAll(".user-outlet-checkbox:checked").forEach(cb => selectedOutlets.push(cb.value));
       }
       const assignedOutlets = (allChecked || selectedOutlets.length === 0) ? ["all"] : selectedOutlets;
+      const currentStoreOwner = localStorage.getItem("pos_store_owner_id") || localStorage.getItem("mainId") || localStorage.getItem("userId") || "";
 
       if (isEdit) {
         const item = staffUsers.find(u => u.id === editingRecordId);
@@ -19945,6 +20217,7 @@ For any queries or updates, reply to this message.`;
           item.phone = phone;
           item.pin = pin;
           item.status = status;
+          if (!item.storeOwnerId && currentStoreOwner) item.storeOwnerId = currentStoreOwner;
         }
         showToast(`Staff member '${name}' updated!`);
       } else {
@@ -19957,7 +20230,8 @@ For any queries or updates, reply to this message.`;
           email: email || `${code.toLowerCase()}@justcatering.in`,
           phone: phone || "+91 98000 00000",
           pin: pin || "1234",
-          status
+          status,
+          storeOwnerId: currentStoreOwner
         };
         staffUsers.push(newUser);
         showToast(`Staff member '${name}' registered with role '${roles.find(r => r.id === roleId)?.roleName || ''}'!`);
