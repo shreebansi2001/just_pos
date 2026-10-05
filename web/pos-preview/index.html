@@ -5179,12 +5179,15 @@
 
           <!-- Bottom Action Buttons: Prominent, high-contrast POS actions -->
           <div class="cart-actions">
-            <div style="display:flex;gap:6px;">
-              <button class="btn" id="holdOrderBtn" style="flex:1;height:38px;padding:0 8px;background:var(--line-soft);border:1.5px solid #f59e0b;color:#b45309;font-weight:700;font-size:12.5px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:5px;" title="Save as Pending order">
+            <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:6px;margin-bottom:6px;">
+              <button class="btn" id="holdOrderBtn" style="height:38px;padding:0 6px;background:var(--line-soft);border:1.5px solid #f59e0b;color:#b45309;font-weight:700;font-size:12px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:4px;" title="Save as Pending order">
                 <i data-lucide="clock" style="width:14px;height:14px;"></i> Hold
               </button>
-              <button class="btn btn-primary" id="sendKotBtn" style="flex:1.4;height:38px;padding:0 8px;font-weight:800;font-size:13.5px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                <i data-lucide="chef-hat" style="width:16px;height:16px;"></i> Send to KOT
+              <button class="btn btn-primary" id="sendKotBtn" style="height:38px;padding:0 6px;font-weight:800;font-size:12.5px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:5px;">
+                <i data-lucide="chef-hat" style="width:15px;height:15px;"></i> Send KOT
+              </button>
+              <button class="btn btn-secondary" id="printOrderBtn" style="height:38px;padding:0 6px;font-weight:800;font-size:12.5px;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:5px;background:#f0fdf4;border:1.5px solid #16a34a;color:#15803d;cursor:pointer;" title="Print Order / Estimate / KOT">
+                <i data-lucide="printer" style="width:15px;height:15px;"></i> Print
               </button>
             </div>
             <button class="btn btn-primary" id="checkoutBtn" style="width:100%;height:44px;padding:0;background:#059669;border-color:#059669;font-weight:800;font-size:14.5px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 2px 8px rgba(5,150,105,0.25);">
@@ -5492,6 +5495,117 @@
       <div class="modal-foot">
         <button type="button" class="btn" data-close-modal style="flex:1;">Cancel</button>
         <button type="submit" class="btn btn-primary" id="saveMasterBtn" style="flex:1;">Save Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Order Print Options Modal -->
+<div class="modal-backdrop" id="orderPrintOptionsModal" style="z-index:10040;background:rgba(0,0,0,0.65);">
+  <div class="modal" style="max-width:480px;box-shadow:0 20px 45px rgba(0,0,0,0.35);border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
+    <div class="modal-head" style="background:var(--surface-subtle);border-bottom:1.5px solid var(--line);padding:14px 18px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">🖨️</span>
+        <div>
+          <h3 style="margin:0;font-size:16px;color:var(--ink);">Print Order &amp; Kitchen Slips</h3>
+          <p id="orderPrintModalSubtitle" style="margin:2px 0 0;font-size:11px;color:var(--ink-soft);">Table / Counter Order</p>
+        </div>
+      </div>
+      <button type="button" class="modal-close" data-close-print-modal style="font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px;display:flex;flex-direction:column;gap:16px;">
+      
+      <!-- Section 1: Number of Copies -->
+      <div>
+        <label style="font-weight:700;font-size:12.5px;color:var(--ink);display:block;margin-bottom:8px;">
+          📄 Number of Copies to Print
+        </label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;">
+            <button type="button" id="btnPrintCopiesDec" style="width:38px;height:38px;border:none;background:var(--surface-subtle);font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;">−</button>
+            <input type="number" id="orderPrintCopiesInput" value="1" min="1" max="10" style="width:50px;height:38px;border:none;text-align:center;font-size:16px;font-weight:900;font-family:monospace;background:transparent;outline:none;" readonly>
+            <button type="button" id="btnPrintCopiesInc" style="width:38px;height:38px;border:none;background:var(--surface-subtle);font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;">+</button>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="1" style="font-weight:700;padding:6px 12px;border-radius:6px;">1 Copy</button>
+            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="2" style="font-weight:700;padding:6px 12px;border-radius:6px;">2 Copies</button>
+            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="3" style="font-weight:700;padding:6px 12px;border-radius:6px;">3 Copies</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Print Mode (With KOT vs Without KOT vs KOT Only) -->
+      <div>
+        <label style="font-weight:700;font-size:12.5px;color:var(--ink);display:block;margin-bottom:8px;">
+          🎛️ Slip Selection (With or Without KOT)
+        </label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--primary);border-radius:8px;cursor:pointer;background:rgba(1,122,156,0.06);" class="print-mode-card" id="card_print_with_kot">
+            <input type="radio" name="orderPrintMode" value="with_kot" checked style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:13px;color:var(--ink);">🍳 With Kitchen KOT (Bill + KOT)</div>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Prints customer estimate / dining bill AND kitchen preparation ticket.</div>
+            </div>
+          </label>
+
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--panel);" class="print-mode-card" id="card_print_without_kot">
+            <input type="radio" name="orderPrintMode" value="without_kot" style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:13px;color:var(--ink);">🧾 Without Kitchen KOT (Bill Only)</div>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Prints customer estimate / dining guest check only. No kitchen slip.</div>
+            </div>
+          </label>
+
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;background:var(--panel);" class="print-mode-card" id="card_print_kot_only">
+            <input type="radio" name="orderPrintMode" value="kot_only" style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:13px;color:var(--ink);">🍳 Kitchen KOT Only (Kitchen Slip Only)</div>
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">Prints only the kitchen order ticket for chefs. No bill slip.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 3: Kitchen Dispatch Checkbox -->
+      <div id="printDispatchKotOption" style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:8px;padding:10px 12px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;margin:0;">
+          <input type="checkbox" id="orderPrintDispatchKitchen" checked>
+          <span>🍳 Also dispatch ticket to active Kitchen KOT Board</span>
+        </label>
+      </div>
+
+      <!-- Live Preview Summary -->
+      <div id="orderPrintSummaryText" style="font-size:11.5px;color:var(--primary);font-weight:700;background:rgba(1,122,156,0.08);padding:8px 12px;border-radius:6px;border-left:3px solid var(--primary);">
+        Summary: 1 copy · Bill + Kitchen KOT (2 slips total)
+      </div>
+
+    </div>
+    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:10px;background:var(--surface-subtle);border-top:1.5px solid var(--line);">
+      <button type="button" class="btn" data-close-print-modal style="flex:1;">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btnExecuteOrderPrint" style="flex:1.4;height:42px;font-weight:800;font-size:14px;background:#15803d;border-color:#15803d;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i data-lucide="printer" style="width:16px;height:16px;"></i> Print Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Add Modal (Nested overlay for adding Category, Floor, Station, Role on the fly) -->
+<div class="modal-backdrop" id="quickAddModal" style="z-index:10050;background:rgba(0,0,0,0.65);">
+  <div class="modal" style="max-width:440px;box-shadow:0 20px 45px rgba(0,0,0,0.35);border:2px solid var(--primary-light);border-radius:12px;overflow:hidden;">
+    <div class="modal-head" style="background:var(--surface-subtle);border-bottom:1.5px solid var(--line);padding:14px 18px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="quickAddIcon" style="font-size:22px;">➕</span>
+        <h3 id="quickAddTitle" style="margin:0;font-size:16px;color:var(--ink);">Quick Add</h3>
+      </div>
+      <button type="button" class="modal-close" id="closeQuickAddModalBtn" style="font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form id="quickAddForm">
+      <div class="modal-body" id="quickAddBody" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <!-- Dynamic fields injected here -->
+      </div>
+      <div class="modal-foot" style="padding:12px 16px;display:flex;gap:10px;background:var(--surface-subtle);border-top:1.5px solid var(--line);">
+        <button type="button" class="btn" id="cancelQuickAddBtn" style="flex:1;">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveQuickAddBtn" style="flex:1.3;font-weight:800;">Add &amp; Select</button>
       </div>
     </form>
   </div>
@@ -12228,6 +12342,209 @@
     } else {
       window.print();
     }
+  });
+
+  // =========================================================================
+  // POS DESK ORDER PRINT CONTROLLER (PRINT COPIES + WITH/WITHOUT KOT)
+  // =========================================================================
+  function updateOrderPrintSummary() {
+    const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
+    const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
+    const summaryEl = document.getElementById("orderPrintSummaryText");
+    const dispatchBox = document.getElementById("printDispatchKotOption");
+
+    // Highlight active card
+    document.querySelectorAll(".print-mode-card").forEach(c => {
+      const isChecked = c.querySelector('input')?.checked;
+      if (isChecked) {
+        c.style.borderColor = "var(--primary)";
+        c.style.background = "rgba(1,122,156,0.06)";
+      } else {
+        c.style.borderColor = "var(--line)";
+        c.style.background = "var(--panel)";
+      }
+    });
+
+    if (dispatchBox) {
+      dispatchBox.style.display = (mode === "without_kot") ? "none" : "block";
+    }
+
+    let modeText = "";
+    let slipsPerCopy = 1;
+    if (mode === "with_kot") {
+      modeText = "Customer Bill + Kitchen KOT";
+      slipsPerCopy = 2;
+    } else if (mode === "without_kot") {
+      modeText = "Customer Bill / Estimate Only";
+      slipsPerCopy = 1;
+    } else {
+      modeText = "Kitchen KOT Only";
+      slipsPerCopy = 1;
+    }
+
+    const totalSlips = copies * slipsPerCopy;
+    if (summaryEl) {
+      summaryEl.textContent = `Summary: ${copies} ${copies === 1 ? 'Copy' : 'Copies'} · ${modeText} (Total ${totalSlips} ${totalSlips === 1 ? 'slip' : 'slips'} will print)`;
+    }
+  }
+
+  document.getElementById("printOrderBtn")?.addEventListener("click", () => {
+    if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
+      showToast("Order is empty! Please add dishes to print.", "error");
+      return;
+    }
+
+    const tableLabel = currentOrderSession.shortcode || currentOrderSession.label || "Counter / Takeaway";
+    const ordId = currentOrderSession.orderId || "NEW";
+    const subtitle = document.getElementById("orderPrintModalSubtitle");
+    if (subtitle) {
+      subtitle.textContent = `Order #${ordId} · ${tableLabel} · ${currentOrderSession.items.length} items`;
+    }
+
+    const copiesInp = document.getElementById("orderPrintCopiesInput");
+    if (copiesInp) copiesInp.value = "1";
+
+    const radioWithKot = document.getElementById("card_print_with_kot")?.querySelector('input');
+    if (radioWithKot) radioWithKot.checked = true;
+
+    updateOrderPrintSummary();
+    openModal("orderPrintOptionsModal");
+    if (window.lucide && lucide.createIcons) lucide.createIcons();
+  });
+
+  document.getElementById("btnPrintCopiesDec")?.addEventListener("click", () => {
+    const inp = document.getElementById("orderPrintCopiesInput");
+    if (inp) {
+      inp.value = Math.max(1, (parseInt(inp.value) || 1) - 1);
+      updateOrderPrintSummary();
+    }
+  });
+
+  document.getElementById("btnPrintCopiesInc")?.addEventListener("click", () => {
+    const inp = document.getElementById("orderPrintCopiesInput");
+    if (inp) {
+      inp.value = Math.min(10, (parseInt(inp.value) || 1) + 1);
+      updateOrderPrintSummary();
+    }
+  });
+
+  document.querySelectorAll(".btn-preset-copy").forEach(b => {
+    b.addEventListener("click", () => {
+      const c = parseInt(b.dataset.copies) || 1;
+      const inp = document.getElementById("orderPrintCopiesInput");
+      if (inp) {
+        inp.value = c;
+        updateOrderPrintSummary();
+      }
+    });
+  });
+
+  document.querySelectorAll('input[name="orderPrintMode"]').forEach(r => {
+    r.addEventListener("change", updateOrderPrintSummary);
+  });
+
+  document.querySelectorAll(".print-mode-card").forEach(c => {
+    c.addEventListener("click", () => {
+      const radio = c.querySelector('input[type="radio"]');
+      if (radio && !radio.checked) {
+        radio.checked = true;
+        updateOrderPrintSummary();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-close-print-modal]").forEach(b => {
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeModal("orderPrintOptionsModal");
+    });
+  });
+
+  document.getElementById("orderPrintOptionsModal")?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("orderPrintOptionsModal")) {
+      e.stopPropagation();
+      closeModal("orderPrintOptionsModal");
+    }
+  });
+
+  document.getElementById("btnExecuteOrderPrint")?.addEventListener("click", () => {
+    if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
+      showToast("Order is empty!", "error");
+      closeModal("orderPrintOptionsModal");
+      return;
+    }
+
+    const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
+    const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
+    const dispatchKitchen = Boolean(document.getElementById("orderPrintDispatchKitchen")?.checked);
+
+    const bill = calculateOrderBill(currentOrderSession, currentOrderSession.items);
+    const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
+    const tempInv = {
+      id: currentOrderSession.orderId || ("ORD-" + Date.now().toString().slice(-6)),
+      companySeries: companyKey,
+      tableLabel: currentOrderSession.shortcode || currentOrderSession.label || "Counter",
+      tokenNo: currentOrderSession.tokenNo || ("T-" + String(Date.now()).slice(-3)),
+      serverName: currentOrderSession.serverName || (currentStaffUser ? currentStaffUser.name : "Staff"),
+      customerName: currentOrderSession.customerName || (document.getElementById("orderCustName")?.value.trim()) || "Walk-in Guest",
+      customerPhone: currentOrderSession.customerPhone || (document.getElementById("orderCustPhone")?.value.trim()) || "",
+      items: currentOrderSession.items,
+      subtotal: bill.subtotal,
+      discountAmount: bill.discountAmount,
+      taxableAmount: bill.taxable,
+      cgst: bill.cgst,
+      sgst: bill.sgst,
+      total: bill.total,
+      paymentMode: "Pending / Bill Review",
+      status: "estimate",
+      dateFormatted: new Date().toLocaleDateString('en-GB'),
+      timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    let combinedHtml = "";
+    for (let c = 1; c <= copies; c++) {
+      const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9px;font-weight:800;color:#64748b;padding-bottom:2px;border-bottom:1px dashed #cbd5e1;margin-bottom:6px;">*** COPY ${c} OF ${copies} ***</div>` : '';
+
+      if (mode === "with_kot" || mode === "without_kot") {
+        // Customer Bill / Estimate Slip
+        const billSlip = generateDocumentSlipHtml(tempInv, "interim");
+        combinedHtml += `
+          <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
+            ${copyBadge}
+            ${billSlip}
+          </div>
+        `;
+      }
+
+      if (mode === "with_kot" || mode === "kot_only") {
+        // Kitchen KOT Slip
+        const kotSlip = generateDocumentSlipHtml(tempInv, "kot");
+        combinedHtml += `
+          <div class="print-slip-cut" style="page-break-after:always;break-after:page;margin-bottom:12mm;padding-bottom:6mm;border-bottom:1.5px dashed #000;">
+            ${copyBadge}
+            ${kotSlip}
+          </div>
+        `;
+      }
+    }
+
+    // Trigger Print
+    executeThermalPrint(combinedHtml, invoiceMasterConfig.paperFormat || "80mm");
+
+    // Optional dispatch to Kitchen KOT board
+    if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
+      const unsent = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
+      if (unsent.length > 0) {
+        dispatchKotForOrder(currentOrderSession, false);
+        renderCart();
+        renderTables();
+        if (typeof renderOrdersList === "function") renderOrdersList();
+      }
+    }
+
+    closeModal("orderPrintOptionsModal");
+    const modeLabel = (mode === "with_kot") ? "Bill + Kitchen KOT" : (mode === "without_kot" ? "Bill Only" : "Kitchen KOT Only");
+    showToast(`🖨️ Sent ${copies} ${copies === 1 ? 'copy' : 'copies'} (${modeLabel}) to printer!`, "success");
   });
 
   let currentInvoiceTab = "tax_invoice"; // "tax_invoice", "gate_pass", "digital"
@@ -19166,7 +19483,290 @@ For any queries or updates, reply to this message.`;
         }
       });
     });
+  // =========================================================================
+  // MASTERS QUICK ADD MODAL (+ ICON FUNCTIONALITY)
+  // Allows direct, non-destructive inline creation of Categories, Floors,
+  // Stations, and Roles without losing form state in the parent modal
+  // =========================================================================
+  let activeQuickAddTarget = null;
+  let activeQuickAddSelectId = null;
+
+  function openQuickAddModal(targetType, selectElementId) {
+    activeQuickAddTarget = targetType;
+    activeQuickAddSelectId = selectElementId;
+    const body = document.getElementById("quickAddBody");
+    const title = document.getElementById("quickAddTitle");
+    const icon = document.getElementById("quickAddIcon");
+    if (!body || !title) return;
+
+    if (targetType === "category") {
+      if (icon) icon.textContent = "📂";
+      title.textContent = "Quick Add Category";
+      body.innerHTML = `
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Category Name *</label>
+          <input type="text" id="quick_catName" required placeholder="e.g. Starters, Beverages, Desserts" style="font-size:13px;padding:8px 10px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Short Code <span style="font-size:10px;font-weight:normal;color:var(--ink-soft);">(Optional)</span></label>
+          <input type="text" id="quick_catCode" placeholder="e.g. STR" maxlength="10" style="text-transform:uppercase;font-weight:800;font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 10px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:12px;">
+            <input type="checkbox" id="quick_catAllOutlets" checked>
+            <span>🌐 Visible in All Outlets / Stations</span>
+          </label>
+        </div>
+      `;
+      setTimeout(() => {
+        const nameInp = document.getElementById("quick_catName");
+        const codeInp = document.getElementById("quick_catCode");
+        nameInp?.focus();
+        nameInp?.addEventListener("input", () => {
+          if (codeInp && !codeInp.dataset.manual) {
+            codeInp.value = deriveShortCode(nameInp.value, "CAT");
+          }
+        });
+        codeInp?.addEventListener("input", () => { codeInp.dataset.manual = "true"; });
+      }, 50);
+    } else if (targetType === "floor") {
+      if (icon) icon.textContent = "🗺️";
+      title.textContent = "Quick Add Floor / Section";
+      body.innerHTML = `
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Floor / Section Name *</label>
+          <input type="text" id="quick_flrName" required placeholder="e.g. First Floor AC, Terrace Lounge, Garden" style="font-size:13px;padding:8px 10px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Display Sort Order</label>
+          <input type="number" id="quick_flrSort" value="${floors.length + 1}" min="1" style="font-size:13px;padding:8px 10px;">
+        </div>
+      `;
+      setTimeout(() => {
+        document.getElementById("quick_flrName")?.focus();
+      }, 50);
+    } else if (targetType === "station") {
+      if (icon) icon.textContent = "🍳";
+      title.textContent = "Quick Add Kitchen Station";
+      body.innerHTML = `
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Station Name *</label>
+          <input type="text" id="quick_stationName" required placeholder="e.g. Tandoor, Bakery, Coffee Bar, Pantry" style="font-size:13px;padding:8px 10px;">
+        </div>
+      `;
+      setTimeout(() => {
+        document.getElementById("quick_stationName")?.focus();
+      }, 50);
+    } else if (targetType === "role") {
+      if (icon) icon.textContent = "👥";
+      title.textContent = "Quick Add Staff Role";
+      body.innerHTML = `
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Role Name *</label>
+          <input type="text" id="quick_roleName" required placeholder="e.g. Captain, Bar Expediter" style="font-size:13px;padding:8px 10px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Role Code *</label>
+          <input type="text" id="quick_roleCode" required placeholder="e.g. CAP" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 10px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="font-weight:700;font-size:12px;">Quick Template</label>
+          <select id="quick_roleTemplate" style="font-size:12px;padding:6px 8px;">
+            <option value="waiter">🧑‍🍳 Captain / Waiter (POS &amp; Tables)</option>
+            <option value="cashier">💵 Cashier (Billing &amp; Invoices)</option>
+            <option value="kitchen">🍳 Kitchen Chef (KOT Kanban Only)</option>
+            <option value="admin">👑 Admin (Full Access)</option>
+          </select>
+        </div>
+      `;
+      setTimeout(() => {
+        const nameInp = document.getElementById("quick_roleName");
+        const codeInp = document.getElementById("quick_roleCode");
+        nameInp?.focus();
+        nameInp?.addEventListener("input", () => {
+          if (codeInp && !codeInp.dataset.manual) {
+            codeInp.value = deriveShortCode(nameInp.value, "ROLE");
+          }
+        });
+        codeInp?.addEventListener("input", () => { codeInp.dataset.manual = "true"; });
+      }, 50);
+    }
+
+    const modal = document.getElementById("quickAddModal");
+    if (modal) {
+      modal.classList.add("active");
+      modal.style.display = "flex";
+    }
   }
+  window.openQuickAddModal = openQuickAddModal;
+
+  document.getElementById("closeQuickAddModalBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeModal("quickAddModal");
+  });
+  document.getElementById("cancelQuickAddBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeModal("quickAddModal");
+  });
+  document.getElementById("quickAddModal")?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("quickAddModal")) {
+      e.stopPropagation();
+      closeModal("quickAddModal");
+    }
+  });
+
+  document.getElementById("quickAddForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const targetSelect = document.getElementById(activeQuickAddSelectId);
+
+    if (activeQuickAddTarget === "category") {
+      const name = document.getElementById("quick_catName")?.value.trim();
+      if (!name) {
+        showToast("Category name is required!", "error");
+        return;
+      }
+      const rawCode = (document.getElementById("quick_catCode")?.value || "").trim().toUpperCase();
+      const code = rawCode || deriveShortCode(name, "CAT");
+      const allOutlets = Boolean(document.getElementById("quick_catAllOutlets")?.checked);
+
+      const newId = (categories.length > 0 ? Math.max(...categories.map(c => Number(c.id) || 0)) : 0) + 1;
+      const newCat = {
+        id: newId,
+        categoryName: name,
+        code: code,
+        shortcode: code,
+        categoryDescription: "",
+        applicableOutlets: allOutlets ? ["all"] : [activeCompanySeries || "main"],
+        sortOrder: categories.length + 1,
+        status: "active"
+      };
+
+      categories.push(newCat);
+      setCategoryMeta(newId, {
+        code: code,
+        description: "",
+        applicableOutlets: allOutlets ? ["all"] : [activeCompanySeries || "main"],
+        sortOrder: categories.length
+      });
+      saveCategoriesState();
+
+      if (targetSelect) {
+        const opt = document.createElement("option");
+        opt.value = newId;
+        opt.textContent = name;
+        targetSelect.appendChild(opt);
+        targetSelect.value = newId;
+        targetSelect.dispatchEvent(new Event("change"));
+      }
+
+      if (typeof renderMasters === "function" && activeView === "masters") renderMasterTable();
+      if (typeof renderPosMenu === "function") renderPosMenu();
+
+      closeModal("quickAddModal");
+      showToast(`✓ Category "${name}" created and selected!`, "success");
+
+    } else if (activeQuickAddTarget === "floor") {
+      const name = document.getElementById("quick_flrName")?.value.trim();
+      if (!name) {
+        showToast("Floor name is required!", "error");
+        return;
+      }
+      const sort = Number(document.getElementById("quick_flrSort")?.value) || (floors.length + 1);
+      const newId = (floors.length > 0 ? Math.max(...floors.map(f => Number(f.id) || 0)) : 0) + 1;
+      const newFloor = {
+        id: newId,
+        floorName: name,
+        sortOrder: sort,
+        status: "active"
+      };
+
+      floors.push(newFloor);
+      saveFloorsState();
+
+      if (targetSelect) {
+        const opt = document.createElement("option");
+        opt.value = newId;
+        opt.textContent = name;
+        targetSelect.appendChild(opt);
+        targetSelect.value = newId;
+        targetSelect.dispatchEvent(new Event("change"));
+      }
+
+      if (typeof renderMasters === "function" && activeView === "masters") renderMasterTable();
+      if (typeof renderTables === "function") renderTables();
+
+      closeModal("quickAddModal");
+      showToast(`✓ Floor "${name}" created and selected!`, "success");
+
+    } else if (activeQuickAddTarget === "station") {
+      const name = document.getElementById("quick_stationName")?.value.trim();
+      if (!name) {
+        showToast("Station name is required!", "error");
+        return;
+      }
+      if (targetSelect) {
+        let exists = false;
+        Array.from(targetSelect.options).forEach(o => {
+          if (o.value.toLowerCase() === name.toLowerCase()) {
+            exists = true;
+            targetSelect.value = o.value;
+          }
+        });
+        if (!exists) {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          targetSelect.appendChild(opt);
+          targetSelect.value = name;
+        }
+        targetSelect.dispatchEvent(new Event("change"));
+      }
+      closeModal("quickAddModal");
+      showToast(`✓ Kitchen Station "${name}" added and selected!`, "success");
+
+    } else if (activeQuickAddTarget === "role") {
+      const name = document.getElementById("quick_roleName")?.value.trim();
+      if (!name) {
+        showToast("Role name is required!", "error");
+        return;
+      }
+      const code = (document.getElementById("quick_roleCode")?.value || "").trim().toUpperCase() || deriveShortCode(name, "ROLE");
+      const tmpl = document.getElementById("quick_roleTemplate")?.value || "waiter";
+
+      let perms = ["view_kot"];
+      if (tmpl === "admin") perms = ALL_PERMISSIONS.map(p => p.id);
+      else if (tmpl === "cashier") perms = ["view_tables", "view_orders", "view_pos", "view_billing", "can_apply_discount", "can_exempt_tax"];
+      else if (tmpl === "waiter") perms = ["view_tables", "view_orders", "view_pos"];
+
+      const newId = (roles.length > 0 ? Math.max(...roles.map(r => Number(r.id) || 0)) : 0) + 1;
+      const newRole = {
+        id: newId,
+        roleName: name,
+        roleCode: code,
+        description: `Custom ${name} role`,
+        permissions: perms,
+        status: "active",
+        isSystem: false
+      };
+
+      roles.push(newRole);
+      try {
+        localStorage.setItem("pos_custom_roles", JSON.stringify(roles));
+      } catch(e) {}
+
+      if (targetSelect) {
+        const opt = document.createElement("option");
+        opt.value = newId;
+        opt.textContent = `${name} (${code}) — ${perms.length} rights`;
+        targetSelect.appendChild(opt);
+        targetSelect.value = newId;
+        targetSelect.dispatchEvent(new Event("change"));
+      }
+
+      closeModal("quickAddModal");
+      showToast(`✓ Role "${name}" created and selected!`, "success");
+    }
+  });
 
   let activeMasterFormType = "categories";
 
@@ -19451,10 +20051,20 @@ For any queries or updates, reply to this message.`;
             <input type="text" id="m_itShort" value="${rec.shortcode || ''}" placeholder="e.g. PBM (Auto-generated if empty)" maxlength="10" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;">
           </div>
           <div class="form-group">
-            <label>Category *</label>
-            <select id="m_itCat" required>
-              ${categories.map(c => `<option value="${c.id}" ${rec.categoryId === c.id ? 'selected' : ''}>${c.categoryName}</option>`).join("")}
-            </select>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <label style="margin:0;">Category *</label>
+              <button type="button" id="btnQuickAddCat" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;" title="Quick Add Category">
+                <span>➕ New</span>
+              </button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select id="m_itCat" required style="flex:1;">
+                ${categories.map(c => `<option value="${c.id}" ${rec.categoryId === c.id ? 'selected' : ''}>${c.categoryName}</option>`).join("")}
+              </select>
+              <button type="button" id="btnQuickAddCatIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Category">
+                +
+              </button>
+            </div>
           </div>
         </div>
 
@@ -19536,13 +20146,24 @@ For any queries or updates, reply to this message.`;
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group">
-            <label>Kitchen Station</label>
-            <select id="m_itStation">
-              <option value="Kitchen" ${rec.station === 'Kitchen' ? 'selected' : ''}>Kitchen</option>
-              <option value="Bar" ${rec.station === 'Bar' ? 'selected' : ''}>Bar / Beverage</option>
-              <option value="Live Counter" ${rec.station === 'Live Counter' ? 'selected' : ''}>Live Counter</option>
-              <option value="Dessert Counter" ${rec.station === 'Dessert Counter' ? 'selected' : ''}>Dessert Counter</option>
-            </select>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <label style="margin:0;">Kitchen Station</label>
+              <button type="button" id="btnQuickAddStation" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;" title="Quick Add Kitchen Station">
+                <span>➕ New</span>
+              </button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select id="m_itStation" style="flex:1;">
+                <option value="Kitchen" ${rec.station === 'Kitchen' ? 'selected' : ''}>Kitchen</option>
+                <option value="Bar" ${rec.station === 'Bar' ? 'selected' : ''}>Bar / Beverage</option>
+                <option value="Live Counter" ${rec.station === 'Live Counter' ? 'selected' : ''}>Live Counter</option>
+                <option value="Dessert Counter" ${rec.station === 'Dessert Counter' ? 'selected' : ''}>Dessert Counter</option>
+                ${(rec.station && !['Kitchen','Bar','Live Counter','Dessert Counter'].includes(rec.station)) ? `<option value="${rec.station}" selected>${rec.station}</option>` : ''}
+              </select>
+              <button type="button" id="btnQuickAddStationIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Kitchen Station">
+                +
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label>Approx 1-Plate Weight (Grams)</label>
@@ -19785,6 +20406,11 @@ For any queries or updates, reply to this message.`;
           }
         });
       }
+
+      document.getElementById("btnQuickAddCat")?.addEventListener("click", () => openQuickAddModal("category", "m_itCat"));
+      document.getElementById("btnQuickAddCatIcon")?.addEventListener("click", () => openQuickAddModal("category", "m_itCat"));
+      document.getElementById("btnQuickAddStation")?.addEventListener("click", () => openQuickAddModal("station", "m_itStation"));
+      document.getElementById("btnQuickAddStationIcon")?.addEventListener("click", () => openQuickAddModal("station", "m_itStation"));
     } else if (type === "floors") {
       const rec = isEdit ? floors.find(f => f.id === id) : { floorName: "", sortOrder: floors.length + 1, status: "active" };
       formBody.innerHTML = `
@@ -19821,10 +20447,20 @@ For any queries or updates, reply to this message.`;
             <input type="text" id="m_tblShort" value="${curShort}" placeholder="e.g. GF01 (Auto-generated)" style="font-family:'JetBrains Mono',monospace;text-transform:uppercase;">
           </div>
           <div class="form-group">
-            <label>Assigned Floor *</label>
-            <select id="m_tblFloor" required>
-              ${floors.map(f => `<option value="${f.id}" ${rec.floorId == f.id ? 'selected' : ''}>${f.floorName}</option>`).join("")}
-            </select>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <label style="margin:0;">Assigned Floor *</label>
+              <button type="button" id="btnQuickAddFloor" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;" title="Quick Add Floor">
+                <span>➕ New</span>
+              </button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select id="m_tblFloor" required style="flex:1;">
+                ${floors.map(f => `<option value="${f.id}" ${rec.floorId == f.id ? 'selected' : ''}>${f.floorName}</option>`).join("")}
+              </select>
+              <button type="button" id="btnQuickAddFloorIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Floor">
+                +
+              </button>
+            </div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -19858,6 +20494,9 @@ For any queries or updates, reply to this message.`;
           }
         });
       }
+
+      document.getElementById("btnQuickAddFloor")?.addEventListener("click", () => openQuickAddModal("floor", "m_tblFloor"));
+      document.getElementById("btnQuickAddFloorIcon")?.addEventListener("click", () => openQuickAddModal("floor", "m_tblFloor"));
     } else if (type === "taxes") {
       const rec = isEdit ? taxes.find(tx => tx.id === id) : { taxName: "", percentage: 5.0, status: "active" };
       formBody.innerHTML = `
@@ -20068,14 +20707,24 @@ For any queries or updates, reply to this message.`;
         </div>
 
         <div class="form-group">
-          <label>Assigned Role (Permissions Profile) *</label>
-          <select id="m_userRoleId" required style="font-weight:700;font-size:12.5px;">
-            ${roles.filter(r => r.status === 'active').map(r => `
-              <option value="${r.id}" ${rec.roleId === r.id ? 'selected' : ''}>
-                ${r.roleName} (${r.roleCode}) — ${r.permissions.length} rights
-              </option>
-            `).join("")}
-          </select>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <label style="margin:0;">Assigned Role (Permissions Profile) *</label>
+            <button type="button" id="btnQuickAddRole" style="display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--primary);background:none;border:none;cursor:padding:0;" title="Quick Add Role">
+              <span>➕ New</span>
+            </button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="m_userRoleId" required style="font-weight:700;font-size:12.5px;flex:1;">
+              ${roles.filter(r => r.status === 'active').map(r => `
+                <option value="${r.id}" ${rec.roleId === r.id ? 'selected' : ''}>
+                  ${r.roleName} (${r.roleCode}) — ${r.permissions.length} rights
+                </option>
+              `).join("")}
+            </select>
+            <button type="button" id="btnQuickAddRoleIcon" class="btn btn-secondary" style="padding:0;width:38px;height:38px;min-width:38px;font-size:18px;font-weight:800;color:var(--primary);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--primary-light);background:var(--primary-subtle);cursor:pointer;" title="Quick Add Role">
+              +
+            </button>
+          </div>
         </div>
 
         <div class="form-group" style="margin-bottom:12px;">
@@ -20231,6 +20880,9 @@ For any queries or updates, reply to this message.`;
         }
 
         updateCodeSuggestion();
+
+        document.getElementById("btnQuickAddRole")?.addEventListener("click", () => openQuickAddModal("role", "m_userRoleId"));
+        document.getElementById("btnQuickAddRoleIcon")?.addEventListener("click", () => openQuickAddModal("role", "m_userRoleId"));
       }, 50);
     }
 
