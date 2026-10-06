@@ -9,4 +9,9 @@ import com.crmportal.pos.entity.PosItemEntity;
 public interface PosItemRepository extends JpaRepository<PosItemEntity, Long> {
     List<PosItemEntity> findByActiveTrue();
     List<PosItemEntity> findByCategoryIdAndActiveTrue(Long categoryId);
+
+    // User-wise queries
+    List<PosItemEntity> findByUserId(Long userId);
+    List<PosItemEntity> findByUserIdAndActiveTrue(Long userId);
+    List<PosItemEntity> findByUserIdAndCategoryIdAndActiveTrue(Long userId, Long categoryId);
 }

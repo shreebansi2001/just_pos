@@ -34,11 +34,17 @@ public class PosOrderEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L; // Admin/Owner account (client_id = 0 in users table)
+
     @Column(name = "order_code", nullable = false, length = 40)
     private String orderCode;
 
     @Column(name = "order_type", nullable = false, length = 30)
     private String orderType = "dine-in"; // dine-in, takeaway, delivery, catering
+
+    @Column(name = "outlet_code", length = 30)
+    private String outletCode = "MAIN";
 
     @Column(name = "table_id")
     private Long tableId;
@@ -52,6 +58,41 @@ public class PosOrderEntity implements Serializable {
     @Column(name = "customer_phone", length = 30)
     private String customerPhone;
 
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
+
+    // Staff Role-based User ID Tracking
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId; // Waiter/Captain who punched order
+
+    @Column(name = "waiter_id")
+    private Long waiterId; // Assigned Captain/Waiter
+
+    @Column(name = "cashier_id")
+    private Long cashierId; // Cashier who settled payment
+
+    @Column(name = "delivery_boy_id")
+    private Long deliveryBoyId; // Delivery rider
+
+    @Column(name = "approved_by_user_id")
+    private Long approvedByUserId; // Admin/Manager who approved discount/void
+
+    @Column(name = "updated_by_user_id")
+    private Long updatedByUserId; // Staff member who last edited order
+
+    // Delivery Tracking
+    @Column(name = "delivery_status", length = 30)
+    private String deliveryStatus = "unassigned";
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "delivery_assigned_at")
+    private Date deliveryAssignedAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "delivered_at")
+    private Date deliveredAt;
+
+    // Pricing & Status
     @Column(name = "discount_type", length = 20)
     private String discountType = "pct"; // pct or flat
 
@@ -70,4 +111,8 @@ public class PosOrderEntity implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
     private Date createdAt = new Date();
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "updated_at")
+    private Date updatedAt = new Date();
 }

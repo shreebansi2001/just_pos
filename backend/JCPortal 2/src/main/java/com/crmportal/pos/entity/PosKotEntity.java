@@ -34,6 +34,9 @@ public class PosKotEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L; // Admin/Owner account
+
     @Column(name = "kot_code", nullable = false, length = 40)
     private String kotCode;
 
@@ -49,8 +52,14 @@ public class PosKotEntity implements Serializable {
     @Column(name = "order_type", length = 30)
     private String orderType = "dine-in";
 
+    @Column(name = "station", length = 60)
+    private String station = "Kitchen";
+
     @Column(name = "status", length = 30)
-    private String status = "new"; // new, preparing, ready, served
+    private String status = "new"; // new, preparing, ready, served, cancelled
+
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId; // Staff member who punched KOT
 
     @OneToMany(mappedBy = "kot", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<PosKotItemEntity> items = new ArrayList<PosKotItemEntity>();

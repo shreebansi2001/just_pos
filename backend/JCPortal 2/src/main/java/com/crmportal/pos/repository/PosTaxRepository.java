@@ -8,4 +8,8 @@ import com.crmportal.pos.entity.PosTaxEntity;
 @Repository
 public interface PosTaxRepository extends JpaRepository<PosTaxEntity, Long> {
     List<PosTaxEntity> findByStatus(String status);
+
+    // User-wise queries
+    List<PosTaxEntity> findByUserId(Long userId);
+    List<PosTaxEntity> findByUserIdAndStatus(Long userId, String status);
 }

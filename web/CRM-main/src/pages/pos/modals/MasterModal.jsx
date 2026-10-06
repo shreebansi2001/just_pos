@@ -9,7 +9,7 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
 
   useEffect(() => {
     if (itemData) {
-      setFormData({ ...itemData });
+      setFormData({ ...itemData, code: itemData.code || itemData.shortcode || '' });
       if (itemData.variants && itemData.variants.length > 0) {
         setHasVariants(true);
         setVariants([...itemData.variants]);
@@ -19,7 +19,7 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
       }
     } else {
       if (masterType === 'categories') {
-        setFormData({ name: '', sortOrder: (categories.length || 0) + 1, active: true });
+        setFormData({ name: '', code: '', sortOrder: (categories.length || 0) + 1, active: true });
       } else if (masterType === 'items') {
         setFormData({
           name: '',
@@ -94,20 +94,45 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
           {/* Category Fields */}
           {masterType === 'categories' && (
             <>
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-gray-500 mb-1">Category Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Starters"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:border-[#017A9C]"
-                />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block font-bold uppercase tracking-wider text-gray-500 mb-1">Category Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name || ''}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      const words = newName.trim().split(/\s+/).filter(Boolean);
+                      let suggested = '';
+                      if (words.length >= 2) suggested = words.map(w => w[0]).join('').slice(0, 4).toUpperCase();
+                      else if (words.length === 1) suggested = words[0].slice(0, 3).toUpperCase();
+                      setFormData({
+                        ...formData,
+                        name: newName,
+                        code: formData.codeEdited ? (formData.code || '') : suggested
+                      });
+                    }}
+                    placeholder="e.g. Starters"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:border-[#017A9C]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold uppercase tracking-wider text-gray-500 mb-1">Short Code *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.code || ''}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase(), codeEdited: true })}
+                    placeholder="e.g. STR"
+                    maxLength={10}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-bold uppercase tracking-wider focus:outline-none focus:border-[#017A9C]"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold uppercase tracking-wider text-gray-500 mb-1">Sort Order</label>
+                  <label className="block font-bold uppercase tracking-wider text-gray-500 mb-1">Display Sequence (Optional)</label>
                   <input
                     type="number"
                     value={formData.sortOrder || 1}

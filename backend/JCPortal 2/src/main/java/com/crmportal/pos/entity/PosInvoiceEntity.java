@@ -30,8 +30,14 @@ public class PosInvoiceEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L; // Admin/Owner account
+
     @Column(name = "invoice_code", nullable = false, length = 40)
     private String invoiceCode;
+
+    @Column(name = "outlet_code", length = 30)
+    private String outletCode = "MAIN";
 
     @Column(name = "order_id")
     private Long orderId;
@@ -71,6 +77,12 @@ public class PosInvoiceEntity implements Serializable {
 
     @Column(name = "payment_mode", length = 40)
     private String paymentMode; // Cash, Card, UPI
+
+    @Column(name = "cashier_id")
+    private Long cashierId; // Cashier who collected payment
+
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId; // Staff who created invoice
 
     @Lob
     @Column(name = "items_json")

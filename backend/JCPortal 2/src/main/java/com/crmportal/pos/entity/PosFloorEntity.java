@@ -29,6 +29,9 @@ public class PosFloorEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L; // Admin/Owner account (client_id = 0 in users table)
+
     @Column(name = "code", length = 30)
     private String code;
 
@@ -44,7 +47,27 @@ public class PosFloorEntity implements Serializable {
     @Column(name = "is_active")
     private Boolean active = true;
 
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId;
+
+    @Column(name = "updated_by_user_id")
+    private Long updatedByUserId;
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
     private Date createdAt = new Date();
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "updated_at")
+    private Date updatedAt = new Date();
+
+    public void setFloorName(String floorName) {
+        if (this.name == null || this.name.trim().isEmpty()) {
+            this.name = floorName;
+        }
+    }
+
+    public String getFloorName() {
+        return this.name;
+    }
 }

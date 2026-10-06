@@ -29,6 +29,9 @@ public class PosReservationEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L; // Admin/Owner account
+
     @Column(name = "res_code", nullable = false, length = 40)
     private String resCode;
 
@@ -64,6 +67,9 @@ public class PosReservationEntity implements Serializable {
 
     @Column(name = "order_id")
     private Long orderId;
+
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId; // Staff who booked reservation
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")

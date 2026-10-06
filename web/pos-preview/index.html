@@ -7895,6 +7895,8 @@
 
   // Active Session State
   let activeView = "tables";
+  let previousView = "tables";
+  let navigationHistoryStack = [];
   let activeFloorTab = "all";
   let activeMasterTab = "categories";
   let activeMenuCatId = "all"; // Default to "all" so user sees items immediately!
@@ -9007,7 +9009,7 @@
   // =========================================================================
   // VIEW NAVIGATION & ROUTING (WITH ROLE-BASED ACCESS GUARDS)
   // =========================================================================
-  function showView(viewId) {
+  function showView(viewId, pushHistory = true) {
     // Dynamic Role-based Access Guard
     const permKey = viewId === "pos" ? "view_pos" : `view_${viewId}`;
     if (!hasPermission(permKey)) {
@@ -9016,15 +9018,30 @@
         const curRole = getCurrentRole();
         const fallback = (curRole.roleCode === "KITCHEN" && allowed.includes("kot")) ? "kot" : (allowed.includes("tables") ? "tables" : allowed[0]);
         showToast(`⚠️ Access Restricted: '${curRole.roleName}' cannot access ${viewId.toUpperCase()}`);
-        showView(fallback);
+        showView(fallback, pushHistory);
         return;
       }
+    }
+
+    if (viewId !== activeView) {
+      previousView = activeView;
+      navigationHistoryStack.push(activeView);
+      if (navigationHistoryStack.length > 30) navigationHistoryStack.shift();
     }
 
     activeView = viewId;
     try {
       localStorage.setItem("pos_active_view", viewId);
     } catch (e) {}
+
+    // Update browser URL hash & history state for browser/device back button support
+    if (pushHistory !== false && window.history && window.history.pushState) {
+      const targetHash = `#view-${viewId}`;
+      if (window.location.hash !== targetHash) {
+        window.history.pushState({ view: viewId }, `Just POS`, targetHash);
+      }
+    }
+
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     document.querySelectorAll(".nav-btn[data-view]").forEach(b => b.classList.remove("active"));
 
@@ -9032,6 +9049,23 @@
     if (targetView) targetView.classList.add("active");
     const activeNav = document.querySelector(`.nav-btn[data-view="${viewId}"]`) || (viewId === "pos" ? document.querySelector(`.nav-btn[data-view="orders"]`) : null);
     if (activeNav) activeNav.classList.add("active");
+
+    // Dynamic Back Button Label in POS Desk Header
+    if (viewId === "pos") {
+      const backBtn = document.getElementById("backToFloorBtn");
+      if (backBtn) {
+        if (previousView === "orders") {
+          backBtn.textContent = "← Orders";
+          backBtn.title = "Back to all orders list";
+        } else if (previousView === "billing") {
+          backBtn.textContent = "← Billing";
+          backBtn.title = "Back to billing receipts";
+        } else {
+          backBtn.textContent = "← Tables";
+          backBtn.title = "Back to floor tables layout";
+        }
+      }
+    }
 
     if (viewId === "tables") {
       document.getElementById("pageTitle").textContent = "Live Floor Tables";
@@ -9327,9 +9361,11 @@
     const loginScreen = document.getElementById("loginScreen");
     const incomingToken = urlParams.get("token") || urlParams.get("t") || urlParams.get("authToken") || urlParams.get("userToken");
     const incomingUserId = urlParams.get("userId") || urlParams.get("mainId");
-    const isBypassMode = urlParams.get("bypass") === "1" || urlParams.get("dashboard") === "1";
-    const fromJcx = urlParams.get("from") === "jcx" || urlParams.get("source") === "jcx" || urlParams.get("sso") === "1" || !!urlParams.get("token") || !!urlParams.get("t");
-    const isAuthenticated = sessionStorage.getItem("pos_authenticated_session") === "true" || isBypassMode;
+    const isStoredAuth = localStorage.getItem("pos_is_authenticated") === "true" && !!localStorage.getItem("pos_user");
+    const isAuthenticated = sessionStorage.getItem("pos_authenticated_session") === "true" || isStoredAuth || isBypassMode;
+    if (isAuthenticated && !sessionStorage.getItem("pos_authenticated_session")) {
+      sessionStorage.setItem("pos_authenticated_session", "true");
+    }
 
     if (isBypassMode) {
       sessionStorage.setItem("pos_authenticated_session", "true");
@@ -9767,15 +9803,14 @@
       // Verify Module Entitlement: checks upgradeModuleId === 24 or moduleName contains POS
       const rawUpgraded = (u && Array.isArray(u.userUpgradedModule)) ? u.userUpgradedModule : 
                           (Array.isArray(loginResult.data?.userUpgradedModule) ? loginResult.data.userUpgradedModule : []);
-      console.log("[Auth] Checking module entitlement in userUpgradedModule:", rawUpgraded, "User:", u);
-
-      const hasPosAccess = rawUpgraded.some(module => {
+      const isOwnerOrAdmin = (!u.ischilduser || u.clientId === 0 || u.clientId === -1 || !u.clientId || u.id === u.clientId || (u.role && String(u.role).toUpperCase().includes("ADMIN")));
+      const hasPosAccess = isOwnerOrAdmin || rawUpgraded.some(module => {
         const modId = Number(module.upgradeModuleId || module.moduleId || module.id);
         const isTargetModule = (modId === 24);
         const isPosName = module.moduleName && (module.moduleName.trim().toUpperCase() === "POS" || module.moduleName.trim().toUpperCase().includes("POS"));
         const isActive = (module.isActive === true || module.isActive === "true" || module.isActive === 1 || module.isActive === undefined || module.isActive === null);
         return (isTargetModule || isPosName) && isActive;
-      }) || (u && u.role && String(u.role).toUpperCase().includes("ADMIN"));
+      });
 
       if (!hasPosAccess && rawUpgraded.length > 0) {
         console.warn("[Auth] Login blocked: User does not have active module entitlement (upgradeModuleId=24)", rawUpgraded);
@@ -10346,8 +10381,74 @@
     showView("pos");
   });
 
-  document.getElementById("backToFloorBtn").addEventListener("click", () => showView("tables"));
+  document.getElementById("backToFloorBtn")?.addEventListener("click", () => {
+    // 1. Preserve customer name & phone if typed into current session and tableOrders
+    if (currentOrderSession) {
+      const nameVal = document.getElementById("orderCustName")?.value.trim();
+      const phoneVal = document.getElementById("orderCustPhone")?.value.trim();
+      if (nameVal) currentOrderSession.customerName = nameVal;
+      if (phoneVal) currentOrderSession.customerPhone = phoneVal;
+      if (currentOrderSession.tableId && tableOrders && tableOrders[currentOrderSession.tableId]) {
+        tableOrders[currentOrderSession.tableId].customerName = currentOrderSession.customerName;
+        tableOrders[currentOrderSession.tableId].customerPhone = currentOrderSession.customerPhone;
+        if (typeof saveTableOrders === "function") saveTableOrders();
+      }
+    }
+    // 2. Intelligent navigation to previous view (orders, billing, or floor tables)
+    const target = (previousView && previousView !== "pos") ? previousView : "tables";
+    showView(target);
+  });
   document.getElementById("backToOrdersBtn")?.addEventListener("click", () => showView("orders"));
+
+  // =========================================================================
+  // GLOBAL BROWSER & HARDWARE BACK BUTTON NAVIGATION HANDLER
+  // =========================================================================
+  window.addEventListener("popstate", (event) => {
+    // 1. If any modal is active, close the modal first (so back button dismisses modal)
+    const openModals = document.querySelectorAll(".modal-backdrop.active, .modal.active, .pos-custom-backdrop.active");
+    if (openModals.length > 0) {
+      if (typeof closeAllModals === "function") closeAllModals();
+      document.querySelectorAll(".pos-custom-backdrop").forEach(b => b.classList.remove("active"));
+      if (window.history && window.history.pushState) {
+        window.history.pushState({ view: activeView }, "Just POS", `#view-${activeView}`);
+      }
+      return;
+    }
+
+    // 2. If in mobile POS Desk cart view, switch back to dishes menu
+    const posView = document.getElementById("view-pos");
+    if (posView && posView.classList.contains("active") && posView.classList.contains("mobile-mode-cart")) {
+      if (typeof setPosMobileView === "function") {
+        setPosMobileView("menu");
+      }
+      if (window.history && window.history.pushState) {
+        window.history.pushState({ view: "pos" }, "Just POS", "#view-pos");
+      }
+      return;
+    }
+
+    // 3. Normal view back navigation
+    let targetView = event.state && event.state.view;
+    if (!targetView && window.location.hash.startsWith("#view-")) {
+      targetView = window.location.hash.replace("#view-", "");
+    }
+    if (!targetView) {
+      targetView = (previousView && previousView !== activeView) ? previousView : "tables";
+    }
+
+    if (targetView && targetView !== activeView) {
+      showView(targetView, false);
+    }
+  });
+
+  window.addEventListener("hashchange", () => {
+    if (window.location.hash.startsWith("#view-")) {
+      const hView = window.location.hash.replace("#view-", "");
+      if (hView && hView !== activeView) {
+        showView(hView, false);
+      }
+    }
+  });
 
   // =========================================================================
   // ORDERS MANAGEMENT (ALL ORDERS LIST)
@@ -23722,9 +23823,13 @@ For any queries or updates, reply to this message.`;
   // Initial Load
   enforceRoleAccess();
   const _initUrlParams = new URLSearchParams(window.location.search);
-  const _savedView = _initUrlParams.get("view") || localStorage.getItem("pos_active_view") || "tables";
+  const _hashView = (window.location.hash.startsWith("#view-") ? window.location.hash.replace("#view-", "") : "");
+  const _savedView = _initUrlParams.get("view") || _hashView || localStorage.getItem("pos_active_view") || "tables";
   const _viewToOpen = (_savedView === "pos" && !currentOrderSession) ? "tables" : _savedView;
-  showView(_viewToOpen);
+  showView(_viewToOpen, false);
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({ view: _viewToOpen }, "Just POS", `#view-${_viewToOpen}`);
+  }
   checkJcxAuthentication();
   if (_initUrlParams.get("view") === "masters" && _initUrlParams.get("mastertab")) {
     const _mTab = _initUrlParams.get("mastertab");

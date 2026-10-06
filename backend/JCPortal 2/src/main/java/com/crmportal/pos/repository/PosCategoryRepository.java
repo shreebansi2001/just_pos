@@ -9,4 +9,8 @@ import com.crmportal.pos.entity.PosCategoryEntity;
 public interface PosCategoryRepository extends JpaRepository<PosCategoryEntity, Long> {
     List<PosCategoryEntity> findByActiveTrueOrderBySortOrderAsc();
     List<PosCategoryEntity> findAllByOrderBySortOrderAsc();
+
+    // User-wise queries
+    List<PosCategoryEntity> findByUserIdOrderBySortOrderAsc(Long userId);
+    List<PosCategoryEntity> findByUserIdAndActiveTrueOrderBySortOrderAsc(Long userId);
 }

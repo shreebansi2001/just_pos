@@ -14,6 +14,11 @@ public class PosDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OrderCreateRequest implements Serializable {
+        private Long userId;
+        private Long createdByUserId;
+        private Long waiterId;
+        private String outletCode;
+        private String deliveryAddress;
         private String type; // dine-in, takeaway, delivery, catering
         private Long tableId;
         private String customerName;
@@ -32,6 +37,10 @@ public class PosDto {
         private Double price;
         private Integer qty;
         private Integer sentQty;
+        private String unitMode; // plate, kg
+        private Double weightKg;
+        private String variantLabel;
+        private String note;
     }
 
     @Getter
@@ -49,6 +58,7 @@ public class PosDto {
     @AllArgsConstructor
     public static class KotStatusUpdate implements Serializable {
         private String status; // new, preparing, ready, served
+        private Long updatedByUserId;
     }
 
     @Getter
@@ -56,6 +66,8 @@ public class PosDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class InvoicePaymentRequest implements Serializable {
+        private Long userId;
+        private Long cashierId;
         private String paymentMode; // Cash, Card, UPI
     }
 
@@ -64,6 +76,7 @@ public class PosDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MoveTableRequest implements Serializable {
+        private Long userId;
         private Long newTableId;
     }
 }

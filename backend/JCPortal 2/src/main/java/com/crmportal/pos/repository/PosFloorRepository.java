@@ -9,4 +9,8 @@ import com.crmportal.pos.entity.PosFloorEntity;
 public interface PosFloorRepository extends JpaRepository<PosFloorEntity, Long> {
     List<PosFloorEntity> findByActiveTrueOrderBySortOrderAsc();
     List<PosFloorEntity> findAllByOrderBySortOrderAsc();
+
+    // User-wise queries
+    List<PosFloorEntity> findByUserIdOrderBySortOrderAsc(Long userId);
+    List<PosFloorEntity> findByUserIdAndActiveTrueOrderBySortOrderAsc(Long userId);
 }

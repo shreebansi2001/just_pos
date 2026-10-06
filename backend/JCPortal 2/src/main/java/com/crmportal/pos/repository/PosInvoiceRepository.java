@@ -11,4 +11,9 @@ public interface PosInvoiceRepository extends JpaRepository<PosInvoiceEntity, Lo
     Optional<PosInvoiceEntity> findByInvoiceCode(String invoiceCode);
     List<PosInvoiceEntity> findByOrderId(Long orderId);
     List<PosInvoiceEntity> findAllByOrderByCreatedAtDesc();
+
+    // User-wise queries
+    List<PosInvoiceEntity> findByUserId(Long userId);
+    List<PosInvoiceEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<PosInvoiceEntity> findByUserIdAndOrderId(Long userId, Long orderId);
 }

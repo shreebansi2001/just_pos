@@ -16,12 +16,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pos_tax")
+@Table(name = "pos_order_activity")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PosTaxEntity implements Serializable {
+public class PosOrderActivityEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -29,20 +29,20 @@ public class PosTaxEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId = 1L; // Admin/Owner account
+    @Column(name = "user_id")
+    private Long userId; // Staff member who performed the action
 
-    @Column(name = "tax_name", nullable = false, length = 100)
-    private String taxName; // e.g. CGST, SGST, IGST, Service Tax
+    @Column(name = "order_id", nullable = false)
+    private Long orderId;
 
-    @Column(name = "percentage", nullable = false)
-    private Double percentage = 0.0;
+    @Column(name = "role_name", length = 40)
+    private String roleName;
 
-    @Column(name = "status", length = 30)
-    private String status = "active"; // active or inactive
+    @Column(name = "action", nullable = false, length = 50)
+    private String action; // created, kot_sent, delivery_assigned, out_for_delivery, delivered, settled, cancelled
 
-    @Column(name = "created_by_user_id")
-    private Long createdByUserId;
+    @Column(name = "remarks", length = 255)
+    private String remarks;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")

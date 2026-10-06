@@ -36,6 +36,7 @@ bin/
 *.class
 *.jar
 *.war
+*.zip
 .mvn/
 
 

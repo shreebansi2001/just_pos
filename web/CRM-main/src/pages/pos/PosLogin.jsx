@@ -17,31 +17,31 @@ import {
 
 export function PosLogin() {
   const navigate = useNavigate();
-  const [activeRole, setActiveRole] = useState('cashier');
-  const [userCode, setUserCode] = useState('JC-POS-01');
-  const [username, setUsername] = useState('cashier@justcatering.in');
-  const [password, setPassword] = useState('password123');
+  const [userCode, setUserCode] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleRoleSelect = (role) => {
-    setActiveRole(role);
-    if (role === 'cashier') {
-      setUserCode('JC-POS-01');
-      setUsername('cashier@justcatering.in');
-      setPassword('password123');
-    } else if (role === 'manager') {
-      setUserCode('JC-MGR-01');
-      setUsername('manager@justcatering.in');
-      setPassword('mgr@2026');
-    } else if (role === 'waiter') {
-      setUserCode('JC-SRV-01');
-      setUsername('captain@justcatering.in');
-      setPassword('serve123');
+  // JCX Single Sign-On (SSO) & Auto-Authentication Gateway:
+  // If user is coming from JCX (with token, source=jcx, or existing session), bypass login directly!
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const incomingToken = params.get('t') || params.get('token');
+    const isFromJcx = params.get('from') === 'jcx' || params.get('source') === 'jcx' || !!incomingToken;
+    const activeSession = sessionStorage.getItem('pos_authenticated_session') === 'true';
+
+    if (incomingToken) {
+      localStorage.setItem('userToken', incomingToken);
+      localStorage.setItem('pos_token', incomingToken);
     }
-    setShowPassword(false);
-  };
+
+    if (isFromJcx || activeSession) {
+      console.log('Active session detected: Opening POS Dashboard.');
+      navigate('/pos', { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogin = (e) => {
     e?.preventDefault();
@@ -50,10 +50,11 @@ export function PosLogin() {
 
     setTimeout(() => {
       setIsLoading(false);
+      sessionStorage.setItem('pos_authenticated_session', 'true');
       localStorage.setItem('pos_user', JSON.stringify({
         userCode,
         username,
-        role: activeRole.toUpperCase(),
+        role: 'ADMIN',
         loginTime: new Date().toISOString()
       }));
       navigate('/pos');
@@ -183,45 +184,8 @@ export function PosLogin() {
             <div className="inline-flex w-12 h-12 rounded-xl bg-[#017A9C]/10 text-[#017A9C] items-center justify-center mb-3 shadow-inner">
               <Lock className="w-6 h-6" />
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Operator Sign In</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select operator profile or enter credentials to open POS floor desk</p>
-          </div>
-
-          {/* Role Switcher Pills */}
-          <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl mb-6 border border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => handleRoleSelect('cashier')}
-              className={`py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                activeRole === 'cashier'
-                  ? 'bg-white dark:bg-gray-700 text-[#017A9C] dark:text-white shadow-xs'
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400'
-              }`}
-            >
-              👤 Cashier
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRoleSelect('manager')}
-              className={`py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                activeRole === 'manager'
-                  ? 'bg-white dark:bg-gray-700 text-[#017A9C] dark:text-white shadow-xs'
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400'
-              }`}
-            >
-              👔 Manager
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRoleSelect('waiter')}
-              className={`py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                activeRole === 'waiter'
-                  ? 'bg-white dark:bg-gray-700 text-[#017A9C] dark:text-white shadow-xs'
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400'
-              }`}
-            >
-              🧑‍🍳 Captain
-            </button>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Sign In</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter your credentials to access the POS</p>
           </div>
 
           {error && (
@@ -233,7 +197,7 @@ export function PosLogin() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1.5">
-                Station Code
+                Code
               </label>
               <div className="relative">
                 <Cpu className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -250,7 +214,7 @@ export function PosLogin() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1.5">
-                Cashier / Waiter Email
+                Email
               </label>
               <div className="relative">
                 <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -259,7 +223,7 @@ export function PosLogin() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="operator@justcatering.in"
+                  placeholder="admin@justcatering.in"
                   className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-semibold focus:outline-none focus:border-[#017A9C] dark:focus:border-[#017A9C] focus:bg-white dark:focus:bg-gray-900 transition-all"
                 />
               </div>
@@ -267,7 +231,7 @@ export function PosLogin() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1.5">
-                PIN / Password
+                Password
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />

@@ -11,4 +11,9 @@ public interface PosReservationRepository extends JpaRepository<PosReservationEn
     Optional<PosReservationEntity> findByResCode(String resCode);
     List<PosReservationEntity> findByResDate(String resDate);
     List<PosReservationEntity> findByResDateAndStatus(String resDate, String status);
+
+    // User-wise queries
+    List<PosReservationEntity> findByUserId(Long userId);
+    List<PosReservationEntity> findByUserIdAndResDate(Long userId, String resDate);
+    List<PosReservationEntity> findByUserIdAndResDateAndStatus(Long userId, String resDate, String status);
 }
