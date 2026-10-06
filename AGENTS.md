@@ -3,10 +3,10 @@
 ## 1. Production Domains & URLs
 - **Frontend Live URL:** `https://pos.justcatering.in/`
   - The live frontend must always be deployed to and served on `https://pos.justcatering.in/`.
-  - Deployment targets on FTP:
-    - `/public_html/index.html`
-    - `/public_html/pos/index.html`
+  - Deployment targets on FTP (SUBDOMAIN ONLY):
     - `/public_html/pos.justcatering.in/index.html`
+    - `/public_html/pos/index.html`
+  - **STRICT PROHIBITION:** NEVER touch or overwrite `/public_html/index.html`. That is the main website `justcatering.in` and must never serve POS.
 - **Backend API Base URL:** `https://www.justcatering.in/JCPortal`
   - `BACKEND_BASE` must strictly and always be `https://www.justcatering.in/JCPortal`.
   - API endpoints:
