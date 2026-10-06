@@ -38,6 +38,7 @@ bin/
 *.war
 *.zip
 .mvn/
+backend/demo_structure/
 
 
 # Logs & Databases

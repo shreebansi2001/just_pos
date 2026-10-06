@@ -1,0 +1,25 @@
+package com.crmportal.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.crmportal.entity.PosReservationEntity;
+
+@Repository
+public interface PosReservationRepository extends JpaRepository<PosReservationEntity, Long> {
+	Optional<PosReservationEntity> findByResCode(String resCode);
+
+	List<PosReservationEntity> findByResDate(String resDate);
+
+	List<PosReservationEntity> findByResDateAndStatus(String resDate, String status);
+
+	// User-wise queries
+	List<PosReservationEntity> findByUserId(Long userId);
+
+	List<PosReservationEntity> findByUserIdAndResDate(Long userId, String resDate);
+
+	List<PosReservationEntity> findByUserIdAndResDateAndStatus(Long userId, String resDate, String status);
+}

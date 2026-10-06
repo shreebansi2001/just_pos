@@ -1,0 +1,18 @@
+package com.crmportal.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.crmportal.entity.PosTaxEntity;
+
+@Repository
+public interface PosTaxRepository extends JpaRepository<PosTaxEntity, Long> {
+	List<PosTaxEntity> findByStatus(String status);
+
+	// User-wise queries
+	List<PosTaxEntity> findByUserId(Long userId);
+
+	List<PosTaxEntity> findByUserIdAndStatus(Long userId, String status);
+}

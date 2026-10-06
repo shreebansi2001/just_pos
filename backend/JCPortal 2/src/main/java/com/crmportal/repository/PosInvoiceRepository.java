@@ -1,0 +1,25 @@
+package com.crmportal.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.crmportal.entity.PosInvoiceEntity;
+
+@Repository
+public interface PosInvoiceRepository extends JpaRepository<PosInvoiceEntity, Long> {
+	Optional<PosInvoiceEntity> findByInvoiceCode(String invoiceCode);
+
+	List<PosInvoiceEntity> findByOrderId(Long orderId);
+
+	List<PosInvoiceEntity> findAllByOrderByCreatedAtDesc();
+
+	// User-wise queries
+	List<PosInvoiceEntity> findByUserId(Long userId);
+
+	List<PosInvoiceEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+	List<PosInvoiceEntity> findByUserIdAndOrderId(Long userId, Long orderId);
+}
