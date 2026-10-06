@@ -223,7 +223,7 @@ export function PosLogin() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin@justcatering.in"
+                  placeholder="operator@company.com"
                   className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-semibold focus:outline-none focus:border-[#017A9C] dark:focus:border-[#017A9C] focus:bg-white dark:focus:bg-gray-900 transition-all"
                 />
               </div>

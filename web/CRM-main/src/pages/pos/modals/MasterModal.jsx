@@ -699,7 +699,7 @@ export function MasterModal({ isOpen, onClose, masterType, itemData, categories,
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="staff@justcatering.in"
+                    placeholder="staff@company.com"
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:border-[#017A9C]"
                   />
                 </div>
