@@ -5596,18 +5596,18 @@
           <div style="display:flex;align-items:center;gap:6px;background:var(--surface-subtle);padding:5px 10px;border-radius:8px;border:1px solid var(--line);">
             <span style="font-size:14px;">📅</span>
             <label style="font-size:12px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;">Business Date:</label>
-            <input type="date" id="dayCloseDateInput" style="padding:4px 8px;font-size:13px;font-weight:800;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font-family:monospace;cursor:pointer;">
+            <input type="date" id="dayCloseDateInput" onchange="onDayCloseDatePicked(this.value)" style="padding:4px 8px;font-size:13px;font-weight:800;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font-family:monospace;cursor:pointer;">
             <div style="display:flex;gap:4px;margin-left:4px;">
-              <button type="button" class="btn btn-xs" id="btnDayCloseToday" style="padding:4px 10px;font-size:11px;font-weight:800;background:var(--primary);color:#fff;border-color:var(--primary);">Today</button>
-              <button type="button" class="btn btn-xs" id="btnDayCloseYesterday" style="padding:4px 10px;font-size:11px;font-weight:700;background:var(--panel);border:1px solid var(--line);">Yesterday</button>
+              <button type="button" class="btn btn-xs" id="btnDayCloseToday" onclick="setDayCloseDate('today')" style="padding:4px 10px;font-size:11px;font-weight:800;background:var(--primary);color:#fff;border-color:var(--primary);cursor:pointer;">Today</button>
+              <button type="button" class="btn btn-xs" id="btnDayCloseYesterday" onclick="setDayCloseDate('yesterday')" style="padding:4px 10px;font-size:11px;font-weight:700;background:var(--panel);border:1px solid var(--line);cursor:pointer;">Yesterday</button>
             </div>
           </div>
 
           <div style="display:flex;align-items:center;gap:6px;">
-            <select id="dayCloseOutletFilter" style="padding:6px 12px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer;">
+            <select id="dayCloseOutletFilter" onchange="onDayCloseOutletPicked(this.value)" style="padding:6px 12px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer;">
               <option value="">🏢 All Outlets (Consolidated)</option>
             </select>
-            <button type="button" class="btn btn-xs" id="btnRefreshDayClose" title="Refresh Sales Data" style="padding:6px 10px;font-size:11.5px;font-weight:700;background:var(--surface-subtle);border:1px solid var(--line);">↻</button>
+            <button type="button" class="btn btn-xs" id="btnRefreshDayClose" onclick="refreshDayCloseView()" title="Refresh Sales Data" style="padding:6px 10px;font-size:11.5px;font-weight:700;background:var(--surface-subtle);border:1px solid var(--line);cursor:pointer;">↻</button>
           </div>
 
           <span id="dayCloseStatusBadge" style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;background:#dcfce7;color:#15803d;border:1px solid #86efac;display:inline-flex;align-items:center;gap:6px;">
@@ -5618,15 +5618,15 @@
 
         <!-- Right: Primary Actions (Z-Report & Close Register) -->
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button type="button" class="btn" id="btnPrintDayCloseZReport" style="background:#0f172a;border:1px solid #334155;color:#ffffff !important;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(15,23,42,0.25);display:inline-flex;align-items:center;gap:7px;cursor:pointer;">
+          <button type="button" class="btn" id="btnPrintDayCloseZReport" onclick="printDayCloseZReport()" style="background:#0f172a;border:1px solid #334155;color:#ffffff !important;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(15,23,42,0.25);display:inline-flex;align-items:center;gap:7px;cursor:pointer;">
             <span style="font-size:15px;">🖨️</span>
             <span style="color:#ffffff !important;">Print 80mm Z-Report</span>
           </button>
-          <button type="button" class="btn btn-primary" id="btnCloseDayRegisterBtn" style="background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);border:none;color:#ffffff !important;font-weight:800;font-size:12.5px;padding:9px 18px;border-radius:9px;box-shadow:0 4px 14px rgba(220,38,38,0.35);display:inline-flex;align-items:center;gap:7px;cursor:pointer;">
+          <button type="button" class="btn btn-primary" id="btnCloseDayRegisterBtn" onclick="closeDayRegisterAction()" style="background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);border:none;color:#ffffff !important;font-weight:800;font-size:12.5px;padding:9px 18px;border-radius:9px;box-shadow:0 4px 14px rgba(220,38,38,0.35);display:inline-flex;align-items:center;gap:7px;cursor:pointer;">
             <span style="font-size:14px;">🔒</span>
             <span style="color:#ffffff !important;">Close Day Register</span>
           </button>
-          <button type="button" class="btn" id="btnReopenDayRegisterBtn" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#b45309;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;align-items:center;gap:7px;cursor:pointer;">
+          <button type="button" class="btn" id="btnReopenDayRegisterBtn" onclick="reopenDayRegisterAction()" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#b45309;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;align-items:center;gap:7px;cursor:pointer;">
             <span>🔓</span>
             <span>Re-open Register</span>
           </button>
@@ -5770,7 +5770,7 @@
             <h3 style="font-size:15px;font-weight:900;margin:0;color:var(--ink);display:flex;align-items:center;gap:8px;">
               <span>💵</span> Till Balancing &amp; Cash Reconciliation
             </h3>
-            <button type="button" class="btn btn-xs" id="btnAddCashExpenseBtn" style="padding:4px 9px;font-size:11px;font-weight:800;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;">
+            <button type="button" class="btn btn-xs" id="btnAddCashExpenseBtn" onclick="addCashExpenseAction()" style="padding:4px 9px;font-size:11px;font-weight:800;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;">
               − Add Cash Out
             </button>
           </div>
@@ -16858,13 +16858,38 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
   }
 
   function renderDayClose() {
-    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const todayIso = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    const yestDate = new Date();
+    yestDate.setDate(yestDate.getDate() - 1);
+    const yestIso = (typeof formatIsoDate === "function") ? formatIsoDate(yestDate) : yestDate.toISOString().split("T")[0];
+
+    const targetDate = dayCloseState.selectedDate || todayIso;
     const targetOutlet = dayCloseState.selectedOutlet || "";
 
     // Set date input
     const dateInp = document.getElementById("dayCloseDateInput");
     if (dateInp && dateInp.value !== targetDate) {
       dateInp.value = targetDate;
+    }
+
+    // Dynamic active styling for Today and Yesterday quick filter buttons
+    const btnToday = document.getElementById("btnDayCloseToday");
+    const btnYest = document.getElementById("btnDayCloseYesterday");
+    if (btnToday && btnYest) {
+      const isToday = (targetDate === todayIso);
+      const isYest = (targetDate === yestIso);
+
+      btnToday.style.background = isToday ? "var(--primary)" : "var(--panel)";
+      btnToday.style.color = isToday ? "#ffffff" : "var(--ink)";
+      btnToday.style.borderColor = isToday ? "var(--primary)" : "var(--line)";
+      btnToday.style.boxShadow = isToday ? "0 2px 6px rgba(1,122,156,0.3)" : "none";
+      btnToday.style.fontWeight = isToday ? "800" : "600";
+
+      btnYest.style.background = isYest ? "var(--primary)" : "var(--panel)";
+      btnYest.style.color = isYest ? "#ffffff" : "var(--ink)";
+      btnYest.style.borderColor = isYest ? "var(--primary)" : "var(--line)";
+      btnYest.style.boxShadow = isYest ? "0 2px 6px rgba(1,122,156,0.3)" : "none";
+      btnYest.style.fontWeight = isYest ? "800" : "600";
     }
 
     // Populate outlet options
@@ -17240,85 +17265,47 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     showToast(`🖨️ Printing 80mm Z-Report for ${targetDate}...`);
   }
 
-  // Setup Day Close Event Listeners
-  document.getElementById("dayCloseDateInput")?.addEventListener("change", (e) => {
-    dayCloseState.selectedDate = e.target.value;
-    renderDayClose();
-  });
-
-  document.getElementById("btnDayCloseToday")?.addEventListener("click", () => {
-    dayCloseState.selectedDate = new Date().toISOString().split("T")[0];
-    renderDayClose();
-  });
-
-  document.getElementById("btnDayCloseYesterday")?.addEventListener("click", () => {
-    const yest = new Date();
-    yest.setDate(yest.getDate() - 1);
-    dayCloseState.selectedDate = yest.toISOString().split("T")[0];
-    renderDayClose();
-  });
-
-  document.getElementById("dayCloseOutletFilter")?.addEventListener("change", (e) => {
-    dayCloseState.selectedOutlet = e.target.value;
-    renderDayClose();
-  });
-
-  document.getElementById("btnRefreshDayClose")?.addEventListener("click", () => {
-    renderDayClose();
-    showToast("↻ Refreshed Day Close sales register");
-  });
-
-  document.getElementById("btnPrintDayCloseZReport")?.addEventListener("click", () => {
-    printDayCloseZReport();
-  });
-
-  document.getElementById("dcOpeningCashInput")?.addEventListener("change", (e) => {
-    const val = Number(e.target.value) || 0;
-    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
-    const openMap = getOpeningCashMap();
-    openMap[targetDate] = val;
-    saveOpeningCashMap(openMap);
-    renderDayClose();
-    showToast(`Opening cash set to ₹${val.toFixed(2)}`);
-  });
-
-  document.getElementById("dcActualCashInput")?.addEventListener("input", (e) => {
-    const counted = Number(e.target.value) || 0;
-    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
-    const targetOutlet = dayCloseState.selectedOutlet || "";
-    const m = computeDayCloseMetrics(targetDate, targetOutlet);
-    const diff = counted - m.expectedCash;
-
-    const varBox = document.getElementById("dcCashVarianceBox");
-    const varTitle = document.getElementById("dcVarianceTitle");
-    const varAmt = document.getElementById("dcVarianceAmount");
-
-    if (varBox && varAmt) {
-      if (Math.abs(diff) < 0.01) {
-        varBox.style.background = "#dcfce7";
-        varBox.style.borderColor = "#86efac";
-        varTitle.style.color = "#166534";
-        varAmt.style.color = "#15803d";
-        varAmt.textContent = `₹0.00 (Match ✓)`;
-      } else if (diff > 0) {
-        varBox.style.background = "#eff6ff";
-        varBox.style.borderColor = "#93c5fd";
-        varTitle.style.color = "#1e40af";
-        varAmt.style.color = "#1d4ed8";
-        varAmt.textContent = `+₹${diff.toFixed(2)} (Excess Cash)`;
-      } else {
-        varBox.style.background = "#fee2e2";
-        varBox.style.borderColor = "#fca5a5";
-        varTitle.style.color = "#991b1b";
-        varAmt.style.color = "#b91c1c";
-        varAmt.textContent = `−₹${Math.abs(diff).toFixed(2)} (Shortage)`;
-      }
+  // Setup Day Close Action Functions and Listeners
+  function setDayCloseDate(preset) {
+    if (preset === 'today') {
+      dayCloseState.selectedDate = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    } else if (preset === 'yesterday') {
+      const yest = new Date();
+      yest.setDate(yest.getDate() - 1);
+      dayCloseState.selectedDate = (typeof formatIsoDate === "function") ? formatIsoDate(yest) : yest.toISOString().split("T")[0];
     }
-  });
+    renderDayClose();
+    showToast(`📅 Switched to ${preset === 'today' ? 'Today' : 'Yesterday'} (${dayCloseState.selectedDate})`);
+  }
+  window.setDayCloseDate = setDayCloseDate;
 
-  // Close Day Register Button Handler
-  document.getElementById("btnCloseDayRegisterBtn")?.addEventListener("click", () => {
-    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+  function onDayCloseDatePicked(val) {
+    if (!val) return;
+    dayCloseState.selectedDate = val;
+    renderDayClose();
+    showToast(`📅 Switched to date ${val}`);
+  }
+  window.onDayCloseDatePicked = onDayCloseDatePicked;
+
+  function onDayCloseOutletPicked(val) {
+    dayCloseState.selectedOutlet = val || "";
+    renderDayClose();
+    const outletName = val ? (companySeriesConfig[val]?.name || val) : "All Outlets (Consolidated)";
+    showToast(`🏢 Filtered by: ${outletName}`);
+  }
+  window.onDayCloseOutletPicked = onDayCloseOutletPicked;
+
+  function refreshDayCloseView() {
+    renderDayClose();
+    showToast("↻ Sales register updated");
+  }
+  window.refreshDayCloseView = refreshDayCloseView;
+
+  window.printDayCloseZReport = printDayCloseZReport;
+
+  function closeDayRegisterAction() {
+    const todayIso = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    const targetDate = dayCloseState.selectedDate || todayIso;
     const targetOutlet = dayCloseState.selectedOutlet || "";
     const m = computeDayCloseMetrics(targetDate, targetOutlet);
     const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
@@ -17356,11 +17343,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     setTimeout(() => {
       printDayCloseZReport();
     }, 400);
-  });
+  }
+  window.closeDayRegisterAction = closeDayRegisterAction;
 
-  // Re-open Day Register
-  document.getElementById("btnReopenDayRegisterBtn")?.addEventListener("click", () => {
-    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+  function reopenDayRegisterAction() {
+    const todayIso = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    const targetDate = dayCloseState.selectedDate || todayIso;
     if (!confirm(`Re-open register for ${targetDate}? Staff will be able to add orders and adjust till balances.`)) return;
 
     const closedMap = getClosedRegistersMap();
@@ -17369,11 +17357,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
     renderDayClose();
     showToast(`🔓 Register re-opened for ${targetDate}!`);
-  });
+  }
+  window.reopenDayRegisterAction = reopenDayRegisterAction;
 
-  // Add Cash Out / Expense Handler
-  document.getElementById("btnAddCashExpenseBtn")?.addEventListener("click", () => {
-    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+  function addCashExpenseAction() {
+    const todayIso = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    const targetDate = dayCloseState.selectedDate || todayIso;
     const reason = prompt("Enter expense reason / description (e.g. Milk, Ice, Vendor payout):");
     if (!reason || !reason.trim()) return;
 
@@ -17398,6 +17387,64 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
     renderDayClose();
     showToast(`✓ Cash Out: ₹${amount.toFixed(2)} recorded for "${reason}"`);
+  }
+  window.addCashExpenseAction = addCashExpenseAction;
+
+  // Add event listener bindings as secondary safety net
+  document.getElementById("dayCloseDateInput")?.addEventListener("change", (e) => onDayCloseDatePicked(e.target.value));
+  document.getElementById("btnDayCloseToday")?.addEventListener("click", () => setDayCloseDate('today'));
+  document.getElementById("btnDayCloseYesterday")?.addEventListener("click", () => setDayCloseDate('yesterday'));
+  document.getElementById("dayCloseOutletFilter")?.addEventListener("change", (e) => onDayCloseOutletPicked(e.target.value));
+  document.getElementById("btnRefreshDayClose")?.addEventListener("click", () => refreshDayCloseView());
+  document.getElementById("btnPrintDayCloseZReport")?.addEventListener("click", () => printDayCloseZReport());
+  document.getElementById("btnCloseDayRegisterBtn")?.addEventListener("click", () => closeDayRegisterAction());
+  document.getElementById("btnReopenDayRegisterBtn")?.addEventListener("click", () => reopenDayRegisterAction());
+  document.getElementById("btnAddCashExpenseBtn")?.addEventListener("click", () => addCashExpenseAction());
+
+  document.getElementById("dcOpeningCashInput")?.addEventListener("change", (e) => {
+    const val = Number(e.target.value) || 0;
+    const todayIso = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    const targetDate = dayCloseState.selectedDate || todayIso;
+    const openMap = getOpeningCashMap();
+    openMap[targetDate] = val;
+    saveOpeningCashMap(openMap);
+    renderDayClose();
+    showToast(`Opening cash set to ₹${val.toFixed(2)}`);
+  });
+
+  document.getElementById("dcActualCashInput")?.addEventListener("input", (e) => {
+    const counted = Number(e.target.value) || 0;
+    const todayIso = (typeof formatIsoDate === "function") ? formatIsoDate(new Date()) : new Date().toISOString().split("T")[0];
+    const targetDate = dayCloseState.selectedDate || todayIso;
+    const targetOutlet = dayCloseState.selectedOutlet || "";
+    const m = computeDayCloseMetrics(targetDate, targetOutlet);
+    const diff = counted - m.expectedCash;
+
+    const varBox = document.getElementById("dcCashVarianceBox");
+    const varTitle = document.getElementById("dcVarianceTitle");
+    const varAmt = document.getElementById("dcVarianceAmount");
+
+    if (varBox && varAmt) {
+      if (Math.abs(diff) < 0.01) {
+        varBox.style.background = "#dcfce7";
+        varBox.style.borderColor = "#86efac";
+        varTitle.style.color = "#166534";
+        varAmt.style.color = "#15803d";
+        varAmt.textContent = `₹0.00 (Match ✓)`;
+      } else if (diff > 0) {
+        varBox.style.background = "#eff6ff";
+        varBox.style.borderColor = "#93c5fd";
+        varTitle.style.color = "#1e40af";
+        varAmt.style.color = "#1d4ed8";
+        varAmt.textContent = `+₹${diff.toFixed(2)} (Excess Cash)`;
+      } else {
+        varBox.style.background = "#fee2e2";
+        varBox.style.borderColor = "#fca5a5";
+        varTitle.style.color = "#991b1b";
+        varAmt.style.color = "#b91c1c";
+        varAmt.textContent = `−₹${Math.abs(diff).toFixed(2)} (Shortage)`;
+      }
+    }
   });
 
   // Navigation Links to Day Close
@@ -18203,9 +18250,15 @@ For any queries or updates, reply to this message.`;
     const pageSize = isA4 ? "A4 portrait" : (String(format).toLowerCase() === "58mm" ? "58mm auto" : "80mm auto");
 
     // 1. Try clean direct popup window (never blocked by modal focus traps)
+    let printWin = null;
     try {
-      const printWin = window.open('', '_blank', 'width=420,height=600,menubar=no,toolbar=no,location=no,status=no');
-      if (printWin && printWin.document) {
+      printWin = window.open('', '_blank', 'width=460,height=680,menubar=no,toolbar=no,location=no,status=no');
+    } catch (popupErr) {
+      printWin = null;
+    }
+
+    if (printWin && printWin.document) {
+      try {
         printWin.document.open();
         printWin.document.write(`<!DOCTYPE html>
 <html>
@@ -18230,19 +18283,27 @@ For any queries or updates, reply to this message.`;
 </body>
 </html>`);
         printWin.document.close();
+        printWin.focus();
+
+        printWin.onafterprint = function() {
+          try { printWin.close(); } catch(e){}
+        };
+
         setTimeout(function() {
           try {
             printWin.focus();
             printWin.print();
-            setTimeout(function() { try { printWin.close(); } catch(e){} }, 600);
           } catch(e) {
             console.warn("[Print] Popup print failed:", e);
+            if (typeof executeThermalPrint === "function") {
+              executeThermalPrint(contentHtml, format);
+            }
           }
-        }, 120);
+        }, 150);
         return;
+      } catch (err) {
+        console.warn("[Print] Popup window document write failed, using iframe fallback:", err);
       }
-    } catch (popupErr) {
-      console.warn("[Print] Popup window blocked or failed, using iframe fallback:", popupErr);
     }
 
     // 2. Fallback to executeThermalPrint
