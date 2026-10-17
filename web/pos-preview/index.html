@@ -5583,228 +5583,267 @@
       </div>
     </div>
 
-    <!-- VIEW 4B: DAY CLOSE & SALES REGISTER (PETPOOJA POS MODEL) -->
-    <div class="view" id="view-day-close">
-      <!-- Top Overview Bar -->
-      <div class="billing-header-row" style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;width:100%;">
-          <div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <h2 style="font-size:20px;font-weight:900;color:var(--ink);margin:0;display:flex;align-items:center;gap:8px;">
-                <span>📊</span> Day Close &amp; Daily Sales Register
-              </h2>
-              <span id="dayCloseStatusBadge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;background:#dcfce7;color:#15803d;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px;">
-                <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;"></span> 🟢 Shift Active · Register Open
-              </span>
+    <!-- VIEW 4B: DAY CLOSE & SALES REGISTER (PETPOOJA POS MODEL - EXECUTIVE DESIGN) -->
+    <div class="view" id="view-day-close" style="padding:18px 24px;">
+      
+      <!-- Top Control Bar (Clean, Unified, No Redundant Headers) -->
+      <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+        
+        <!-- Left: Date Selector, Quick Filters & Register Status -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;background:var(--surface-subtle);padding:5px 10px;border-radius:8px;border:1px solid var(--line);">
+            <span style="font-size:14px;">📅</span>
+            <label style="font-size:12px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;">Business Date:</label>
+            <input type="date" id="dayCloseDateInput" style="padding:4px 8px;font-size:13px;font-weight:800;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font-family:monospace;cursor:pointer;">
+            <div style="display:flex;gap:4px;margin-left:4px;">
+              <button type="button" class="btn btn-xs" id="btnDayCloseToday" style="padding:4px 10px;font-size:11px;font-weight:800;background:var(--primary);color:#fff;border-color:var(--primary);">Today</button>
+              <button type="button" class="btn btn-xs" id="btnDayCloseYesterday" style="padding:4px 10px;font-size:11px;font-weight:700;background:var(--panel);border:1px solid var(--line);">Yesterday</button>
             </div>
-            <p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;">
-              Petpooja-style End of Day register audit, payment collection breakdown, cash till reconciliation, and 80mm Z-Report.
-            </p>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button type="button" class="btn" id="btnPrintDayCloseZReport" style="background:#0284c7;border-color:#0284c7;color:#fff;font-weight:800;display:inline-flex;align-items:center;gap:6px;">
-              <i data-lucide="printer" style="width:16px;height:16px;"></i> Print 80mm Z-Report
-            </button>
-            <button type="button" class="btn btn-primary" id="btnCloseDayRegisterBtn" style="background:linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);border-color:#991b1b;font-weight:800;display:inline-flex;align-items:center;gap:6px;">
-              <i data-lucide="lock" style="width:16px;height:16px;"></i> Close Day Register
-            </button>
-            <button type="button" class="btn" id="btnReopenDayRegisterBtn" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#b45309;font-weight:800;align-items:center;gap:6px;">
-              <i data-lucide="unlock" style="width:16px;height:16px;"></i> Re-open Register
-            </button>
-          </div>
-        </div>
 
-        <!-- Filter & Date Selection Bar -->
-        <div style="display:flex;gap:12px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);">Business Date:</label>
-            <input type="date" id="dayCloseDateInput" style="padding:5px 10px;font-size:12.5px;font-weight:800;border:1.5px solid var(--line);border-radius:6px;background:var(--surface-subtle);font-family:monospace;">
-            <button type="button" class="btn btn-xs" id="btnDayCloseToday" style="padding:5px 10px;font-size:11px;font-weight:800;">Today</button>
-            <button type="button" class="btn btn-xs" id="btnDayCloseYesterday" style="padding:5px 10px;font-size:11px;font-weight:700;">Yesterday</button>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);">Outlet Station:</label>
-            <select id="dayCloseOutletFilter" style="padding:5px 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:6px;background:var(--surface-subtle);">
+            <select id="dayCloseOutletFilter" style="padding:6px 12px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer;">
               <option value="">🏢 All Outlets (Consolidated)</option>
             </select>
-            <button type="button" class="btn btn-xs btn-primary" id="btnRefreshDayClose" style="padding:5px 10px;font-size:11px;font-weight:800;">↻ Refresh</button>
+            <button type="button" class="btn btn-xs" id="btnRefreshDayClose" title="Refresh Sales Data" style="padding:6px 10px;font-size:11.5px;font-weight:700;background:var(--surface-subtle);border:1px solid var(--line);">↻</button>
           </div>
+
+          <span id="dayCloseStatusBadge" style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;background:#dcfce7;color:#15803d;border:1px solid #86efac;display:inline-flex;align-items:center;gap:6px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;box-shadow:0 0 6px rgba(22,163,74,0.6);"></span>
+            <span>🟢 Shift Active · Register Open</span>
+          </span>
+        </div>
+
+        <!-- Right: Primary Actions (Z-Report & Close Register) -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="btn" id="btnPrintDayCloseZReport" style="background:#0f172a;border:1px solid #334155;color:#ffffff !important;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(15,23,42,0.25);display:inline-flex;align-items:center;gap:7px;cursor:pointer;">
+            <span style="font-size:15px;">🖨️</span>
+            <span style="color:#ffffff !important;">Print 80mm Z-Report</span>
+          </button>
+          <button type="button" class="btn btn-primary" id="btnCloseDayRegisterBtn" style="background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);border:none;color:#ffffff !important;font-weight:800;font-size:12.5px;padding:9px 18px;border-radius:9px;box-shadow:0 4px 14px rgba(220,38,38,0.35);display:inline-flex;align-items:center;gap:7px;cursor:pointer;">
+            <span style="font-size:14px;">🔒</span>
+            <span style="color:#ffffff !important;">Close Day Register</span>
+          </button>
+          <button type="button" class="btn" id="btnReopenDayRegisterBtn" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#b45309;font-weight:800;font-size:12.5px;padding:9px 16px;border-radius:9px;align-items:center;gap:7px;cursor:pointer;">
+            <span>🔓</span>
+            <span>Re-open Register</span>
+          </button>
         </div>
       </div>
 
-      <!-- KPI Cards: How Much Sell -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-bottom:16px;" id="dayCloseKpiCards">
-        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid #16a34a;border-radius:10px;padding:14px 16px;">
-          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">💰 Total Net Sales (Revenue)</div>
-          <div style="font-size:24px;font-weight:900;color:#15803d;font-family:monospace;margin:4px 0;" id="dcKpiNetSales">₹0.00</div>
-          <div style="font-size:11.5px;color:var(--ink-soft);" id="dcKpiBillsCount">0 settled invoices</div>
-        </div>
-        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid var(--primary);border-radius:10px;padding:14px 16px;">
+      <!-- Executive Sales Metrics (Hero KPI Grid) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:14px;margin-bottom:18px;" id="dayCloseKpiCards">
+        
+        <!-- Hero Card 1: Total Net Sales -->
+        <div style="background:linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(5,150,105,0.02) 100%);border:1.5px solid #86efac;border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Gross Sales &amp; Discounts</div>
-            <span style="font-size:10px;background:var(--surface-subtle);padding:2px 6px;border-radius:4px;font-weight:700;">Pre-tax</span>
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;color:#15803d;letter-spacing:0.5px;">💰 Total Net Sales (Revenue)</span>
+            <span style="font-size:10px;font-weight:800;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;">Net Collection</span>
           </div>
-          <div style="font-size:20px;font-weight:900;color:var(--ink);font-family:monospace;margin:4px 0;" id="dcKpiGrossSales">₹0.00</div>
-          <div style="font-size:11.5px;color:#dc2626;font-weight:700;" id="dcKpiDiscounts">−₹0.00 discount given</div>
+          <div style="font-size:28px;font-weight:900;color:#15803d;font-family:monospace;margin:6px 0 4px;" id="dcKpiNetSales">₹0.00</div>
+          <div style="font-size:12px;font-weight:700;color:#166534;" id="dcKpiBillsCount">0 settled invoices</div>
         </div>
-        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid #ca8a04;border-radius:10px;padding:14px 16px;">
-          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Taxes Collected (GST)</div>
-          <div style="font-size:20px;font-weight:900;color:#a16207;font-family:monospace;margin:4px 0;" id="dcKpiTaxes">₹0.00</div>
-          <div style="font-size:11.5px;color:var(--ink-soft);" id="dcKpiTaxableBase">Taxable Base: ₹0.00</div>
+
+        <!-- Card 2: Gross Turnover & Discounts -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Gross Turnover &amp; Disc</span>
+            <span style="font-size:10px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 6px;border-radius:4px;">Pre-Tax</span>
+          </div>
+          <div style="font-size:22px;font-weight:900;color:var(--ink);font-family:monospace;margin:6px 0 4px;" id="dcKpiGrossSales">₹0.00</div>
+          <div style="font-size:12px;font-weight:700;color:#dc2626;" id="dcKpiDiscounts">−₹0.00 discount given</div>
         </div>
-        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid #6366f1;border-radius:10px;padding:14px 16px;">
-          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Average Ticket (AOV)</div>
-          <div style="font-size:20px;font-weight:900;color:#4f46e5;font-family:monospace;margin:4px 0;" id="dcKpiAov">₹0.00</div>
-          <div style="font-size:11.5px;color:var(--ink-soft);" id="dcKpiTotalQty">0 items sold</div>
+
+        <!-- Card 3: GST Taxes -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Taxes Collected (GST)</span>
+            <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#b45309;padding:2px 6px;border-radius:4px;">CGST + SGST</span>
+          </div>
+          <div style="font-size:22px;font-weight:900;color:#b45309;font-family:monospace;margin:6px 0 4px;" id="dcKpiTaxes">₹0.00</div>
+          <div style="font-size:12px;font-weight:600;color:var(--ink-soft);" id="dcKpiTaxableBase">Taxable Base: ₹0.00</div>
+        </div>
+
+        <!-- Card 4: Order Performance -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Average Ticket (AOV)</span>
+            <span style="font-size:10px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 6px;border-radius:4px;">Per Order</span>
+          </div>
+          <div style="font-size:22px;font-weight:900;color:var(--primary);font-family:monospace;margin:6px 0 4px;" id="dcKpiAov">₹0.00</div>
+          <div style="font-size:12px;font-weight:600;color:var(--ink-soft);" id="dcKpiTotalQty">0 items sold</div>
         </div>
       </div>
 
       <!-- Main Two-Column Analysis: Payment Modes & Cash Drawer Reconciliation -->
-      <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:18px;margin-bottom:18px;">
         
-        <!-- Column 1: Payment Mode Breakdown (MOP) -->
-        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:18px;">
-          <h3 style="font-size:15px;font-weight:900;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;">
-            <span>💳 Payment Collection Modes (MOP)</span>
+        <!-- Column 1: Mode of Payment (MOP Breakdown - Petpooja Style) -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="font-size:15px;font-weight:900;margin:0;color:var(--ink);display:flex;align-items:center;gap:8px;">
+              <span>💳</span> Tender Breakdown (MOP Split)
+            </h3>
             <span style="font-size:11px;font-weight:700;color:var(--ink-soft);">Petpooja Daily Split</span>
-          </h3>
-          <div style="display:flex;flex-direction:column;gap:10px;">
+          </div>
+
+          <!-- Visual Progress Bar for Tender Distribution -->
+          <div style="height:10px;border-radius:6px;background:var(--surface-subtle);overflow:hidden;display:flex;margin-bottom:14px;border:1px solid var(--line);">
+            <div id="dcBarCash" style="width:0%;background:#16a34a;transition:width 0.3s ease;" title="Cash"></div>
+            <div id="dcBarCard" style="width:0%;background:#2563eb;transition:width 0.3s ease;" title="Card"></div>
+            <div id="dcBarUpi" style="width:0%;background:#9333ea;transition:width 0.3s ease;" title="UPI"></div>
+          </div>
+
+          <!-- MOP Tender Cards -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
             <!-- Cash -->
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:22px;">💵</span>
+                <span style="font-size:20px;">💵</span>
                 <div>
-                  <div style="font-weight:900;font-size:14px;color:#166534;">Cash Collection</div>
+                  <div style="font-weight:900;font-size:13.5px;color:#166534;">Cash Collection</div>
                   <div style="font-size:11px;color:#15803d;" id="dcMopCashCount">0 bills</div>
                 </div>
               </div>
               <div style="text-align:right;">
                 <div style="font-size:16px;font-weight:900;font-family:monospace;color:#166534;" id="dcMopCashAmount">₹0.00</div>
-                <div style="font-size:10.5px;font-weight:800;color:#15803d;" id="dcMopCashPct">0%</div>
+                <div style="font-size:11px;font-weight:800;color:#15803d;" id="dcMopCashPct">0%</div>
               </div>
             </div>
+
             <!-- Card -->
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:9px;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:22px;">💳</span>
+                <span style="font-size:20px;">💳</span>
                 <div>
-                  <div style="font-weight:900;font-size:14px;color:#1e40af;">Credit / Debit Card</div>
+                  <div style="font-weight:900;font-size:13.5px;color:#1e40af;">Credit / Debit Card</div>
                   <div style="font-size:11px;color:#2563eb;" id="dcMopCardCount">0 bills</div>
                 </div>
               </div>
               <div style="text-align:right;">
                 <div style="font-size:16px;font-weight:900;font-family:monospace;color:#1e40af;" id="dcMopCardAmount">₹0.00</div>
-                <div style="font-size:10.5px;font-weight:800;color:#2563eb;" id="dcMopCardPct">0%</div>
+                <div style="font-size:11px;font-weight:800;color:#2563eb;" id="dcMopCardPct">0%</div>
               </div>
             </div>
+
             <!-- UPI -->
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:9px;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:22px;">📱</span>
+                <span style="font-size:20px;">📱</span>
                 <div>
-                  <div style="font-weight:900;font-size:14px;color:#6b21a8;">UPI / QR Code</div>
+                  <div style="font-weight:900;font-size:13.5px;color:#6b21a8;">UPI / QR Code</div>
                   <div style="font-size:11px;color:#7e22ce;" id="dcMopUpiCount">0 bills</div>
                 </div>
               </div>
               <div style="text-align:right;">
                 <div style="font-size:16px;font-weight:900;font-family:monospace;color:#6b21a8;" id="dcMopUpiAmount">₹0.00</div>
-                <div style="font-size:10.5px;font-weight:800;color:#7e22ce;" id="dcMopUpiPct">0%</div>
+                <div style="font-size:11px;font-weight:800;color:#7e22ce;" id="dcMopUpiPct">0%</div>
               </div>
             </div>
           </div>
 
           <!-- Channel Split -->
-          <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);">
-            <div style="font-size:11.5px;font-weight:800;color:var(--ink-soft);margin-bottom:8px;text-transform:uppercase;">Dining Channel Split:</div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">
+            <div style="font-size:11px;font-weight:800;color:var(--ink-soft);margin-bottom:8px;text-transform:uppercase;">Dining Channel Breakdown:</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
-              <div style="background:var(--surface-subtle);padding:8px;border-radius:6px;border:1px solid var(--line);">
+              <div style="background:var(--surface-subtle);padding:7px 8px;border-radius:7px;border:1px solid var(--line);">
                 <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🍽️ Dine-in</div>
-                <div style="font-size:13px;font-weight:900;font-family:monospace;" id="dcChanDine">₹0.00</div>
+                <div style="font-size:12.5px;font-weight:900;font-family:monospace;margin-top:2px;" id="dcChanDine">₹0.00</div>
               </div>
-              <div style="background:var(--surface-subtle);padding:8px;border-radius:6px;border:1px solid var(--line);">
+              <div style="background:var(--surface-subtle);padding:7px 8px;border-radius:7px;border:1px solid var(--line);">
                 <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🥡 Takeaway</div>
-                <div style="font-size:13px;font-weight:900;font-family:monospace;" id="dcChanTakeaway">₹0.00</div>
+                <div style="font-size:12.5px;font-weight:900;font-family:monospace;margin-top:2px;" id="dcChanTakeaway">₹0.00</div>
               </div>
-              <div style="background:var(--surface-subtle);padding:8px;border-radius:6px;border:1px solid var(--line);">
-                <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🛵 Delivery / Bulk</div>
-                <div style="font-size:13px;font-weight:900;font-family:monospace;" id="dcChanDelivery">₹0.00</div>
+              <div style="background:var(--surface-subtle);padding:7px 8px;border-radius:7px;border:1px solid var(--line);">
+                <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🛵 Delivery</div>
+                <div style="font-size:12.5px;font-weight:900;font-family:monospace;margin-top:2px;" id="dcChanDelivery">₹0.00</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Column 2: Cash Drawer Reconciliation (Petpooja Register Balance) -->
-        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:18px;">
+        <!-- Column 2: Cash Drawer & Till Balance Reconciliation -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.03);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="font-size:15px;font-weight:900;margin:0;color:var(--ink);display:flex;align-items:center;gap:6px;">
-              <span>💵</span> Cash Drawer &amp; Till Balance
+            <h3 style="font-size:15px;font-weight:900;margin:0;color:var(--ink);display:flex;align-items:center;gap:8px;">
+              <span>💵</span> Till Balancing &amp; Cash Reconciliation
             </h3>
-            <button type="button" class="btn btn-xs" id="btnAddCashExpenseBtn" style="padding:3px 8px;font-size:10.5px;font-weight:800;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
-              − Add Cash Out / Expense
+            <button type="button" class="btn btn-xs" id="btnAddCashExpenseBtn" style="padding:4px 9px;font-size:11px;font-weight:800;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;">
+              − Add Cash Out
             </button>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+            <!-- Step 1: Opening Cash -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);">
-              <span style="color:var(--ink-soft);font-weight:600;">1. Opening Cash Float (Start of day):</span>
+              <span style="color:var(--ink-soft);font-weight:700;">1. Starting Cash Float:</span>
               <div style="display:flex;align-items:center;gap:4px;">
-                <span style="font-family:monospace;font-weight:700;">₹</span>
-                <input type="number" id="dcOpeningCashInput" value="0" min="0" step="50" style="width:90px;padding:3px 6px;text-align:right;font-weight:800;font-family:monospace;border:1.5px solid var(--line);border-radius:4px;">
+                <span style="font-family:monospace;font-weight:800;color:var(--ink-soft);">₹</span>
+                <input type="number" id="dcOpeningCashInput" value="0" min="0" step="50" style="width:90px;padding:4px 8px;text-align:right;font-weight:900;font-family:monospace;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);">
               </div>
             </div>
 
+            <!-- Step 2: Cash Sales -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);">
-              <span style="color:#16a34a;font-weight:700;">+ 2. Cash Collected from Orders:</span>
-              <span style="font-weight:900;font-family:monospace;color:#15803d;" id="dcCashCollectedRow">₹0.00</span>
+              <span style="color:#16a34a;font-weight:800;">+ 2. Cash Collected from Orders:</span>
+              <span style="font-weight:900;font-family:monospace;color:#15803d;font-size:14px;" id="dcCashCollectedRow">₹0.00</span>
             </div>
 
+            <!-- Step 3: Cash Expenses -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);">
-              <span style="color:#dc2626;font-weight:700;">− 3. Cash Expenses / Payouts:</span>
-              <span style="font-weight:900;font-family:monospace;color:#b91c1c;" id="dcCashExpensesRow">₹0.00</span>
+              <span style="color:#dc2626;font-weight:800;">− 3. Cash Expenses / Payouts:</span>
+              <span style="font-weight:900;font-family:monospace;color:#b91c1c;font-size:14px;" id="dcCashExpensesRow">₹0.00</span>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface-subtle);border-radius:6px;border:1.5px solid var(--line);">
-              <span style="font-weight:800;color:var(--ink);">Expected Cash in Drawer:</span>
-              <span style="font-size:16px;font-weight:900;font-family:monospace;color:var(--primary);" id="dcExpectedCashRow">₹0.00</span>
+            <!-- Step 4: Expected Drawer Balance -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface-subtle);border-radius:8px;border:1.5px solid var(--line);margin:3px 0;">
+              <span style="font-weight:900;color:var(--ink);font-size:13px;">Expected Cash in Drawer:</span>
+              <span style="font-size:17px;font-weight:900;font-family:monospace;color:var(--primary);" id="dcExpectedCashRow">₹0.00</span>
             </div>
 
+            <!-- Step 5: Counted Cash Input -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1.5px solid var(--line);">
-              <span style="font-weight:800;color:var(--ink);">Actual Cash in Drawer (Counted):</span>
+              <div>
+                <div style="font-weight:800;color:var(--ink);font-size:13px;">Physical Cash Counted:</div>
+                <div style="font-size:10.5px;color:var(--ink-soft);">Enter actual cash notes in drawer</div>
+              </div>
               <div style="display:flex;align-items:center;gap:4px;">
-                <span style="font-family:monospace;font-weight:700;">₹</span>
-                <input type="number" id="dcActualCashInput" value="0" min="0" step="10" placeholder="Counted cash" style="width:110px;padding:5px 8px;text-align:right;font-size:14px;font-weight:900;font-family:monospace;border:2px solid var(--primary);border-radius:6px;background:#fff;">
+                <span style="font-family:monospace;font-weight:800;color:var(--primary);font-size:15px;">₹</span>
+                <input type="number" id="dcActualCashInput" value="0" min="0" step="10" placeholder="Counted cash" style="width:115px;padding:6px 10px;text-align:right;font-size:15px;font-weight:900;font-family:monospace;border:2px solid var(--primary);border-radius:8px;background:var(--panel);color:var(--ink);">
               </div>
             </div>
 
-            <!-- Variance -->
-            <div id="dcCashVarianceBox" style="padding:10px 12px;border-radius:8px;background:#dcfce7;border:1.5px solid #86efac;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
-              <span style="font-weight:800;font-size:12.5px;color:#166534;" id="dcVarianceTitle">Cash Variance / Difference:</span>
+            <!-- Step 6: Reconciliation Variance Badge -->
+            <div id="dcCashVarianceBox" style="padding:10px 14px;border-radius:9px;background:#dcfce7;border:1.5px solid #86efac;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+              <span style="font-weight:800;font-size:12.5px;color:#166534;" id="dcVarianceTitle">Till Balance Status:</span>
               <span style="font-weight:900;font-size:15px;font-family:monospace;color:#15803d;" id="dcVarianceAmount">₹0.00 (Match ✓)</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Bottom Tables: Day Expenses & Invoices Audit Table -->
-      <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3 style="font-size:14px;font-weight:900;margin:0;color:var(--ink);">
-            📋 Settled Invoices for Selected Date (<span id="dcDayInvoicesCount">0</span>)
-          </h3>
-          <span style="font-size:11px;color:var(--ink-soft);">Click 🖨️ on any invoice to reprint 80mm slip</span>
+      <!-- Settled Invoices Audit Table for Selected Date -->
+      <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <h3 style="font-size:15px;font-weight:900;margin:0;color:var(--ink);display:flex;align-items:center;gap:8px;">
+              <span>📋</span> Invoices Settled for Selected Date (<span id="dcDayInvoicesCount">0</span>)
+            </h3>
+            <span style="font-size:11.5px;color:var(--ink-soft);">Click 🖨️ on any invoice row to reprint 80mm thermal slip instantly</span>
+          </div>
         </div>
-        <div class="billing-table-container" style="max-height:360px;overflow-y:auto;">
+        <div class="billing-table-container" style="max-height:360px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;">
           <table class="billing-table">
             <thead>
-              <tr>
-                <th style="width:110px;">INVOICE #</th>
+              <tr style="background:var(--surface-subtle);">
+                <th style="width:120px;">INVOICE #</th>
                 <th style="width:100px;">SERIES</th>
                 <th style="width:85px;">TIME</th>
                 <th style="width:110px;">SOURCE</th>
                 <th>CUSTOMER</th>
-                <th style="text-align:right;width:100px;">TOTAL</th>
-                <th style="width:90px;">MOP</th>
-                <th style="text-align:right;width:70px;">PRINT</th>
+                <th style="text-align:right;width:110px;">TOTAL</th>
+                <th style="width:95px;">MOP</th>
+                <th style="text-align:right;width:80px;">REPRINT</th>
               </tr>
             </thead>
             <tbody id="dayCloseInvoicesTableBody"></tbody>
@@ -5967,128 +6006,120 @@
 </div>
 
 <!-- Order Print Options Modal -->
+<!-- Print Order & Kitchen Slips Modal (Feedback #1 Fix: Compact, Pinned Footer so buttons never get cut off) -->
 <div class="modal-backdrop" id="orderPrintOptionsModal" style="z-index:200000 !important;background:rgba(0,0,0,0.65);">
-  <div class="modal" style="max-width:480px;box-shadow:0 20px 45px rgba(0,0,0,0.35);border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
-    <div class="modal-head" style="background:var(--surface-subtle);border-bottom:1.5px solid var(--line);padding:14px 18px;">
+  <div class="modal" style="max-width:470px;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.35);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;">
+    <div class="modal-head" style="background:var(--surface-subtle);border-bottom:1.5px solid var(--line);padding:12px 18px;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:24px;">🖨️</span>
+        <span style="font-size:22px;">🖨️</span>
         <div>
-          <h3 style="margin:0;font-size:16px;color:var(--ink);" id="orderPrintModalTitle">Generate Invoice &amp; Print Options</h3>
-          <p id="orderPrintModalSubtitle" style="margin:2px 0 0;font-size:11px;color:var(--ink-soft);">Choose combined OT print or separate customer bill print</p>
+          <h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);" id="orderPrintModalTitle">Generate Invoice &amp; Print Options</h3>
+          <p id="orderPrintModalSubtitle" style="margin:1px 0 0;font-size:11px;color:var(--ink-soft);">Choose combined OT print or separate customer bill print</p>
         </div>
       </div>
-      <button type="button" class="modal-close" data-close-print-modal style="font-size:18px;cursor:pointer;">✕</button>
+      <button type="button" class="modal-close" data-close-print-modal style="font-size:16px;cursor:pointer;">✕</button>
     </div>
-    <div class="modal-body" style="padding:18px;display:flex;flex-direction:column;gap:16px;">
+    
+    <div class="modal-body" style="padding:14px 18px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;">
       
       <!-- Section 1: Slip Type Selection -->
       <div>
-        <label style="font-weight:800;font-size:13px;color:var(--ink);display:block;margin-bottom:8px;">
+        <label style="font-weight:800;font-size:12px;color:var(--ink);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;">
           1. Select What to Print:
         </label>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:2px solid var(--primary);border-radius:10px;cursor:pointer;background:rgba(1,122,156,0.06);transition:all .15s ease;" class="print-mode-card" id="card_print_with_kot">
-            <input type="radio" name="orderPrintMode" value="with_kot" checked style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:2px solid var(--primary);border-radius:9px;cursor:pointer;background:rgba(1,122,156,0.06);transition:all .15s ease;" class="print-mode-card" id="card_print_with_kot">
+            <input type="radio" name="orderPrintMode" value="with_kot" checked style="accent-color:var(--primary);width:16px;height:16px;">
             <div style="flex:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 With OT Print (Customer Bill + Kitchen OT)</div>
-                <span style="font-size:10.5px;font-weight:800;background:var(--primary);color:#fff;padding:2px 8px;border-radius:12px;">Standard (2 Slips on Roll)</span>
+                <div style="font-weight:800;font-size:13px;color:var(--ink);">🍳 With OT Print (Bill + Kitchen OT)</div>
+                <span style="font-size:10px;font-weight:800;background:var(--primary);color:#fff;padding:2px 7px;border-radius:10px;">Standard (2 Slips)</span>
               </div>
-              <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
-                Customer dining invoice slip + continuous Kitchen OT (Order Ticket) for Chef.
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">
+                Customer dining bill + Kitchen OT on continuous roll with tear line.
               </div>
             </div>
           </label>
 
-          <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel);transition:all .15s ease;" class="print-mode-card" id="card_print_without_kot">
-            <input type="radio" name="orderPrintMode" value="without_kot" style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;cursor:pointer;background:var(--panel);transition:all .15s ease;" class="print-mode-card" id="card_print_without_kot">
+            <input type="radio" name="orderPrintMode" value="without_kot" style="accent-color:var(--primary);width:16px;height:16px;">
             <div style="flex:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🧾 Separate Print (Customer Bill Only)</div>
-                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip (Bill Only)</span>
+                <div style="font-weight:800;font-size:13px;color:var(--ink);">🧾 Separate Print (Customer Bill Only)</div>
+                <span style="font-size:10px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 7px;border-radius:10px;">1 Slip (Bill)</span>
               </div>
-              <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
-                Single customer bill / tax invoice slip only. No kitchen ticket attached.
+              <div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">
+                Customer invoice receipt only. No kitchen ticket attached.
               </div>
             </div>
           </label>
 
-          <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel);transition:all .15s ease;" class="print-mode-card" id="card_print_kot_only">
-            <input type="radio" name="orderPrintMode" value="kot_only" style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
-            <div style="flex:1;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 Kitchen OT Only (No Bill)</div>
-                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip (OT Only)</span>
-              </div>
-              <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
-                Cook order ticket for kitchen/pantry only.
-              </div>
+          <label style="display:flex;align-items:center;gap:10px;padding:7px 12px;border:1.5px solid var(--line);border-radius:9px;cursor:pointer;background:var(--panel);transition:all .15s ease;" class="print-mode-card" id="card_print_kot_only">
+            <input type="radio" name="orderPrintMode" value="kot_only" style="accent-color:var(--primary);width:15px;height:15px;">
+            <div style="flex:1;display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-weight:700;font-size:12px;color:var(--ink);">🍳 Kitchen OT Only (No Bill)</div>
+              <span style="font-size:10px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:1px 6px;border-radius:8px;">1 Slip (OT)</span>
             </div>
           </label>
         </div>
       </div>
 
-      <!-- Section: Paper Format Choice -->
-      <div style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
-        <label style="font-weight:800;font-size:12.5px;color:var(--ink);display:block;margin-bottom:8px;">
-          2. Paper Format:
-        </label>
-        <div style="display:flex;gap:8px;">
-          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:2px solid var(--primary);border-radius:8px;background:rgba(1,122,156,0.06);cursor:pointer;font-size:12.5px;font-weight:800;" class="print-paper-card" id="card_paper_80mm">
-            <input type="radio" name="orderPrintPaperFormat" value="80mm" checked style="accent-color:var(--primary);width:16px;height:16px;">
-            <span>🧾 80mm Thermal Roll (Default)</span>
+      <!-- Section 2: Paper Format Choice -->
+      <div style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:8px;padding:8px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-weight:800;font-size:11.5px;color:var(--ink);margin:0;">
+            Paper Format:
           </label>
-          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;font-size:12.5px;font-weight:700;" class="print-paper-card" id="card_paper_a4">
-            <input type="radio" name="orderPrintPaperFormat" value="a4" style="accent-color:var(--primary);width:16px;height:16px;">
-            <span>📄 A4 Full Sheet</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Section 3: Print Sets / Quantity -->
-      <div style="background:var(--surface-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <label style="font-weight:800;font-size:12.5px;color:var(--ink);margin:0;">
-            3. Print Quantity / Sets:
-          </label>
-          <span id="orderPrintSetHint" style="font-size:11px;color:#0284c7;font-weight:700;">1 Set = 1 Bill + 1 OT (Printed together on roll)</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <div style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;">
-            <button type="button" id="btnPrintCopiesDec" style="width:38px;height:38px;border:none;background:var(--surface-subtle);font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;">−</button>
-            <input type="number" id="orderPrintCopiesInput" value="1" min="1" max="10" style="width:50px;height:38px;border:none;text-align:center;font-size:16px;font-weight:900;font-family:monospace;background:transparent;outline:none;" readonly>
-            <button type="button" id="btnPrintCopiesInc" style="width:38px;height:38px;border:none;background:var(--surface-subtle);font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;">+</button>
-          </div>
           <div style="display:flex;gap:6px;">
-            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="1" style="font-weight:800;padding:7px 14px;border-radius:6px;background:var(--primary);color:#fff;border-color:var(--primary);">1 Set (Default)</button>
-            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="2" style="font-weight:700;padding:7px 14px;border-radius:6px;">2 Sets</button>
-            <button type="button" class="btn btn-xs btn-preset-copy" data-copies="3" style="font-weight:700;padding:7px 14px;border-radius:6px;">3 Sets</button>
+            <label style="display:flex;align-items:center;gap:5px;padding:5px 9px;border:2px solid var(--primary);border-radius:6px;background:rgba(1,122,156,0.06);cursor:pointer;font-size:11.5px;font-weight:800;" class="print-paper-card" id="card_paper_80mm">
+              <input type="radio" name="orderPrintPaperFormat" value="80mm" checked style="accent-color:var(--primary);width:14px;height:14px;">
+              <span>🧾 80mm Roll (Default)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;padding:5px 9px;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer;font-size:11.5px;font-weight:700;" class="print-paper-card" id="card_paper_a4">
+              <input type="radio" name="orderPrintPaperFormat" value="a4" style="accent-color:var(--primary);width:14px;height:14px;">
+              <span>📄 A4 Sheet</span>
+            </label>
           </div>
         </div>
       </div>
 
-      <!-- Section 4: Kitchen Dispatch Checkbox -->
-      <div id="printDispatchKotOption" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:#166534;margin:0;">
-          <input type="checkbox" id="orderPrintDispatchKitchen" checked style="accent-color:#16a34a;width:15px;height:15px;">
-          <span>✓ Also dispatch ticket live to Kitchen KOT screen (#view-kot)</span>
-        </label>
+      <!-- Section 3: Print Copies & Kitchen Dispatch -->
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="flex:1;background:var(--surface-subtle);border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-weight:800;font-size:11px;color:var(--ink-soft);">Copies:</span>
+          <div style="display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden;">
+            <button type="button" id="btnPrintCopiesDec" style="width:28px;height:28px;border:none;background:var(--surface-subtle);font-size:15px;font-weight:800;cursor:pointer;">−</button>
+            <input type="number" id="orderPrintCopiesInput" value="1" min="1" max="10" style="width:34px;height:28px;border:none;text-align:center;font-size:13px;font-weight:900;font-family:monospace;background:transparent;" readonly>
+            <button type="button" id="btnPrintCopiesInc" style="width:28px;height:28px;border:none;background:var(--surface-subtle);font-size:15px;font-weight:800;cursor:pointer;">+</button>
+          </div>
+        </div>
+
+        <div style="flex:1.4;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:7px 10px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;font-weight:700;color:#166534;margin:0;">
+            <input type="checkbox" id="orderPrintDispatchKitchen" checked style="accent-color:#16a34a;width:14px;height:14px;">
+            <span>✓ Dispatch to KOT screen</span>
+          </label>
+        </div>
       </div>
 
       <!-- Live Preview Summary -->
-      <div id="orderPrintSummaryText" style="font-size:13px;color:#15803d;font-weight:800;background:#dcfce7;border:1.5px solid #86efac;padding:12px 14px;border-radius:8px;display:flex;align-items:center;gap:8px;">
-        🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">1 Set (Customer Bill + Kitchen OT)</b> · Both slips together on continuous roll</span>
+      <div id="orderPrintSummaryText" style="font-size:11.5px;color:#15803d;font-weight:800;background:#dcfce7;border:1px solid #86efac;padding:8px 10px;border-radius:7px;display:flex;align-items:center;gap:6px;">
+        🧾 <span>Ready to Print: <b style="font-size:12px;color:#166534;">1 Set (Customer Bill + Kitchen OT)</b> on 80mm Roll</span>
       </div>
 
     </div>
-    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:8px;background:var(--surface-subtle);border-top:1.5px solid var(--line);flex-wrap:wrap;">
-      <button type="button" class="btn" data-close-print-modal style="flex:0.8;">Cancel</button>
-      <button type="button" class="btn" id="btnSkipPrintAndSettle" style="flex:1.1;background:var(--panel);border:1.5px solid var(--line);font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:4px;" title="Proceed directly to settlement without printing">Skip Print &amp; Settle</button>
-      <button type="button" class="btn" id="btnExecuteOrderPrint" style="flex:1.1;background:#0284c7;border-color:#0284c7;color:#fff;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <i data-lucide="printer" style="width:14px;height:14px;"></i> Print Only
+
+    <!-- Pinned Footer: Guaranteed visible, never cut off -->
+    <div class="modal-foot" style="padding:10px 16px;display:flex;gap:6px;background:var(--surface-subtle);border-top:1.5px solid var(--line);flex-shrink:0;">
+      <button type="button" class="btn btn-sm" data-close-print-modal style="flex:0.6;font-weight:700;border:1px solid var(--line);background:var(--panel);">Cancel</button>
+      <button type="button" class="btn btn-sm" id="btnSkipPrintAndSettle" style="flex:1.1;background:var(--panel);border:1.5px solid var(--line);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px;" title="Proceed directly to settlement without printing">
+        Skip &amp; Settle
       </button>
-      <button type="button" class="btn btn-primary" id="btnPrintAndSettleNow" style="flex:1.6;height:42px;font-weight:800;font-size:13.5px;background:linear-gradient(135deg, #059669 0%, #047857 100%);border-color:#059669;box-shadow:0 4px 12px rgba(5,150,105,0.3);display:flex;align-items:center;justify-content:center;gap:6px;">
-        <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Print &amp; Settle Bill
+      <button type="button" class="btn btn-sm" id="btnExecuteOrderPrint" style="flex:1;background:#0284c7;border:none;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;">
+        <i data-lucide="printer" style="width:13px;height:13px;"></i> Print Only
+      </button>
+      <button type="button" class="btn btn-sm btn-primary" id="btnPrintAndSettleNow" style="flex:1.5;height:38px;font-weight:800;font-size:13px;background:linear-gradient(135deg, #059669 0%, #047857 100%);border:none;box-shadow:0 3px 10px rgba(5,150,105,0.35);color:#fff;display:flex;align-items:center;justify-content:center;gap:5px;">
+        <i data-lucide="check-circle" style="width:15px;height:15px;"></i> Print &amp; Settle Bill
       </button>
     </div>
   </div>
@@ -14706,39 +14737,45 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     const printFormatLabel = (invoiceMasterConfig.paperFormat || "80mm").toUpperCase();
     if (isPaid) {
       foot.innerHTML = `
-        <button type="button" class="btn" data-close-modal style="flex:1;">Close</button>
-        <button type="button" class="btn btn-primary" id="printReceiptBtn" style="flex:1.4;">
-          🖨️ Print (${printFormatLabel})
+        <button type="button" class="btn" data-close-modal style="flex:0.8;font-weight:700;">Close</button>
+        <button type="button" class="btn" id="printReceiptBtn" style="flex:1.4;background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;color:#ffffff !important;border:none !important;font-weight:800;font-size:13.5px;border-radius:10px;padding:10px 18px;box-shadow:0 4px 14px rgba(2,132,199,0.35);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
+          <span style="font-size:16px;">🖨️</span>
+          <span style="color:#ffffff !important;font-weight:800;">Print ${printFormatLabel} Slip</span>
         </button>
       `;
-      foot.querySelector("#printReceiptBtn").onclick = () => {
-        const slipHtml = (typeof generateDocumentSlipHtml === "function")
-          ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig)
-          : (document.getElementById("thermalPrintReceipt")?.innerHTML || "");
-        if (slipHtml) {
+      foot.querySelector("#printReceiptBtn").onclick = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        const receiptEl = document.getElementById("thermalPrintReceipt");
+        const slipHtml = receiptEl ? receiptEl.innerHTML : (typeof generateDocumentSlipHtml === "function" ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig) : "");
+        showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
+        if (typeof printThermalSlipRobust === "function") {
+          printThermalSlipRobust(slipHtml, invoiceMasterConfig.paperFormat || "80mm", `Invoice-${inv.id}`);
+        } else {
           executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
-          showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
         }
       };
       foot.querySelector("[data-close-modal]").onclick = closeAllModals;
     } else {
       foot.innerHTML = `
-        <button type="button" class="btn" data-close-modal style="flex:0.8;">Cancel</button>
-        <button type="button" class="btn" id="printReceiptBtn" style="flex:1;background:var(--line-soft);border-color:var(--line);">
-          🖨️ Print ${printFormatLabel} Slip
+        <button type="button" class="btn" data-close-modal style="flex:0.8;font-weight:700;">Cancel</button>
+        <button type="button" class="btn" id="printReceiptBtn" style="flex:1;background:var(--line-soft);border:1.5px solid var(--line);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+          <span>🖨️</span>
+          <span>Print Slip</span>
         </button>
-        <button type="button" class="btn btn-primary" id="payInvoiceBtn" style="flex:1.5;background:#059669;border-color:#059669;">
+        <button type="button" class="btn btn-primary" id="payInvoiceBtn" style="flex:1.5;background:#059669;border-color:#059669;font-weight:800;cursor:pointer;">
           ✓ Collect Payment &amp; Free Table
         </button>
       `;
       foot.querySelector("[data-close-modal]").onclick = closeAllModals;
-      foot.querySelector("#printReceiptBtn").onclick = () => {
-        const slipHtml = (typeof generateDocumentSlipHtml === "function")
-          ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig)
-          : (document.getElementById("thermalPrintReceipt")?.innerHTML || "");
-        if (slipHtml) {
+      foot.querySelector("#printReceiptBtn").onclick = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        const receiptEl = document.getElementById("thermalPrintReceipt");
+        const slipHtml = receiptEl ? receiptEl.innerHTML : (typeof generateDocumentSlipHtml === "function" ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig) : "");
+        showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
+        if (typeof printThermalSlipRobust === "function") {
+          printThermalSlipRobust(slipHtml, invoiceMasterConfig.paperFormat || "80mm", `Invoice-${inv.id}`);
+        } else {
           executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
-          showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
         }
       };
 
@@ -16901,6 +16938,16 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     const mopUpiPct = document.getElementById("dcMopUpiPct");
     if (mopUpiPct) mopUpiPct.textContent = `${m.upiPct}%`;
 
+    // Visual Tender Progress Bar
+    const barCash = document.getElementById("dcBarCash");
+    const barCard = document.getElementById("dcBarCard");
+    const barUpi = document.getElementById("dcBarUpi");
+    if (barCash && barCard && barUpi) {
+      barCash.style.width = `${m.cashPct}%`;
+      barCard.style.width = `${m.cardPct}%`;
+      barUpi.style.width = `${m.upiPct}%`;
+    }
+
     // Channel split
     const chanDine = document.getElementById("dcChanDine");
     if (chanDine) chanDine.textContent = `₹${m.dineInTotal.toFixed(2)}`;
@@ -16973,15 +17020,15 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
 
           return `
             <tr>
-              <td><b style="font-family:monospace;color:var(--primary);">${inv.id}</b></td>
+              <td><b style="font-family:monospace;color:var(--primary);font-size:13px;">${inv.id}</b></td>
               <td><span style="font-size:11px;font-weight:700;color:var(--ink-soft);">${conf.prefix || conf.code}</span></td>
               <td style="font-family:monospace;font-size:11.5px;color:var(--ink-soft);">${inv.time || inv.timeFormatted || '—'}</td>
               <td><span style="font-size:11.5px;font-weight:700;">${inv.tableLabel || 'Counter'}</span></td>
-              <td><span style="font-size:12px;">${inv.customerName || 'Walk-in'}</span></td>
+              <td><span style="font-size:12px;font-weight:600;">${inv.customerName || 'Walk-in'}</span></td>
               <td style="text-align:right;"><b style="font-family:monospace;color:var(--ink);">${money(inv.total)}</b></td>
               <td>${payPill}</td>
               <td style="text-align:right;">
-                <button type="button" class="btn btn-xs" data-dc-reprint="${inv.id}" title="Reprint 80mm Slip" style="padding:3px 7px;font-size:11px;">🖨️</button>
+                <button type="button" class="btn btn-xs" data-dc-reprint="${inv.id}" title="Reprint 80mm Thermal Slip" style="padding:4px 8px;font-size:11px;background:#0284c7;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ Slip</button>
               </td>
             </tr>
           `;
@@ -16995,7 +17042,11 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
                 ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig) 
                 : null;
               if (slipHtml) {
-                executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+                if (typeof printThermalSlipRobust === "function") {
+                  printThermalSlipRobust(slipHtml, invoiceMasterConfig.paperFormat || "80mm", `Invoice-${inv.id}`);
+                } else {
+                  executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+                }
                 showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
               }
             }
@@ -17003,6 +17054,7 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
         });
       }
     }
+    if (typeof refreshLucideIcons === "function") refreshLucideIcons();
   }
 
   // Petpooja 80mm Z-Report (Daily Sales Register Slip) Thermal Generation
@@ -17169,7 +17221,11 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       </div>
     `;
 
-    executeThermalPrint(zReportHtml, "80mm");
+    if (typeof printThermalSlipRobust === "function") {
+      printThermalSlipRobust(zReportHtml, "80mm", `Z-Report-${targetDate}`);
+    } else {
+      executeThermalPrint(zReportHtml, "80mm");
+    }
     showToast(`🖨️ Printing 80mm Z-Report for ${targetDate}...`);
   }
 
@@ -18128,6 +18184,62 @@ For any queries or updates, reply to this message.`;
     }
     inv.amountInWords = numberToWordsINR(inv.total);
   }
+
+  // 100% Reliable Dual-Mode Print Driver (Bypasses Chrome dialog/modal focus trapping)
+  function printThermalSlipRobust(contentHtml, format = (invoiceMasterConfig.paperFormat || "80mm"), title = "POS Receipt") {
+    const isA4 = String(format).toLowerCase() === "a4";
+    const rollWidth = isA4 ? "190mm" : (String(format).toLowerCase() === "58mm" ? "48mm" : "72mm");
+    const pageSize = isA4 ? "A4 portrait" : (String(format).toLowerCase() === "58mm" ? "58mm auto" : "80mm auto");
+
+    // 1. Try clean direct popup window (never blocked by modal focus traps)
+    try {
+      const printWin = window.open('', '_blank', 'width=420,height=600,menubar=no,toolbar=no,location=no,status=no');
+      if (printWin && printWin.document) {
+        printWin.document.open();
+        printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${title}</title>
+  <style>
+    @page { size: ${pageSize} !important; margin: ${isA4 ? '8mm' : '2mm 1mm'} !important; }
+    * { box-sizing: border-box !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    html, body { margin: 0; padding: 0; background: #fff; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; font-size: 10px; line-height: 1.35; width: 100%; }
+    #wrap { width: ${rollWidth} !important; max-width: 100% !important; margin: 0 auto; padding: 2mm; box-sizing: border-box; }
+    table { width: 100% !important; border-collapse: collapse !important; }
+    th, td { padding: 2.5px 3px !important; font-size: inherit !important; }
+    .no-print { display: none !important; }
+    img { max-width: 100% !important; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    ${contentHtml}
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }, 80);
+    };
+  <\/script>
+</body>
+</html>`);
+        printWin.document.close();
+        return;
+      }
+    } catch (popupErr) {
+      console.warn("[Print] Popup window blocked or failed, using iframe fallback:", popupErr);
+    }
+
+    // 2. Fallback to executeThermalPrint
+    if (typeof executeThermalPrint === "function") {
+      executeThermalPrint(contentHtml, format);
+    }
+  }
+  window.printThermalSlipRobust = printThermalSlipRobust;
 
   // Dedicated Thermal Roll & Sheet Printing Driver via Isolated Iframe with Dynamic Content-Adaptive Height
   function executeThermalPrint(contentHtml, paperFormat = (invoiceMasterConfig.paperFormat || "80mm"), customWidthMm = null, margins = null, scalePct = 100, customHeightMm = null) {
