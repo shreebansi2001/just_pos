@@ -31,7 +31,9 @@
   html.pos-auth-ready #loginScreen {
     display: none !important;
   }
-  html.pos-auth-ready .app {
+  html.pos-auth-ready .app,
+  html.pos-auth-ready #loginScreen ~ .app,
+  html.pos-auth-ready #loginScreen:not(.hidden) ~ .app {
     display: flex !important;
   }
 </style>
@@ -9606,7 +9608,11 @@
     } else if (viewId === "day-close") {
       document.getElementById("pageTitle").textContent = "Day Close & Daily Sales Register";
       document.getElementById("pageSub").textContent = "Petpooja-style daily sales audit, MOP collection split, cash drawer reconciliation & Z-Report";
-      renderDayClose();
+      try {
+        renderDayClose();
+      } catch (dcErr) {
+        console.error("[DayClose] Error executing renderDayClose:", dcErr);
+      }
     } else if (viewId === "masters") {
       document.getElementById("pageTitle").textContent = "Unified Masters";
       document.getElementById("pageSub").textContent = "Live categories, items, floors, tables, taxes, roles & staff members";
@@ -10046,9 +10052,14 @@
       return true;
     } else {
       // 3. User is not authenticated -> show login screen and prevent access to dashboard
+      document.documentElement.classList.remove('pos-auth-ready');
       if (loginScreen) {
         loginScreen.classList.remove("hidden");
-        loginScreen.style.display = "";
+        loginScreen.style.display = "flex";
+      }
+      const appEl = document.querySelector(".app");
+      if (appEl) {
+        appEl.style.display = "none";
       }
       setPasswordObscurity(true);
       console.log("🔒 Sign In required · Floor desk locked until authentication");
@@ -18216,18 +18227,18 @@ For any queries or updates, reply to this message.`;
   <div id="wrap">
     ${contentHtml}
   </div>
-  <script>
-    window.onload = function() {
-      setTimeout(function() {
-        window.focus();
-        window.print();
-        setTimeout(function() { window.close(); }, 500);
-      }, 80);
-    };
-  <\/script>
 </body>
 </html>`);
         printWin.document.close();
+        setTimeout(function() {
+          try {
+            printWin.focus();
+            printWin.print();
+            setTimeout(function() { try { printWin.close(); } catch(e){} }, 600);
+          } catch(e) {
+            console.warn("[Print] Popup print failed:", e);
+          }
+        }, 120);
         return;
       }
     } catch (popupErr) {
@@ -25211,6 +25222,7 @@ For any queries or updates, reply to this message.`;
   }
 
   // Initial Load
+  checkJcxAuthentication();
   enforceRoleAccess();
   const _initUrlParams = new URLSearchParams(window.location.search);
   const _hashView = (window.location.hash.startsWith("#view-") ? window.location.hash.replace("#view-", "") : "");
@@ -25218,9 +25230,9 @@ For any queries or updates, reply to this message.`;
   const _viewToOpen = (_savedView === "pos" && !currentOrderSession) ? "tables" : _savedView;
   showView(_viewToOpen, false);
   if (window.history && window.history.replaceState) {
-    window.history.replaceState({ view: _viewToOpen }, "Just POS", `#view-${_viewToOpen}`);
+    const _curSearch = window.location.search;
+    window.history.replaceState({ view: _viewToOpen }, "Just POS", `${window.location.pathname}${_curSearch}#view-${_viewToOpen}`);
   }
-  checkJcxAuthentication();
   if (_initUrlParams.get("view") === "masters" && _initUrlParams.get("mastertab")) {
     const _mTab = _initUrlParams.get("mastertab");
     if (window.setActiveMasterTab) window.setActiveMasterTab(_mTab);
