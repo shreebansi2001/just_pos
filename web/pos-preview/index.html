@@ -4767,12 +4767,13 @@
   /* 80mm Thermal Printer Settings: matches POSPrinter POS-80C 80(72)mm x 297mm */
   @media print {
     @page {
-      size: 80mm auto;
-      margin: 0mm !important;
+      size: 80mm 297mm !important;
+      margin: 2mm 1mm 2mm 1mm !important;
     }
     html, body {
       width: 80mm !important;
-      margin: 0 !important;
+      max-width: 80mm !important;
+      margin: 0 auto !important;
       padding: 0 !important;
       background: #ffffff !important;
       color: #000000 !important;
@@ -5038,6 +5039,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>
       <span>Billing</span>
     </button>
+    <button class="nav-btn" data-view="day-close" id="navBtnDayClose" title="Day Close &amp; Daily Sales Register (Petpooja style)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      <span>Day Close</span>
+    </button>
     <button class="nav-btn" data-view="masters">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
       <span>Masters</span>
@@ -5066,7 +5071,7 @@
         </div>
         <div class="stat-chip"><b id="statTablesFree">0</b> tables free</div>
         <div class="stat-chip"><b id="statActiveKots">0</b> active KOTs</div>
-        <div class="stat-chip primary"><b id="statTodaySales">₹0.00</b> sales today</div>
+        <div class="stat-chip primary" id="statTodaySalesChip" style="cursor:pointer;transition:transform 0.15s ease;" title="Click to view Petpooja Day Sales &amp; Close Register"><b id="statTodaySales">₹0.00</b> sales today ↗</div>
         <div class="stat-chip operator-chip" id="topbarOperatorChip" style="cursor:default;user-select:none;">
           <span>👤</span> <b id="topbarOperatorName">Admin</b>
           <span id="topbarRoleBadge" class="op-role-pill admin">ADMIN</span>
@@ -5460,7 +5465,10 @@
             Audit settled invoices, search customer records, and export accounting reports.
           </span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-secondary" id="btnOpenDayCloseFromBilling" style="display:inline-flex;align-items:center;gap:6px;font-weight:800;background:#f0fdf4;border:1.5px solid #16a34a;color:#15803d;cursor:pointer;">
+            📊 Day Close &amp; Register (Z-Report)
+          </button>
           <button class="btn btn-sm" id="exportBillingCsvBtn" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;">
             📥 Export CSV
           </button>
@@ -5573,6 +5581,237 @@
           <tbody id="billingTableBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- VIEW 4B: DAY CLOSE & SALES REGISTER (PETPOOJA POS MODEL) -->
+    <div class="view" id="view-day-close">
+      <!-- Top Overview Bar -->
+      <div class="billing-header-row" style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;width:100%;">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <h2 style="font-size:20px;font-weight:900;color:var(--ink);margin:0;display:flex;align-items:center;gap:8px;">
+                <span>📊</span> Day Close &amp; Daily Sales Register
+              </h2>
+              <span id="dayCloseStatusBadge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;background:#dcfce7;color:#15803d;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px;">
+                <span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;"></span> 🟢 Shift Active · Register Open
+              </span>
+            </div>
+            <p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;">
+              Petpooja-style End of Day register audit, payment collection breakdown, cash till reconciliation, and 80mm Z-Report.
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn" id="btnPrintDayCloseZReport" style="background:#0284c7;border-color:#0284c7;color:#fff;font-weight:800;display:inline-flex;align-items:center;gap:6px;">
+              <i data-lucide="printer" style="width:16px;height:16px;"></i> Print 80mm Z-Report
+            </button>
+            <button type="button" class="btn btn-primary" id="btnCloseDayRegisterBtn" style="background:linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);border-color:#991b1b;font-weight:800;display:inline-flex;align-items:center;gap:6px;">
+              <i data-lucide="lock" style="width:16px;height:16px;"></i> Close Day Register
+            </button>
+            <button type="button" class="btn" id="btnReopenDayRegisterBtn" style="display:none;background:#fef3c7;border:1.5px solid #f59e0b;color:#b45309;font-weight:800;align-items:center;gap:6px;">
+              <i data-lucide="unlock" style="width:16px;height:16px;"></i> Re-open Register
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Date Selection Bar -->
+        <div style="display:flex;gap:12px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);">Business Date:</label>
+            <input type="date" id="dayCloseDateInput" style="padding:5px 10px;font-size:12.5px;font-weight:800;border:1.5px solid var(--line);border-radius:6px;background:var(--surface-subtle);font-family:monospace;">
+            <button type="button" class="btn btn-xs" id="btnDayCloseToday" style="padding:5px 10px;font-size:11px;font-weight:800;">Today</button>
+            <button type="button" class="btn btn-xs" id="btnDayCloseYesterday" style="padding:5px 10px;font-size:11px;font-weight:700;">Yesterday</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+            <label style="font-size:12px;font-weight:700;color:var(--ink-soft);">Outlet Station:</label>
+            <select id="dayCloseOutletFilter" style="padding:5px 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:6px;background:var(--surface-subtle);">
+              <option value="">🏢 All Outlets (Consolidated)</option>
+            </select>
+            <button type="button" class="btn btn-xs btn-primary" id="btnRefreshDayClose" style="padding:5px 10px;font-size:11px;font-weight:800;">↻ Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Cards: How Much Sell -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-bottom:16px;" id="dayCloseKpiCards">
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid #16a34a;border-radius:10px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">💰 Total Net Sales (Revenue)</div>
+          <div style="font-size:24px;font-weight:900;color:#15803d;font-family:monospace;margin:4px 0;" id="dcKpiNetSales">₹0.00</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);" id="dcKpiBillsCount">0 settled invoices</div>
+        </div>
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid var(--primary);border-radius:10px;padding:14px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Gross Sales &amp; Discounts</div>
+            <span style="font-size:10px;background:var(--surface-subtle);padding:2px 6px;border-radius:4px;font-weight:700;">Pre-tax</span>
+          </div>
+          <div style="font-size:20px;font-weight:900;color:var(--ink);font-family:monospace;margin:4px 0;" id="dcKpiGrossSales">₹0.00</div>
+          <div style="font-size:11.5px;color:#dc2626;font-weight:700;" id="dcKpiDiscounts">−₹0.00 discount given</div>
+        </div>
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid #ca8a04;border-radius:10px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Taxes Collected (GST)</div>
+          <div style="font-size:20px;font-weight:900;color:#a16207;font-family:monospace;margin:4px 0;" id="dcKpiTaxes">₹0.00</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);" id="dcKpiTaxableBase">Taxable Base: ₹0.00</div>
+        </div>
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-left:5px solid #6366f1;border-radius:10px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.5px;">Average Ticket (AOV)</div>
+          <div style="font-size:20px;font-weight:900;color:#4f46e5;font-family:monospace;margin:4px 0;" id="dcKpiAov">₹0.00</div>
+          <div style="font-size:11.5px;color:var(--ink-soft);" id="dcKpiTotalQty">0 items sold</div>
+        </div>
+      </div>
+
+      <!-- Main Two-Column Analysis: Payment Modes & Cash Drawer Reconciliation -->
+      <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:16px;">
+        
+        <!-- Column 1: Payment Mode Breakdown (MOP) -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:18px;">
+          <h3 style="font-size:15px;font-weight:900;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;">
+            <span>💳 Payment Collection Modes (MOP)</span>
+            <span style="font-size:11px;font-weight:700;color:var(--ink-soft);">Petpooja Daily Split</span>
+          </h3>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <!-- Cash -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">💵</span>
+                <div>
+                  <div style="font-weight:900;font-size:14px;color:#166534;">Cash Collection</div>
+                  <div style="font-size:11px;color:#15803d;" id="dcMopCashCount">0 bills</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:16px;font-weight:900;font-family:monospace;color:#166534;" id="dcMopCashAmount">₹0.00</div>
+                <div style="font-size:10.5px;font-weight:800;color:#15803d;" id="dcMopCashPct">0%</div>
+              </div>
+            </div>
+            <!-- Card -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">💳</span>
+                <div>
+                  <div style="font-weight:900;font-size:14px;color:#1e40af;">Credit / Debit Card</div>
+                  <div style="font-size:11px;color:#2563eb;" id="dcMopCardCount">0 bills</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:16px;font-weight:900;font-family:monospace;color:#1e40af;" id="dcMopCardAmount">₹0.00</div>
+                <div style="font-size:10.5px;font-weight:800;color:#2563eb;" id="dcMopCardPct">0%</div>
+              </div>
+            </div>
+            <!-- UPI -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">📱</span>
+                <div>
+                  <div style="font-weight:900;font-size:14px;color:#6b21a8;">UPI / QR Code</div>
+                  <div style="font-size:11px;color:#7e22ce;" id="dcMopUpiCount">0 bills</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:16px;font-weight:900;font-family:monospace;color:#6b21a8;" id="dcMopUpiAmount">₹0.00</div>
+                <div style="font-size:10.5px;font-weight:800;color:#7e22ce;" id="dcMopUpiPct">0%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel Split -->
+          <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);">
+            <div style="font-size:11.5px;font-weight:800;color:var(--ink-soft);margin-bottom:8px;text-transform:uppercase;">Dining Channel Split:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+              <div style="background:var(--surface-subtle);padding:8px;border-radius:6px;border:1px solid var(--line);">
+                <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🍽️ Dine-in</div>
+                <div style="font-size:13px;font-weight:900;font-family:monospace;" id="dcChanDine">₹0.00</div>
+              </div>
+              <div style="background:var(--surface-subtle);padding:8px;border-radius:6px;border:1px solid var(--line);">
+                <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🥡 Takeaway</div>
+                <div style="font-size:13px;font-weight:900;font-family:monospace;" id="dcChanTakeaway">₹0.00</div>
+              </div>
+              <div style="background:var(--surface-subtle);padding:8px;border-radius:6px;border:1px solid var(--line);">
+                <div style="font-size:10px;font-weight:700;color:var(--ink-soft);">🛵 Delivery / Bulk</div>
+                <div style="font-size:13px;font-weight:900;font-family:monospace;" id="dcChanDelivery">₹0.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Cash Drawer Reconciliation (Petpooja Register Balance) -->
+        <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="font-size:15px;font-weight:900;margin:0;color:var(--ink);display:flex;align-items:center;gap:6px;">
+              <span>💵</span> Cash Drawer &amp; Till Balance
+            </h3>
+            <button type="button" class="btn btn-xs" id="btnAddCashExpenseBtn" style="padding:3px 8px;font-size:10.5px;font-weight:800;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
+              − Add Cash Out / Expense
+            </button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);">
+              <span style="color:var(--ink-soft);font-weight:600;">1. Opening Cash Float (Start of day):</span>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="font-family:monospace;font-weight:700;">₹</span>
+                <input type="number" id="dcOpeningCashInput" value="0" min="0" step="50" style="width:90px;padding:3px 6px;text-align:right;font-weight:800;font-family:monospace;border:1.5px solid var(--line);border-radius:4px;">
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);">
+              <span style="color:#16a34a;font-weight:700;">+ 2. Cash Collected from Orders:</span>
+              <span style="font-weight:900;font-family:monospace;color:#15803d;" id="dcCashCollectedRow">₹0.00</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);">
+              <span style="color:#dc2626;font-weight:700;">− 3. Cash Expenses / Payouts:</span>
+              <span style="font-weight:900;font-family:monospace;color:#b91c1c;" id="dcCashExpensesRow">₹0.00</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface-subtle);border-radius:6px;border:1.5px solid var(--line);">
+              <span style="font-weight:800;color:var(--ink);">Expected Cash in Drawer:</span>
+              <span style="font-size:16px;font-weight:900;font-family:monospace;color:var(--primary);" id="dcExpectedCashRow">₹0.00</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1.5px solid var(--line);">
+              <span style="font-weight:800;color:var(--ink);">Actual Cash in Drawer (Counted):</span>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="font-family:monospace;font-weight:700;">₹</span>
+                <input type="number" id="dcActualCashInput" value="0" min="0" step="10" placeholder="Counted cash" style="width:110px;padding:5px 8px;text-align:right;font-size:14px;font-weight:900;font-family:monospace;border:2px solid var(--primary);border-radius:6px;background:#fff;">
+              </div>
+            </div>
+
+            <!-- Variance -->
+            <div id="dcCashVarianceBox" style="padding:10px 12px;border-radius:8px;background:#dcfce7;border:1.5px solid #86efac;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+              <span style="font-weight:800;font-size:12.5px;color:#166534;" id="dcVarianceTitle">Cash Variance / Difference:</span>
+              <span style="font-weight:900;font-size:15px;font-family:monospace;color:#15803d;" id="dcVarianceAmount">₹0.00 (Match ✓)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Tables: Day Expenses & Invoices Audit Table -->
+      <div style="background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3 style="font-size:14px;font-weight:900;margin:0;color:var(--ink);">
+            📋 Settled Invoices for Selected Date (<span id="dcDayInvoicesCount">0</span>)
+          </h3>
+          <span style="font-size:11px;color:var(--ink-soft);">Click 🖨️ on any invoice to reprint 80mm slip</span>
+        </div>
+        <div class="billing-table-container" style="max-height:360px;overflow-y:auto;">
+          <table class="billing-table">
+            <thead>
+              <tr>
+                <th style="width:110px;">INVOICE #</th>
+                <th style="width:100px;">SERIES</th>
+                <th style="width:85px;">TIME</th>
+                <th style="width:110px;">SOURCE</th>
+                <th>CUSTOMER</th>
+                <th style="text-align:right;width:100px;">TOTAL</th>
+                <th style="width:90px;">MOP</th>
+                <th style="text-align:right;width:70px;">PRINT</th>
+              </tr>
+            </thead>
+            <tbody id="dayCloseInvoicesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
     <!-- VIEW 5: MASTERS (Categorized from JUST_POS_MAIN) -->
@@ -5734,8 +5973,8 @@
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:24px;">🖨️</span>
         <div>
-          <h3 style="margin:0;font-size:16px;color:var(--ink);">Print Order &amp; Kitchen Slips</h3>
-          <p id="orderPrintModalSubtitle" style="margin:2px 0 0;font-size:11px;color:var(--ink-soft);">Table / Counter Order</p>
+          <h3 style="margin:0;font-size:16px;color:var(--ink);" id="orderPrintModalTitle">Generate Invoice &amp; Print Options</h3>
+          <p id="orderPrintModalSubtitle" style="margin:2px 0 0;font-size:11px;color:var(--ink-soft);">Choose combined OT print or separate customer bill print</p>
         </div>
       </div>
       <button type="button" class="modal-close" data-close-print-modal style="font-size:18px;cursor:pointer;">✕</button>
@@ -5752,11 +5991,11 @@
             <input type="radio" name="orderPrintMode" value="with_kot" checked style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
             <div style="flex:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 Customer Bill + Kitchen KOT</div>
-                <span style="font-size:10.5px;font-weight:800;background:var(--primary);color:#fff;padding:2px 8px;border-radius:12px;">Standard (2 Slips)</span>
+                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 With OT Print (Customer Bill + Kitchen OT)</div>
+                <span style="font-size:10.5px;font-weight:800;background:var(--primary);color:#fff;padding:2px 8px;border-radius:12px;">Standard (2 Slips on Roll)</span>
               </div>
               <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
-                Page 1: Customer Dining Bill · Page 2: Kitchen KOT preparation ticket for Chef.
+                Customer dining invoice slip + continuous Kitchen OT (Order Ticket) for Chef.
               </div>
             </div>
           </label>
@@ -5765,11 +6004,11 @@
             <input type="radio" name="orderPrintMode" value="without_kot" style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
             <div style="flex:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🧾 Customer Bill Only</div>
-                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip</span>
+                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🧾 Separate Print (Customer Bill Only)</div>
+                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip (Bill Only)</span>
               </div>
               <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
-                Dining estimate / guest check slip only. No kitchen ticket.
+                Single customer bill / tax invoice slip only. No kitchen ticket attached.
               </div>
             </div>
           </label>
@@ -5778,11 +6017,11 @@
             <input type="radio" name="orderPrintMode" value="kot_only" style="margin-top:3px;accent-color:var(--primary);width:16px;height:16px;">
             <div style="flex:1;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 Kitchen KOT Only</div>
-                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip</span>
+                <div style="font-weight:800;font-size:13.5px;color:var(--ink);">🍳 Kitchen OT Only (No Bill)</div>
+                <span style="font-size:10.5px;font-weight:700;background:var(--surface-subtle);color:var(--ink-soft);padding:2px 8px;border-radius:12px;">1 Slip (OT Only)</span>
               </div>
               <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
-                Cook order ticket for chefs only. No customer bill.
+                Cook order ticket for kitchen/pantry only.
               </div>
             </div>
           </label>
@@ -5797,7 +6036,7 @@
         <div style="display:flex;gap:8px;">
           <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:2px solid var(--primary);border-radius:8px;background:rgba(1,122,156,0.06);cursor:pointer;font-size:12.5px;font-weight:800;" class="print-paper-card" id="card_paper_80mm">
             <input type="radio" name="orderPrintPaperFormat" value="80mm" checked style="accent-color:var(--primary);width:16px;height:16px;">
-            <span>🧾 80mm Thermal Roll</span>
+            <span>🧾 80mm Thermal Roll (Default)</span>
           </label>
           <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;font-size:12.5px;font-weight:700;" class="print-paper-card" id="card_paper_a4">
             <input type="radio" name="orderPrintPaperFormat" value="a4" style="accent-color:var(--primary);width:16px;height:16px;">
@@ -5812,7 +6051,7 @@
           <label style="font-weight:800;font-size:12.5px;color:var(--ink);margin:0;">
             3. Print Quantity / Sets:
           </label>
-          <span id="orderPrintSetHint" style="font-size:11px;color:#0284c7;font-weight:700;">1 Set = 1 Bill + 1 KOT (Printed together on roll)</span>
+          <span id="orderPrintSetHint" style="font-size:11px;color:#0284c7;font-weight:700;">1 Set = 1 Bill + 1 OT (Printed together on roll)</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;">
@@ -5828,7 +6067,7 @@
         </div>
       </div>
 
-      <!-- Section 3: Kitchen Dispatch Checkbox -->
+      <!-- Section 4: Kitchen Dispatch Checkbox -->
       <div id="printDispatchKotOption" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:#166534;margin:0;">
           <input type="checkbox" id="orderPrintDispatchKitchen" checked style="accent-color:#16a34a;width:15px;height:15px;">
@@ -5838,14 +6077,18 @@
 
       <!-- Live Preview Summary -->
       <div id="orderPrintSummaryText" style="font-size:13px;color:#15803d;font-weight:800;background:#dcfce7;border:1.5px solid #86efac;padding:12px 14px;border-radius:8px;display:flex;align-items:center;gap:8px;">
-        🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">1 Set (Customer Bill + Kitchen KOT)</b> · Both slips together on continuous roll</span>
+        🧾 <span>Ready to Print: <b style="font-size:13.5px;color:#166534;">1 Set (Customer Bill + Kitchen OT)</b> · Both slips together on continuous roll</span>
       </div>
 
     </div>
-    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:10px;background:var(--surface-subtle);border-top:1.5px solid var(--line);">
-      <button type="button" class="btn" data-close-print-modal style="flex:1;">Cancel</button>
-      <button type="button" class="btn btn-primary" id="btnExecuteOrderPrint" style="flex:1.4;height:42px;font-weight:800;font-size:14px;background:#15803d;border-color:#15803d;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <i data-lucide="printer" style="width:16px;height:16px;"></i> Print Now
+    <div class="modal-foot" style="padding:12px 18px;display:flex;gap:8px;background:var(--surface-subtle);border-top:1.5px solid var(--line);flex-wrap:wrap;">
+      <button type="button" class="btn" data-close-print-modal style="flex:0.8;">Cancel</button>
+      <button type="button" class="btn" id="btnSkipPrintAndSettle" style="flex:1.1;background:var(--panel);border:1.5px solid var(--line);font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:4px;" title="Proceed directly to settlement without printing">Skip Print &amp; Settle</button>
+      <button type="button" class="btn" id="btnExecuteOrderPrint" style="flex:1.1;background:#0284c7;border-color:#0284c7;color:#fff;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i data-lucide="printer" style="width:14px;height:14px;"></i> Print Only
+      </button>
+      <button type="button" class="btn btn-primary" id="btnPrintAndSettleNow" style="flex:1.6;height:42px;font-weight:800;font-size:13.5px;background:linear-gradient(135deg, #059669 0%, #047857 100%);border-color:#059669;box-shadow:0 4px 12px rgba(5,150,105,0.3);display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Print &amp; Settle Bill
       </button>
     </div>
   </div>
@@ -7803,6 +8046,11 @@
   }
 
   function hasPermission(permId) {
+    if (permId === "view_day-close" || permId === "view_day_close") {
+      const role = getCurrentRole();
+      if (!role || !role.permissions) return true;
+      return role.permissions.includes("view_billing") || role.permissions.includes("view_masters") || role.roleCode === "ADMIN";
+    }
     const role = getCurrentRole();
     if (!role || !role.permissions) return false;
     return role.permissions.includes(permId);
@@ -7818,6 +8066,7 @@
     if (role.permissions.includes('view_kot')) views.push('kot');
     if (role.permissions.includes('view_reservations')) views.push('reservations');
     if (role.permissions.includes('view_billing')) views.push('billing');
+    if (role.permissions.includes('view_billing') || role.permissions.includes('view_masters')) views.push('day-close');
     if (role.permissions.includes('view_masters')) views.push('masters');
     return views;
   }
@@ -9323,6 +9572,10 @@
       if (window.apiClient && typeof apiClient.syncBilling === "function") {
         apiClient.syncBilling();
       }
+    } else if (viewId === "day-close") {
+      document.getElementById("pageTitle").textContent = "Day Close & Daily Sales Register";
+      document.getElementById("pageSub").textContent = "Petpooja-style daily sales audit, MOP collection split, cash drawer reconciliation & Z-Report";
+      renderDayClose();
     } else if (viewId === "masters") {
       document.getElementById("pageTitle").textContent = "Unified Masters";
       document.getElementById("pageSub").textContent = "Live categories, items, floors, tables, taxes, roles & staff members";
@@ -13830,152 +14083,10 @@
     }
   });
 
-  document.getElementById("btnExecuteOrderPrint")?.addEventListener("click", () => {
-    try {
-      if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
-        showToast("Order is empty!", "error");
-        closeModal("orderPrintOptionsModal");
-        return;
-      }
+  let pendingSettlementInvoice = null;
 
-      if (!validateCompulsoryGuestDetails()) {
-        closeModal("orderPrintOptionsModal");
-        return;
-      }
-
-      const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
-      const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
-      const dispatchKitchen = Boolean(document.getElementById("orderPrintDispatchKitchen")?.checked);
-
-      const bill = calculateOrderBill(currentOrderSession, currentOrderSession.items);
-      const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
-      const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
-      const invNum = currentOrderSession.orderId || peekNextInvoiceNumber(companyKey);
-      const totalTax = (Number(bill.cgst) || 0) + (Number(bill.sgst) || 0);
-
-      const tempInv = {
-        id: invNum,
-        companySeries: companyKey,
-        tableLabel: currentOrderSession.shortcode || currentOrderSession.label || "Counter",
-        floorLabel: currentOrderSession.floor || "",
-        tokenNo: currentOrderSession.tokenNo || ("T-" + String(Date.now()).slice(-3)),
-        serverName: currentOrderSession.serverName || (activeUser ? activeUser.name : "Staff"),
-        customerName: currentOrderSession.customerName || (document.getElementById("orderCustName")?.value.trim()) || "Walk-in Guest",
-        customerPhone: currentOrderSession.customerPhone || (document.getElementById("orderCustPhone")?.value.trim()) || "",
-        items: currentOrderSession.items,
-        subtotal: bill.subtotal,
-        discountAmount: bill.discountAmount,
-        taxableAmount: bill.taxable,
-        cgst: bill.cgst,
-        sgst: bill.sgst,
-        totalGst: totalTax,
-        total: bill.total,
-        amountInWords: typeof numberToWordsINR === 'function' ? numberToWordsINR(bill.total) : '',
-        paymentMode: "Pending / Cash",
-        status: "pending",
-        dateFormatted: new Date().toLocaleDateString('en-GB'),
-        timeFormatted: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-      };
-
-      const chosenPaperFormat = document.querySelector('input[name="orderPrintPaperFormat"]:checked')?.value || "80mm";
-      const cfgOverride = { paperFormat: chosenPaperFormat };
-
-      const slips = [];
-      for (let c = 1; c <= copies; c++) {
-        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** SET ${c} OF ${copies} ***</div>` : '';
-
-        if (mode === "with_kot") {
-          // Generate both slips strictly from Invoice Master
-          const billSlip = generateDocumentSlipHtml(tempInv, "invoice", cfgOverride);
-          const kotSlip = generateDocumentSlipHtml(tempInv, "kot", cfgOverride);
-
-          if (chosenPaperFormat === "a4") {
-            // Realistic A4 layout: Side-by-side presentation on single A4 sheet with tear divider
-            slips.push(`
-              <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
-                ${copyBadge}
-                <div style="display:flex; gap:16mm; align-items:flex-start; width:100%; box-sizing:border-box;">
-                  <div style="flex:1.15; border:2px solid #000; padding:12px 14px; background:#fff; border-radius:4px; box-sizing:border-box;">
-                    <div style="font-size:10px; font-weight:800; color:#475569; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">🧾 Customer Bill / Tax Invoice</div>
-                    ${billSlip}
-                  </div>
-                  <div style="flex:0.85; border:2px dashed #000; padding:12px 14px; background:#fafafa; border-radius:4px; box-sizing:border-box;">
-                    <div style="font-size:10px; font-weight:900; color:#b91c1c; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
-                      ✂ TEAR HERE · KITCHEN KOT TICKET
-                    </div>
-                    ${kotSlip}
-                  </div>
-                </div>
-              </div>
-            `);
-          } else {
-            // Standard 80mm / 58mm Thermal continuous roll: Customer Bill + Perforated Tear Line + Kitchen KOT in ONE continuous slip!
-            slips.push(`
-              <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
-                ${copyBadge}
-                ${billSlip}
-                <div class="receipt-tear-divider" style="margin:16px 0 14px 0; padding:6px 0; border-top:2px dashed #000; border-bottom:2px dashed #000; text-align:center; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; font-size:11px; font-weight:900; letter-spacing:0.5px; background:#f8fafc; color:#000;">
-                  ✂ - - - - - TEAR HERE · KITCHEN KOT - - - - - ✂
-                </div>
-                ${kotSlip}
-              </div>
-            `);
-          }
-        } else if (mode === "without_kot") {
-          const billSlip = generateDocumentSlipHtml(tempInv, "invoice", cfgOverride);
-          slips.push(`
-            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
-              ${copyBadge}
-              ${billSlip}
-            </div>
-          `);
-        } else if (mode === "kot_only") {
-          const kotSlip = generateDocumentSlipHtml(tempInv, "kot", cfgOverride);
-          slips.push(`
-            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
-              ${copyBadge}
-              ${kotSlip}
-            </div>
-          `);
-        }
-      }
-      const combinedHtml = slips.join("\n");
-
-      // Close modal before opening print dialog
-      closeModal("orderPrintOptionsModal");
-
-      // Trigger Print using the chosen paper format (80mm Thermal Roll or A4 Full Sheet)
-      executeThermalPrint(combinedHtml, chosenPaperFormat);
-
-      // Optional dispatch to Kitchen KOT board
-      if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
-        const unsent = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
-        if (unsent.length > 0) {
-          dispatchKotForOrder(currentOrderSession, false);
-          renderCart();
-          renderTables();
-          if (typeof renderOrdersList === "function") renderOrdersList();
-        }
-      }
-
-      const modeLabel = (mode === "with_kot") ? "Bill + Kitchen KOT" : (mode === "without_kot" ? "Bill Only" : "Kitchen KOT Only");
-      showToast(`🖨️ Sent ${copies} ${copies === 1 ? 'copy' : 'copies'} (${modeLabel}) to printer!`, "success");
-    } catch (err) {
-      console.error("[OrderPrint] Execute print error:", err);
-      showToast("❌ Print error: " + (err.message || err), "error");
-    }
-  });
-
-  let currentInvoiceTab = "tax_invoice"; // "tax_invoice", "gate_pass", "digital"
-
-  document.getElementById("checkoutBtn").addEventListener("click", () => {
-    if (!currentOrderSession || currentOrderSession.items.length === 0) {
-      showToast("No items in order to bill!", "error");
-      return;
-    }
-
-    if (!validateCompulsoryGuestDetails()) return;
-
+  function buildCurrentInvoiceObject() {
+    if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) return null;
     const companyKey = currentOrderSession.companySeries || activeCompanySeries || Object.keys(companySeriesConfig)[0] || "main";
     const invId = peekNextInvoiceNumber(companyKey);
 
@@ -13998,17 +14109,20 @@
     const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     const isoDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    const inv = {
+    return {
       id: invId,
       companySeries: companyKey,
       orderCode: currentOrderSession.orderId,
-      tableLabel: currentOrderSession.shortcode || currentOrderSession.label,
-      type: currentOrderSession.orderType,
-      customerName: currentOrderSession.customerName || "Walk-in Guest",
-      customerPhone: currentOrderSession.customerPhone || "",
+      tableLabel: currentOrderSession.shortcode || currentOrderSession.label || "Counter",
+      floorLabel: currentOrderSession.floor || "",
+      tokenNo: currentOrderSession.tokenNo || ("T-" + String(Date.now()).slice(-3)),
+      type: currentOrderSession.orderType || "dineIn",
+      customerName: currentOrderSession.customerName || (document.getElementById("orderCustName")?.value.trim()) || "Walk-in Guest",
+      customerPhone: currentOrderSession.customerPhone || (document.getElementById("orderCustPhone")?.value.trim()) || "",
       dateFormatted,
       isoDate,
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      timeFormatted: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       subtotal: sub,
       discountType: discType,
       discountVal: discVal,
@@ -14022,13 +14136,189 @@
       serviceCharge,
       total,
       totalQty,
-      amountInWords: numberToWordsINR(total),
+      amountInWords: typeof numberToWordsINR === 'function' ? numberToWordsINR(total) : '',
       status: "unpaid",
       paymentMode: "Cash",
       items: [...currentOrderSession.items]
     };
+  }
 
-    showInvoiceModal(inv);
+  function executeOrderPrintFlow(openSettlementAfter = false) {
+    try {
+      if (!currentOrderSession || !currentOrderSession.items || currentOrderSession.items.length === 0) {
+        showToast("Order is empty!", "error");
+        closeModal("orderPrintOptionsModal");
+        return;
+      }
+
+      if (!validateCompulsoryGuestDetails()) {
+        closeModal("orderPrintOptionsModal");
+        return;
+      }
+
+      const copies = Math.max(1, parseInt(document.getElementById("orderPrintCopiesInput")?.value) || 1);
+      const mode = document.querySelector('input[name="orderPrintMode"]:checked')?.value || "with_kot";
+      const dispatchKitchen = Boolean(document.getElementById("orderPrintDispatchKitchen")?.checked);
+
+      const invObj = pendingSettlementInvoice || buildCurrentInvoiceObject();
+      if (!invObj) return;
+
+      const chosenPaperFormat = document.querySelector('input[name="orderPrintPaperFormat"]:checked')?.value || "80mm";
+      const cfgOverride = { paperFormat: chosenPaperFormat };
+
+      const slips = [];
+      for (let c = 1; c <= copies; c++) {
+        const copyBadge = copies > 1 ? `<div style="text-align:right;font-size:9.5px;font-weight:800;color:#64748b;padding-bottom:3px;border-bottom:1.5px dashed #cbd5e1;margin-bottom:6px;">*** SET ${c} OF ${copies} ***</div>` : '';
+
+        if (mode === "with_kot") {
+          // Both slips on roll: Customer Dining Bill + Kitchen KOT / OT
+          const billSlip = generateDocumentSlipHtml(invObj, "invoice", cfgOverride);
+          const kotSlip = generateDocumentSlipHtml(invObj, "kot", cfgOverride);
+
+          if (chosenPaperFormat === "a4") {
+            slips.push(`
+              <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+                ${copyBadge}
+                <div style="display:flex; gap:16mm; align-items:flex-start; width:100%; box-sizing:border-box;">
+                  <div style="flex:1.15; border:2px solid #000; padding:12px 14px; background:#fff; border-radius:4px; box-sizing:border-box;">
+                    <div style="font-size:10px; font-weight:800; color:#475569; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">🧾 Customer Bill / Tax Invoice</div>
+                    ${billSlip}
+                  </div>
+                  <div style="flex:0.85; border:2px dashed #000; padding:12px 14px; background:#fafafa; border-radius:4px; box-sizing:border-box;">
+                    <div style="font-size:10px; font-weight:900; color:#b91c1c; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
+                      ✂ TEAR HERE · KITCHEN OT TICKET
+                    </div>
+                    ${kotSlip}
+                  </div>
+                </div>
+              </div>
+            `);
+          } else {
+            slips.push(`
+              <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+                ${copyBadge}
+                ${billSlip}
+                <div class="receipt-tear-divider" style="margin:16px 0 14px 0; padding:6px 0; border-top:2px dashed #000; border-bottom:2px dashed #000; text-align:center; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; font-size:11px; font-weight:900; letter-spacing:0.5px; background:#f8fafc; color:#000;">
+                  ✂ - - - - - TEAR HERE · KITCHEN OT - - - - - ✂
+                </div>
+                ${kotSlip}
+              </div>
+            `);
+          }
+        } else if (mode === "without_kot") {
+          // Separate print: Customer Bill only
+          const billSlip = generateDocumentSlipHtml(invObj, "invoice", cfgOverride);
+          slips.push(`
+            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+              ${copyBadge}
+              ${billSlip}
+            </div>
+          `);
+        } else if (mode === "kot_only") {
+          // Kitchen OT only
+          const kotSlip = generateDocumentSlipHtml(invObj, "kot", cfgOverride);
+          slips.push(`
+            <div class="print-slip-cut" style="width:100%; box-sizing:border-box;">
+              ${copyBadge}
+              ${kotSlip}
+            </div>
+          `);
+        }
+      }
+      const combinedHtml = slips.join("\n");
+
+      closeModal("orderPrintOptionsModal");
+      executeThermalPrint(combinedHtml, chosenPaperFormat);
+
+      if (dispatchKitchen && (mode === "with_kot" || mode === "kot_only")) {
+        const unsent = currentOrderSession.items.filter(i => i.qty > (i.sentQty || 0));
+        if (unsent.length > 0) {
+          dispatchKotForOrder(currentOrderSession, false);
+          renderCart();
+          renderTables();
+          if (typeof renderOrdersList === "function") renderOrdersList();
+        }
+      }
+
+      const modeLabel = (mode === "with_kot") ? "Bill + Kitchen OT" : (mode === "without_kot" ? "Separate Bill" : "Kitchen OT Only");
+      showToast(`🖨️ Sent ${copies} ${copies === 1 ? 'copy' : 'copies'} (${modeLabel}) to printer!`, "success");
+
+      if (openSettlementAfter) {
+        setTimeout(() => {
+          showInvoiceModal(invObj);
+        }, 300);
+      }
+    } catch (err) {
+      console.error("[OrderPrint] Execute print error:", err);
+      showToast("❌ Print error: " + (err.message || err), "error");
+    }
+  }
+
+  document.getElementById("btnExecuteOrderPrint")?.addEventListener("click", () => {
+    executeOrderPrintFlow(false);
+  });
+
+  document.getElementById("btnPrintAndSettleNow")?.addEventListener("click", () => {
+    executeOrderPrintFlow(true);
+  });
+
+  document.getElementById("btnSkipPrintAndSettle")?.addEventListener("click", () => {
+    closeModal("orderPrintOptionsModal");
+    const invObj = pendingSettlementInvoice || buildCurrentInvoiceObject();
+    if (invObj) {
+      showInvoiceModal(invObj);
+    }
+  });
+
+  let currentInvoiceTab = "tax_invoice"; // "tax_invoice", "gate_pass", "digital"
+
+  // Feedback #1 Fix: Clicking 'Generate Invoice & Settle' automatically shows print popup for OT print or separate print!
+  document.getElementById("checkoutBtn").addEventListener("click", () => {
+    if (!currentOrderSession || currentOrderSession.items.length === 0) {
+      showToast("No items in order to bill!", "error");
+      return;
+    }
+
+    if (!validateCompulsoryGuestDetails()) return;
+
+    const inv = buildCurrentInvoiceObject();
+    if (!inv) return;
+    pendingSettlementInvoice = inv;
+
+    // Configure and automatically show print options modal
+    const tableLabel = currentOrderSession.shortcode || currentOrderSession.label || "Counter";
+    const subtitle = document.getElementById("orderPrintModalSubtitle");
+    if (subtitle) {
+      subtitle.textContent = `Invoice #${inv.id} · ${tableLabel} · ${currentOrderSession.items.length} items (₹${inv.total.toFixed(2)})`;
+    }
+
+    const copiesInp = document.getElementById("orderPrintCopiesInput");
+    if (copiesInp) copiesInp.value = "1";
+
+    const radioWithKot = document.getElementById("card_print_with_kot")?.querySelector('input');
+    if (radioWithKot) radioWithKot.checked = true;
+
+    const radio80 = document.getElementById("card_paper_80mm")?.querySelector('input');
+    if (radio80) radio80.checked = true;
+
+    document.querySelectorAll(".print-paper-card").forEach(card => {
+      const checked = card.querySelector('input')?.checked;
+      if (checked) {
+        card.style.borderColor = "var(--primary)";
+        card.style.background = "rgba(1,122,156,0.06)";
+        card.style.borderWidth = "2px";
+        card.style.fontWeight = "800";
+      } else {
+        card.style.borderColor = "var(--line)";
+        card.style.background = "var(--panel)";
+        card.style.borderWidth = "1.5px";
+        card.style.fontWeight = "700";
+      }
+    });
+
+    updateOrderPrintSummary();
+    openModal("orderPrintOptionsModal");
+    if (window.lucide && lucide.createIcons) lucide.createIcons();
   });
 
   function showInvoiceModal(inv) {
@@ -14422,11 +14712,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
         </button>
       `;
       foot.querySelector("#printReceiptBtn").onclick = () => {
-        const receiptEl = document.getElementById("thermalPrintReceipt");
-        if (receiptEl) {
-          executeThermalPrint(receiptEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
-        } else {
-          window.print();
+        const slipHtml = (typeof generateDocumentSlipHtml === "function")
+          ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig)
+          : (document.getElementById("thermalPrintReceipt")?.innerHTML || "");
+        if (slipHtml) {
+          executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+          showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
         }
       };
       foot.querySelector("[data-close-modal]").onclick = closeAllModals;
@@ -14442,11 +14733,12 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       `;
       foot.querySelector("[data-close-modal]").onclick = closeAllModals;
       foot.querySelector("#printReceiptBtn").onclick = () => {
-        const receiptEl = document.getElementById("thermalPrintReceipt");
-        if (receiptEl) {
-          executeThermalPrint(receiptEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
-        } else {
-          window.print();
+        const slipHtml = (typeof generateDocumentSlipHtml === "function")
+          ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig)
+          : (document.getElementById("thermalPrintReceipt")?.innerHTML || "");
+        if (slipHtml) {
+          executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+          showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
         }
       };
 
@@ -16245,15 +16537,15 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
       btn.onclick = () => {
         const inv = invoices.find(x => x.id === btn.dataset.invid);
         if (inv) {
-          showInvoiceModal(inv);
-          setTimeout(() => {
-            const receiptEl = document.getElementById("thermalPrintReceipt");
-            if (receiptEl) {
-              executeThermalPrint(receiptEl.innerHTML, invoiceMasterConfig.paperFormat || "80mm");
-            } else {
-              window.print();
-            }
-          }, 250);
+          const slipHtml = (typeof generateDocumentSlipHtml === "function") 
+            ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig) 
+            : null;
+          if (slipHtml) {
+            executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+            showToast(`🖨️ Printing 80mm slip for Invoice ${inv.id}...`);
+          } else {
+            showInvoiceModal(inv);
+          }
         }
       };
     });
@@ -16327,6 +16619,730 @@ _${inv.amountInWords || numberToWordsINR(inv.total)}_
     showToast("↻ Refreshed settled invoices list");
   });
   document.getElementById("exportBillingCsvBtn")?.addEventListener("click", exportBillingCsv);
+
+  // =========================================================================
+  // 4A. PETPOOJA-STYLE DAY CLOSE & DAILY SALES REGISTER (Z-REPORT)
+  // =========================================================================
+  const DAY_CLOSE_STORAGE_KEY = "pos_day_closed_registers";
+  const DAY_EXPENSES_STORAGE_KEY = "pos_day_expenses";
+  const DAY_OPENING_CASH_KEY = "pos_day_opening_cash";
+
+  function getClosedRegistersMap() {
+    try {
+      return JSON.parse(localStorage.getItem(DAY_CLOSE_STORAGE_KEY) || "{}");
+    } catch(e) { return {}; }
+  }
+
+  function saveClosedRegistersMap(map) {
+    try {
+      localStorage.setItem(DAY_CLOSE_STORAGE_KEY, JSON.stringify(map));
+    } catch(e) {}
+  }
+
+  function getDayExpensesList() {
+    try {
+      return JSON.parse(localStorage.getItem(DAY_EXPENSES_STORAGE_KEY) || "[]");
+    } catch(e) { return []; }
+  }
+
+  function saveDayExpensesList(list) {
+    try {
+      localStorage.setItem(DAY_EXPENSES_STORAGE_KEY, JSON.stringify(list));
+    } catch(e) {}
+  }
+
+  function getOpeningCashMap() {
+    try {
+      return JSON.parse(localStorage.getItem(DAY_OPENING_CASH_KEY) || "{}");
+    } catch(e) { return {}; }
+  }
+
+  function saveOpeningCashMap(map) {
+    try {
+      localStorage.setItem(DAY_OPENING_CASH_KEY, JSON.stringify(map));
+    } catch(e) {}
+  }
+
+  let dayCloseState = {
+    selectedDate: new Date().toISOString().split("T")[0],
+    selectedOutlet: ""
+  };
+
+  function getInvoicesForDayClose(targetDate, targetOutlet) {
+    const list = Array.isArray(invoices) ? invoices : [];
+    return list.filter(inv => {
+      if (inv.status !== "paid") return false;
+      const invDate = getInvoiceIsoDate(inv);
+      if (invDate !== targetDate) return false;
+      if (targetOutlet) {
+        const matchesSeries = (inv.companySeries === targetOutlet) || ((inv.id || "").toUpperCase().startsWith(targetOutlet.toUpperCase()));
+        if (!matchesSeries) return false;
+      }
+      return true;
+    });
+  }
+
+  function computeDayCloseMetrics(targetDate, targetOutlet) {
+    const dayInvoices = getInvoicesForDayClose(targetDate, targetOutlet);
+    const billsCount = dayInvoices.length;
+
+    let grossSales = 0;
+    let discountTotal = 0;
+    let taxableBase = 0;
+    let taxesTotal = 0;
+    let netSales = 0;
+    let totalQty = 0;
+
+    let cashTotal = 0;
+    let cashCount = 0;
+    let cardTotal = 0;
+    let cardCount = 0;
+    let upiTotal = 0;
+    let upiCount = 0;
+
+    let dineInTotal = 0;
+    let takeawayTotal = 0;
+    let deliveryTotal = 0;
+
+    const itemSalesMap = {};
+
+    dayInvoices.forEach(inv => {
+      const tot = Number(inv.total) || 0;
+      const sub = Number(inv.subtotal) || tot;
+      const disc = Number(inv.discountAmount) || 0;
+      const taxBase = Number(inv.taxableAmount) || sub;
+      const taxVal = (Number(inv.cgst) || 0) + (Number(inv.sgst) || 0) || (Number(inv.totalGst) || 0);
+
+      netSales += tot;
+      grossSales += sub;
+      discountTotal += disc;
+      taxableBase += taxBase;
+      taxesTotal += taxVal;
+
+      // MOP
+      const mode = (inv.paymentMode || "Cash").toLowerCase();
+      if (mode.includes("cash")) {
+        cashTotal += tot;
+        cashCount++;
+      } else if (mode.includes("card")) {
+        cardTotal += tot;
+        cardCount++;
+      } else {
+        upiTotal += tot;
+        upiCount++;
+      }
+
+      // Channel
+      const typ = (inv.type || "dineIn").toLowerCase();
+      if (typ.includes("takeaway") || typ.includes("counter")) {
+        takeawayTotal += tot;
+      } else if (typ.includes("delivery")) {
+        deliveryTotal += tot;
+      } else {
+        dineInTotal += tot;
+      }
+
+      // Items
+      (inv.items || []).forEach(it => {
+        const q = Number(it.qty) || 1;
+        totalQty += q;
+        const name = it.name || "Item";
+        if (!itemSalesMap[name]) itemSalesMap[name] = { qty: 0, amount: 0 };
+        itemSalesMap[name].qty += q;
+        itemSalesMap[name].amount += (Number(it.price) || 0) * q;
+      });
+    });
+
+    const aov = billsCount > 0 ? (netSales / billsCount) : 0;
+    const topItems = Object.entries(itemSalesMap)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    // Cash Drawer Reconciliation
+    const openCashMap = getOpeningCashMap();
+    const openingCash = Number(openCashMap[targetDate]) || 0;
+
+    const allExpenses = getDayExpensesList();
+    const dayExpensesList = allExpenses.filter(e => e.date === targetDate);
+    const dayExpenses = dayExpensesList.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+
+    const expectedCash = openingCash + cashTotal - dayExpenses;
+
+    const closedMap = getClosedRegistersMap();
+    const closedRecord = closedMap[targetDate];
+    const actualCash = closedRecord ? Number(closedRecord.actualCash) : expectedCash;
+    const variance = actualCash - expectedCash;
+
+    return {
+      targetDate,
+      targetOutlet,
+      dayInvoices,
+      billsCount,
+      grossSales,
+      discountTotal,
+      taxableBase,
+      taxesTotal,
+      netSales,
+      totalQty,
+      aov,
+      cashTotal,
+      cashCount,
+      cashPct: netSales > 0 ? ((cashTotal / netSales) * 100).toFixed(1) : "0",
+      cardTotal,
+      cardCount,
+      cardPct: netSales > 0 ? ((cardTotal / netSales) * 100).toFixed(1) : "0",
+      upiTotal,
+      upiCount,
+      upiPct: netSales > 0 ? ((upiTotal / netSales) * 100).toFixed(1) : "0",
+      dineInTotal,
+      takeawayTotal,
+      deliveryTotal,
+      openingCash,
+      cashExpenses,
+      expectedCash,
+      actualCash,
+      variance,
+      isClosed: Boolean(closedRecord),
+      closedRecord,
+      topItems
+    };
+  }
+
+  function renderDayClose() {
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const targetOutlet = dayCloseState.selectedOutlet || "";
+
+    // Set date input
+    const dateInp = document.getElementById("dayCloseDateInput");
+    if (dateInp && dateInp.value !== targetDate) {
+      dateInp.value = targetDate;
+    }
+
+    // Populate outlet options
+    const outletSelect = document.getElementById("dayCloseOutletFilter");
+    if (outletSelect) {
+      const confKeys = Object.keys(companySeriesConfig);
+      const curVal = outletSelect.value;
+      const opts = Object.values(companySeriesConfig).map(o => 
+        `<option value="${o.key}" ${curVal === o.key ? 'selected' : ''}>🏢 ${o.name || o.prefix}</option>`
+      ).join("");
+      outletSelect.innerHTML = `<option value="">🏢 All Outlets (Consolidated)</option>${opts}`;
+      if (targetOutlet) outletSelect.value = targetOutlet;
+    }
+
+    const m = computeDayCloseMetrics(targetDate, targetOutlet);
+
+    // Status Badge & Action buttons
+    const statusBadge = document.getElementById("dayCloseStatusBadge");
+    const closeBtn = document.getElementById("btnCloseDayRegisterBtn");
+    const reopenBtn = document.getElementById("btnReopenDayRegisterBtn");
+
+    if (m.isClosed) {
+      if (statusBadge) {
+        statusBadge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span> 🔒 Day Closed at ${m.closedRecord.closedAt || 'EOD'} by ${m.closedRecord.closedBy || 'Admin'}`;
+        statusBadge.style.background = "#fee2e2";
+        statusBadge.style.color = "#991b1b";
+        statusBadge.style.borderColor = "#fca5a5";
+      }
+      if (closeBtn) closeBtn.style.display = "none";
+      if (reopenBtn) reopenBtn.style.display = "inline-flex";
+    } else {
+      if (statusBadge) {
+        statusBadge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;"></span> 🟢 Shift Active · Register Open`;
+        statusBadge.style.background = "#dcfce7";
+        statusBadge.style.color = "#15803d";
+        statusBadge.style.borderColor = "#86efac";
+      }
+      if (closeBtn) closeBtn.style.display = "inline-flex";
+      if (reopenBtn) reopenBtn.style.display = "none";
+    }
+
+    // KPI Cards: How Much Sell
+    const netEl = document.getElementById("dcKpiNetSales");
+    if (netEl) netEl.textContent = `₹${m.netSales.toFixed(2)}`;
+    const billsCountEl = document.getElementById("dcKpiBillsCount");
+    if (billsCountEl) billsCountEl.textContent = `${m.billsCount} settled invoice${m.billsCount !== 1 ? 's' : ''}`;
+
+    const grossEl = document.getElementById("dcKpiGrossSales");
+    if (grossEl) grossEl.textContent = `₹${m.grossSales.toFixed(2)}`;
+    const discEl = document.getElementById("dcKpiDiscounts");
+    if (discEl) discEl.textContent = `−₹${m.discountTotal.toFixed(2)} discount given`;
+
+    const taxEl = document.getElementById("dcKpiTaxes");
+    if (taxEl) taxEl.textContent = `₹${m.taxesTotal.toFixed(2)}`;
+    const taxBaseEl = document.getElementById("dcKpiTaxableBase");
+    if (taxBaseEl) taxBaseEl.textContent = `Taxable Base: ₹${m.taxableBase.toFixed(2)}`;
+
+    const aovEl = document.getElementById("dcKpiAov");
+    if (aovEl) aovEl.textContent = `₹${m.aov.toFixed(2)}`;
+    const qtyEl = document.getElementById("dcKpiTotalQty");
+    if (qtyEl) qtyEl.textContent = `${m.totalQty} items sold`;
+
+    // MOP
+    const mopCashAmt = document.getElementById("dcMopCashAmount");
+    if (mopCashAmt) mopCashAmt.textContent = `₹${m.cashTotal.toFixed(2)}`;
+    const mopCashCnt = document.getElementById("dcMopCashCount");
+    if (mopCashCnt) mopCashCnt.textContent = `${m.cashCount} bills`;
+    const mopCashPct = document.getElementById("dcMopCashPct");
+    if (mopCashPct) mopCashPct.textContent = `${m.cashPct}%`;
+
+    const mopCardAmt = document.getElementById("dcMopCardAmount");
+    if (mopCardAmt) mopCardAmt.textContent = `₹${m.cardTotal.toFixed(2)}`;
+    const mopCardCnt = document.getElementById("dcMopCardCount");
+    if (mopCardCnt) mopCardCnt.textContent = `${m.cardCount} bills`;
+    const mopCardPct = document.getElementById("dcMopCardPct");
+    if (mopCardPct) mopCardPct.textContent = `${m.cardPct}%`;
+
+    const mopUpiAmt = document.getElementById("dcMopUpiAmount");
+    if (mopUpiAmt) mopUpiAmt.textContent = `₹${m.upiTotal.toFixed(2)}`;
+    const mopUpiCnt = document.getElementById("dcMopUpiCount");
+    if (mopUpiCnt) mopUpiCnt.textContent = `${m.upiCount} bills`;
+    const mopUpiPct = document.getElementById("dcMopUpiPct");
+    if (mopUpiPct) mopUpiPct.textContent = `${m.upiPct}%`;
+
+    // Channel split
+    const chanDine = document.getElementById("dcChanDine");
+    if (chanDine) chanDine.textContent = `₹${m.dineInTotal.toFixed(2)}`;
+    const chanTake = document.getElementById("dcChanTakeaway");
+    if (chanTake) chanTake.textContent = `₹${m.takeawayTotal.toFixed(2)}`;
+    const chanDeliv = document.getElementById("dcChanDelivery");
+    if (chanDeliv) chanDeliv.textContent = `₹${m.deliveryTotal.toFixed(2)}`;
+
+    // Cash Drawer Reconciliation
+    const openInp = document.getElementById("dcOpeningCashInput");
+    if (openInp && document.activeElement !== openInp) {
+      openInp.value = m.openingCash;
+    }
+    const cashCollRow = document.getElementById("dcCashCollectedRow");
+    if (cashCollRow) cashCollRow.textContent = `₹${m.cashTotal.toFixed(2)}`;
+    const cashExpRow = document.getElementById("dcCashExpensesRow");
+    if (cashExpRow) cashExpRow.textContent = `₹${m.cashExpenses.toFixed(2)}`;
+    const expCashRow = document.getElementById("dcExpectedCashRow");
+    if (expCashRow) expCashRow.textContent = `₹${m.expectedCash.toFixed(2)}`;
+
+    const actualInp = document.getElementById("dcActualCashInput");
+    if (actualInp && document.activeElement !== actualInp) {
+      actualInp.value = m.actualCash;
+    }
+
+    // Variance
+    const varBox = document.getElementById("dcCashVarianceBox");
+    const varTitle = document.getElementById("dcVarianceTitle");
+    const varAmt = document.getElementById("dcVarianceAmount");
+
+    if (varBox && varAmt) {
+      if (Math.abs(m.variance) < 0.01) {
+        varBox.style.background = "#dcfce7";
+        varBox.style.borderColor = "#86efac";
+        varTitle.style.color = "#166534";
+        varAmt.style.color = "#15803d";
+        varAmt.textContent = `₹0.00 (Match ✓)`;
+      } else if (m.variance > 0) {
+        varBox.style.background = "#eff6ff";
+        varBox.style.borderColor = "#93c5fd";
+        varTitle.style.color = "#1e40af";
+        varAmt.style.color = "#1d4ed8";
+        varAmt.textContent = `+₹${m.variance.toFixed(2)} (Excess Cash)`;
+      } else {
+        varBox.style.background = "#fee2e2";
+        varBox.style.borderColor = "#fca5a5";
+        varTitle.style.color = "#991b1b";
+        varAmt.style.color = "#b91c1c";
+        varAmt.textContent = `−₹${Math.abs(m.variance).toFixed(2)} (Shortage)`;
+      }
+    }
+
+    // Day Invoices Table
+    const dayInvsCountEl = document.getElementById("dcDayInvoicesCount");
+    if (dayInvsCountEl) dayInvsCountEl.textContent = m.billsCount;
+
+    const tbody = document.getElementById("dayCloseInvoicesTableBody");
+    if (tbody) {
+      if (m.dayInvoices.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ink-soft);font-size:13px;">No settled invoices recorded for ${targetDate}.</td></tr>`;
+      } else {
+        tbody.innerHTML = m.dayInvoices.map(inv => {
+          const conf = companySeriesConfig[inv.companySeries] || Object.values(companySeriesConfig)[0] || defaultCompanySeriesConfig.main;
+          const payMode = inv.paymentMode || "Cash";
+          const payPill = payMode === "Cash" 
+            ? `<span class="payment-pill payment-pill-cash">💵 Cash</span>`
+            : (payMode === "Card" 
+                ? `<span class="payment-pill payment-pill-card">💳 Card</span>`
+                : `<span class="payment-pill payment-pill-upi">📱 UPI</span>`);
+
+          return `
+            <tr>
+              <td><b style="font-family:monospace;color:var(--primary);">${inv.id}</b></td>
+              <td><span style="font-size:11px;font-weight:700;color:var(--ink-soft);">${conf.prefix || conf.code}</span></td>
+              <td style="font-family:monospace;font-size:11.5px;color:var(--ink-soft);">${inv.time || inv.timeFormatted || '—'}</td>
+              <td><span style="font-size:11.5px;font-weight:700;">${inv.tableLabel || 'Counter'}</span></td>
+              <td><span style="font-size:12px;">${inv.customerName || 'Walk-in'}</span></td>
+              <td style="text-align:right;"><b style="font-family:monospace;color:var(--ink);">${money(inv.total)}</b></td>
+              <td>${payPill}</td>
+              <td style="text-align:right;">
+                <button type="button" class="btn btn-xs" data-dc-reprint="${inv.id}" title="Reprint 80mm Slip" style="padding:3px 7px;font-size:11px;">🖨️</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        tbody.querySelectorAll("[data-dc-reprint]").forEach(btn => {
+          btn.onclick = () => {
+            const inv = invoices.find(x => x.id === btn.dataset.dcReprint);
+            if (inv) {
+              const slipHtml = (typeof generateDocumentSlipHtml === "function") 
+                ? generateDocumentSlipHtml(inv, "invoice", invoiceMasterConfig) 
+                : null;
+              if (slipHtml) {
+                executeThermalPrint(slipHtml, invoiceMasterConfig.paperFormat || "80mm");
+                showToast(`🖨️ Printing 80mm slip for ${inv.id}...`);
+              }
+            }
+          };
+        });
+      }
+    }
+  }
+
+  // Petpooja 80mm Z-Report (Daily Sales Register Slip) Thermal Generation
+  function printDayCloseZReport() {
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const targetOutlet = dayCloseState.selectedOutlet || "";
+    const m = computeDayCloseMetrics(targetDate, targetOutlet);
+    const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
+
+    const restName = invoiceMasterConfig.restaurantName || "JUST POS RESTAURANT";
+    const address = invoiceMasterConfig.address || "";
+    const gstNo = invoiceMasterConfig.gstNumber || "";
+    const nowStr = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+
+    const topItemsRows = m.topItems.map((it, idx) => `
+      <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:10.5px;">
+        <span style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${idx + 1}. ${it.name} (x${it.qty})</span>
+        <span style="font-family:monospace;font-weight:700;">₹${it.amount.toFixed(2)}</span>
+      </div>
+    `).join("");
+
+    const zReportHtml = `
+      <div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; color:#000; font-size:11px; line-height:1.35; padding:4px 2px;">
+        
+        <!-- Header -->
+        <div style="text-align:center; padding-bottom:8px; border-bottom:2px solid #000; margin-bottom:8px;">
+          <div style="font-size:15px; font-weight:900; letter-spacing:0.5px; text-transform:uppercase;">${restName}</div>
+          ${address ? `<div style="font-size:9.5px; margin-top:2px;">${address}</div>` : ''}
+          ${gstNo ? `<div style="font-size:10px; font-weight:700; margin-top:2px;">GSTIN: ${gstNo}</div>` : ''}
+          <div style="display:inline-block; margin-top:6px; padding:3px 10px; border:1.5px solid #000; font-weight:900; font-size:12px; letter-spacing:1px; text-transform:uppercase;">
+            ★ PETPOOJA Z-REPORT ★
+          </div>
+          <div style="font-size:10px; font-weight:800; margin-top:4px;">END OF DAY SALES REGISTER</div>
+        </div>
+
+        <!-- Meta Info -->
+        <div style="font-size:10.5px; margin-bottom:8px; border-bottom:1px dashed #000; padding-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span><b>Business Date:</b></span>
+            <span><b>${targetDate}</b></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px;">
+            <span>Report Generated:</span>
+            <span>${nowStr}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px;">
+            <span>Cashier / Staff:</span>
+            <span>${activeUser ? activeUser.name : 'Admin'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:2px;">
+            <span>Register Status:</span>
+            <span><b>${m.isClosed ? 'CLOSED (LOCKED)' : 'ACTIVE (PROVISIONAL)'}</b></span>
+          </div>
+        </div>
+
+        <!-- 1. Revenue & Sales Summary -->
+        <div style="margin-bottom:8px; border-bottom:1px solid #000; padding-bottom:6px;">
+          <div style="font-weight:900; font-size:11px; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.5px;">
+            1. SALES REVENUE SUMMARY
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>Gross Sales (Pre-tax):</span>
+            <span style="font-family:monospace;font-weight:700;">₹${m.grossSales.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>Total Discounts:</span>
+            <span style="font-family:monospace;font-weight:700;">−₹${m.discountTotal.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>Taxable Turnover:</span>
+            <span style="font-family:monospace;font-weight:700;">₹${m.taxableBase.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>Total GST Collected:</span>
+            <span style="font-family:monospace;font-weight:700;">₹${m.taxesTotal.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1.5px dashed #000;margin-top:4px;font-size:12.5px;">
+            <span><b>NET SALES COLLECTION:</b></span>
+            <span style="font-family:monospace;font-weight:900;">₹${m.netSales.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:10px;color:#333;">
+            <span>Total Settled Invoices:</span>
+            <span>${m.billsCount} bills</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:10px;color:#333;">
+            <span>Average Order Value (AOV):</span>
+            <span>₹${m.aov.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <!-- 2. Payment Modes (MOP) -->
+        <div style="margin-bottom:8px; border-bottom:1px solid #000; padding-bottom:6px;">
+          <div style="font-weight:900; font-size:11px; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.5px;">
+            2. PAYMENT MODES (MOP)
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>💵 Cash (${m.cashCount} bills):</span>
+            <span style="font-family:monospace;font-weight:700;">₹${m.cashTotal.toFixed(2)} (${m.cashPct}%)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>💳 Card (${m.cardCount} bills):</span>
+            <span style="font-family:monospace;font-weight:700;">₹${m.cardTotal.toFixed(2)} (${m.cardPct}%)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>📱 UPI / QR (${m.upiCount} bills):</span>
+            <span style="font-family:monospace;font-weight:700;">₹${m.upiTotal.toFixed(2)} (${m.upiPct}%)</span>
+          </div>
+        </div>
+
+        <!-- 3. Cash Drawer Reconciliation -->
+        <div style="margin-bottom:8px; border-bottom:1px solid #000; padding-bottom:6px;">
+          <div style="font-weight:900; font-size:11px; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.5px;">
+            3. CASH TILL RECONCILIATION
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>Opening Float:</span>
+            <span style="font-family:monospace;">₹${m.openingCash.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>+ Cash Sales Collected:</span>
+            <span style="font-family:monospace;">₹${m.cashTotal.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;">
+            <span>− Cash Expenses / Payouts:</span>
+            <span style="font-family:monospace;">₹${m.cashExpenses.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-top:1px dashed #000;margin-top:3px;font-weight:800;">
+            <span>Expected Cash in Till:</span>
+            <span style="font-family:monospace;">₹${m.expectedCash.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-weight:800;">
+            <span>Actual Cash Counted:</span>
+            <span style="font-family:monospace;">₹${m.actualCash.toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-top:1px solid #000;margin-top:3px;font-weight:900;font-size:11.5px;">
+            <span>VARIANCE / DIFFERENCE:</span>
+            <span style="font-family:monospace;">${m.variance >= 0 ? '+' : ''}₹${m.variance.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <!-- 4. Top Selling Dishes -->
+        ${m.topItems.length > 0 ? `
+          <div style="margin-bottom:8px; border-bottom:1px dashed #000; padding-bottom:6px;">
+            <div style="font-weight:900; font-size:11px; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.5px;">
+              4. TOP SELLING DISHES
+            </div>
+            ${topItemsRows}
+          </div>
+        ` : ''}
+
+        <!-- Signatures Footer -->
+        <div style="margin-top:18px; padding-top:10px; display:flex; justify-content:space-between; font-size:10px; text-align:center;">
+          <div style="border-top:1px solid #000; width:45%; padding-top:4px;">
+            Cashier Signature
+          </div>
+          <div style="border-top:1px solid #000; width:45%; padding-top:4px;">
+            Manager Signature
+          </div>
+        </div>
+
+        <div style="text-align:center; font-size:9px; color:#555; margin-top:14px; border-top:1px dashed #000; padding-top:6px;">
+          *** END OF Z-REPORT · JUST POS ***
+        </div>
+      </div>
+    `;
+
+    executeThermalPrint(zReportHtml, "80mm");
+    showToast(`🖨️ Printing 80mm Z-Report for ${targetDate}...`);
+  }
+
+  // Setup Day Close Event Listeners
+  document.getElementById("dayCloseDateInput")?.addEventListener("change", (e) => {
+    dayCloseState.selectedDate = e.target.value;
+    renderDayClose();
+  });
+
+  document.getElementById("btnDayCloseToday")?.addEventListener("click", () => {
+    dayCloseState.selectedDate = new Date().toISOString().split("T")[0];
+    renderDayClose();
+  });
+
+  document.getElementById("btnDayCloseYesterday")?.addEventListener("click", () => {
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    dayCloseState.selectedDate = yest.toISOString().split("T")[0];
+    renderDayClose();
+  });
+
+  document.getElementById("dayCloseOutletFilter")?.addEventListener("change", (e) => {
+    dayCloseState.selectedOutlet = e.target.value;
+    renderDayClose();
+  });
+
+  document.getElementById("btnRefreshDayClose")?.addEventListener("click", () => {
+    renderDayClose();
+    showToast("↻ Refreshed Day Close sales register");
+  });
+
+  document.getElementById("btnPrintDayCloseZReport")?.addEventListener("click", () => {
+    printDayCloseZReport();
+  });
+
+  document.getElementById("dcOpeningCashInput")?.addEventListener("change", (e) => {
+    const val = Number(e.target.value) || 0;
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const openMap = getOpeningCashMap();
+    openMap[targetDate] = val;
+    saveOpeningCashMap(openMap);
+    renderDayClose();
+    showToast(`Opening cash set to ₹${val.toFixed(2)}`);
+  });
+
+  document.getElementById("dcActualCashInput")?.addEventListener("input", (e) => {
+    const counted = Number(e.target.value) || 0;
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const targetOutlet = dayCloseState.selectedOutlet || "";
+    const m = computeDayCloseMetrics(targetDate, targetOutlet);
+    const diff = counted - m.expectedCash;
+
+    const varBox = document.getElementById("dcCashVarianceBox");
+    const varTitle = document.getElementById("dcVarianceTitle");
+    const varAmt = document.getElementById("dcVarianceAmount");
+
+    if (varBox && varAmt) {
+      if (Math.abs(diff) < 0.01) {
+        varBox.style.background = "#dcfce7";
+        varBox.style.borderColor = "#86efac";
+        varTitle.style.color = "#166534";
+        varAmt.style.color = "#15803d";
+        varAmt.textContent = `₹0.00 (Match ✓)`;
+      } else if (diff > 0) {
+        varBox.style.background = "#eff6ff";
+        varBox.style.borderColor = "#93c5fd";
+        varTitle.style.color = "#1e40af";
+        varAmt.style.color = "#1d4ed8";
+        varAmt.textContent = `+₹${diff.toFixed(2)} (Excess Cash)`;
+      } else {
+        varBox.style.background = "#fee2e2";
+        varBox.style.borderColor = "#fca5a5";
+        varTitle.style.color = "#991b1b";
+        varAmt.style.color = "#b91c1c";
+        varAmt.textContent = `−₹${Math.abs(diff).toFixed(2)} (Shortage)`;
+      }
+    }
+  });
+
+  // Close Day Register Button Handler
+  document.getElementById("btnCloseDayRegisterBtn")?.addEventListener("click", () => {
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const targetOutlet = dayCloseState.selectedOutlet || "";
+    const m = computeDayCloseMetrics(targetDate, targetOutlet);
+    const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
+
+    const countedCash = Number(document.getElementById("dcActualCashInput")?.value) || m.expectedCash;
+    const varVal = countedCash - m.expectedCash;
+
+    const confirmMsg = `Are you sure you want to CLOSE DAY REGISTER for ${targetDate}?\n\n` +
+      `• Total Net Sales: ₹${m.netSales.toFixed(2)} (${m.billsCount} bills)\n` +
+      `• Cash Expected: ₹${m.expectedCash.toFixed(2)}\n` +
+      `• Cash Counted: ₹${countedCash.toFixed(2)}\n` +
+      `• Variance: ${varVal >= 0 ? '+' : ''}₹${varVal.toFixed(2)}\n\n` +
+      `An official 80mm Z-Report will be automatically printed.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const closedMap = getClosedRegistersMap();
+    closedMap[targetDate] = {
+      closedAt: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+      closedIso: new Date().toISOString(),
+      closedBy: activeUser ? activeUser.name : "Admin",
+      netSales: m.netSales,
+      billsCount: m.billsCount,
+      openingCash: m.openingCash,
+      cashCollected: m.cashTotal,
+      expenses: m.cashExpenses,
+      expectedCash: m.expectedCash,
+      actualCash: countedCash,
+      variance: varVal
+    };
+    saveClosedRegistersMap(closedMap);
+
+    renderDayClose();
+    showToast(`✓ Day Register closed for ${targetDate}! Printing Z-Report...`, "success");
+    setTimeout(() => {
+      printDayCloseZReport();
+    }, 400);
+  });
+
+  // Re-open Day Register
+  document.getElementById("btnReopenDayRegisterBtn")?.addEventListener("click", () => {
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    if (!confirm(`Re-open register for ${targetDate}? Staff will be able to add orders and adjust till balances.`)) return;
+
+    const closedMap = getClosedRegistersMap();
+    delete closedMap[targetDate];
+    saveClosedRegistersMap(closedMap);
+
+    renderDayClose();
+    showToast(`🔓 Register re-opened for ${targetDate}!`);
+  });
+
+  // Add Cash Out / Expense Handler
+  document.getElementById("btnAddCashExpenseBtn")?.addEventListener("click", () => {
+    const targetDate = dayCloseState.selectedDate || new Date().toISOString().split("T")[0];
+    const reason = prompt("Enter expense reason / description (e.g. Milk, Ice, Vendor payout):");
+    if (!reason || !reason.trim()) return;
+
+    const amountStr = prompt(`Enter cash expense amount in ₹ for "${reason}":`);
+    const amount = parseFloat(amountStr);
+    if (!amount || isNaN(amount) || amount <= 0) {
+      alert("Invalid expense amount!");
+      return;
+    }
+
+    const activeUser = (typeof getCurrentUser === "function") ? getCurrentUser() : null;
+    const allExpenses = getDayExpensesList();
+    allExpenses.push({
+      id: "EXP-" + Date.now(),
+      date: targetDate,
+      reason: reason.trim(),
+      amount,
+      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+      addedBy: activeUser ? activeUser.name : "Admin"
+    });
+    saveDayExpensesList(allExpenses);
+
+    renderDayClose();
+    showToast(`✓ Cash Out: ₹${amount.toFixed(2)} recorded for "${reason}"`);
+  });
+
+  // Navigation Links to Day Close
+  document.getElementById("navBtnDayClose")?.addEventListener("click", () => {
+    showView("day-close");
+  });
+  document.getElementById("statTodaySalesChip")?.addEventListener("click", () => {
+    showView("day-close");
+  });
+  document.getElementById("btnOpenDayCloseFromBilling")?.addEventListener("click", () => {
+    showView("day-close");
+  });
 
   // =========================================================================
   // 4B. TABLE RESERVATIONS & BOOKINGS SYSTEM
@@ -17181,7 +18197,13 @@ For any queries or updates, reply to this message.`;
       printableAreaMm = Math.max(rollWidthMm - (bodyPaddingMm * 2), 20);
     }
 
-    const zoomScale = Number(scalePct) ? (Number(scalePct) / 100) : 1;
+    const initialPageRule = isA4
+      ? "@page { size: A4 portrait !important; margin: 8mm !important; }"
+      : (isA5
+        ? "@page { size: A5 portrait !important; margin: 6mm !important; }"
+        : (is58
+          ? "@page { size: 58mm 210mm !important; margin: 2mm 1mm !important; }"
+          : "@page { size: 80mm 297mm !important; margin: 2mm 1mm !important; }"));
 
     const doc = iframe.contentWindow.document;
     doc.open();
@@ -17192,6 +18214,7 @@ For any queries or updates, reply to this message.`;
           <meta charset="utf-8">
           <title>POS Receipt - ${invoiceMasterConfig.restaurantName || 'JUST POS'}</title>
           <style id="thermalSlipStyle">
+            ${initialPageRule}
             * {
               box-sizing: border-box !important;
               -webkit-print-color-adjust: exact !important;
